@@ -39,7 +39,7 @@
   },
   "homepage": "https://github.com/robbeverhelst/Preparr#readme",
   "dependencies": {
-    "tsarr": "github:robbeverhelst/TsArr",
+    "tsarr": "1.1.2",
     "zod": "^3.24.1"
   },
   "devDependencies": {

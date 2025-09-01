@@ -241,7 +241,8 @@ type(scope): description
 Types: feat, fix, docs, style, refactor, test, chore
 
 ## Resources
-- TsArr Documentation: https://github.com/robbeverhelst/TsArr
+- TsArr Documentation: https://robbeverhelst.github.io/TsArr/
+- TsArr GitHub: https://github.com/robbeverhelst/TsArr
 - Servarr Wiki: https://wiki.servarr.com/
 - Kubernetes Sidecar Pattern: https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/
 - Bun Documentation: https://bun.sh/docs

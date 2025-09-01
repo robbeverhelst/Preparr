@@ -94,6 +94,7 @@
     "ignore": ["**/dist", "**/node_modules", "**/.git", "**/coverage", "**/.claude"]
   },
   "javascript": {
+    "globals": ["Bun"],
     "formatter": {
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
