@@ -1,4 +1,4 @@
-import type { ServarrConfig, PostgresConfig } from '@/config/schema'
+import type { PostgresConfig, ServarrConfig } from '@/config/schema'
 import { logger } from '@/utils/logger'
 import { LidarrClient, ProwlarrClient, RadarrClient, ReadarrClient, SonarrClient } from 'tsarr'
 
