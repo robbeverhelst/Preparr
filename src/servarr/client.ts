@@ -1,4 +1,4 @@
-import type { ServarrConfig } from '@/config/schema'
+import type { ServarrConfig, PostgresConfig } from '@/config/schema'
 import { logger } from '@/utils/logger'
 import { LidarrClient, ProwlarrClient, RadarrClient, ReadarrClient, SonarrClient } from 'tsarr'
 
@@ -96,7 +96,7 @@ export class ServarrManager {
     }
   }
 
-  async configureDatabase(postgresConfig: unknown): Promise<void> {
+  async configureDatabase(postgresConfig: PostgresConfig): Promise<void> {
     logger.info('Configuring Servarr database connection...')
 
     const dbConfig = {
