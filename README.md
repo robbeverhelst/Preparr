@@ -274,7 +274,7 @@ PrepArr follows a simple architecture pattern:
 
 1. **Configuration Loader** - Reads and validates configuration from files or mounted volumes
 2. **PostgreSQL Manager** - Handles database initialization and management
-3. **Servarr Configurator** - Applies configuration via Servarr APIs using TsArr
+3. **Servarr Configurator** - Applies configuration via Servarr APIs using Tsarr
 4. **File Watcher** - Monitors configuration changes and triggers reconciliation
 5. **Health Server** - Provides health endpoints for container orchestration
 
@@ -386,7 +386,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [Servarr Community](https://wiki.servarr.com/) for the amazing media management applications
-- [TsArr](https://github.com/robbeverhelst/TsArr) for the TypeScript Servarr API client
+- [Tsarr](https://github.com/robbeverhelst/Tsarr) for the TypeScript Servarr API client
 - All contributors and users of this project
 
 ## 🔗 Links

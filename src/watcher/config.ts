@@ -1,15 +1,19 @@
 import { watch } from 'node:fs'
+import { ConfigLoader } from '@/config/loader'
+import type { ServarrApplicationConfig } from '@/config/schema'
 import { logger } from '@/utils/logger'
 
 export class ConfigWatcher {
   private configPath: string
-  private onChange: () => Promise<void>
+  private onChange: (config: ServarrApplicationConfig) => Promise<void>
   private watcher: ReturnType<typeof watch> | null = null
   private isWatching = false
+  private configLoader: ConfigLoader
 
-  constructor(configPath: string, onChange: () => Promise<void>) {
+  constructor(configPath: string, onChange: (config: ServarrApplicationConfig) => Promise<void>) {
     this.configPath = configPath
     this.onChange = onChange
+    this.configLoader = new ConfigLoader()
   }
 
   async start(): Promise<void> {
@@ -33,7 +37,10 @@ export class ConfigWatcher {
           })
 
           try {
-            await this.onChange()
+            const config = await this.loadConfig()
+            if (config) {
+              await this.onChange(config)
+            }
           } catch (error) {
             logger.error('Error during config reconciliation', { error })
           }
@@ -56,29 +63,12 @@ export class ConfigWatcher {
     }
   }
 
-  async loadConfig(): Promise<unknown> {
+  async loadConfig(): Promise<ServarrApplicationConfig | null> {
     try {
-      const file = Bun.file(this.configPath)
-
-      if (!(await file.exists())) {
-        logger.warn('Config file not found', { path: this.configPath })
-        return null
-      }
-
-      const content = await file.text()
-
-      if (this.configPath.endsWith('.json')) {
-        return JSON.parse(content)
-      }
-
-      if (this.configPath.endsWith('.yaml') || this.configPath.endsWith('.yml')) {
-        throw new Error('YAML parsing not implemented yet - use JSON config for now')
-      }
-
-      throw new Error(`Unsupported config file format: ${this.configPath}`)
+      return await this.configLoader.loadConfig(this.configPath)
     } catch (error) {
       logger.error('Failed to load config file', { path: this.configPath, error })
-      throw error
+      return null
     }
   }
 }

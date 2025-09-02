@@ -6,7 +6,7 @@ PrepArr is a lightweight Docker sidecar designed to run alongside Servarr applic
 ## Technology Stack
 - **Runtime**: Bun (latest) - https://bun.sh/docs
 - **Language**: TypeScript
-- **API Client**: TsArr (https://github.com/robbeverhelst/TsArr)
+- **API Client**: Tsarr (https://github.com/robbeverhelst/Tsarr)
 - **Database**: PostgreSQL (via Bun's native SQL API)
 - **File Watching**: Bun.file() + filesystem watching APIs
 - **HTTP Client**: Native fetch() API
@@ -56,7 +56,7 @@ preparr/
 # Directories will be created as needed during implementation:
 # ├── config/               # Configuration management (Zod schemas, loaders)
 # ├── postgres/             # PostgreSQL initialization
-# ├── servarr/              # Servarr API interactions (TsArr client)
+# ├── servarr/              # Servarr API interactions (Tsarr client)
 # └── health/               # Health check endpoints
 ```
 
@@ -241,15 +241,15 @@ type(scope): description
 Types: feat, fix, docs, style, refactor, test, chore
 
 ## Resources
-- TsArr Documentation: https://robbeverhelst.github.io/TsArr/
-- TsArr GitHub: https://github.com/robbeverhelst/TsArr
+- Tsarr Documentation: https://robbeverhelst.github.io/Tsarr/
+- Tsarr GitHub: https://github.com/robbeverhelst/Tsarr
 - Servarr Wiki: https://wiki.servarr.com/
 - Kubernetes Sidecar Pattern: https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/
 - Bun Documentation: https://bun.sh/docs
 
 ## Notes for Implementation
 - Start with PostgreSQL initialization as it's the foundation
-- Use TsArr for all Servarr API interactions
+- Use Tsarr for all Servarr API interactions
 - Leverage Bun's native file system APIs for configuration reading
 - Use Bun's native SQL API for PostgreSQL operations instead of external drivers
 - Implement health checks early for debugging using Bun's HTTP server
@@ -264,5 +264,11 @@ Types: feat, fix, docs, style, refactor, test, chore
 - Use `Bun.env` instead of process.env for environment variables
 - Leverage Bun's fast JSON parsing for configuration files
 - Use Bun's built-in HTTP server for health endpoints
-- Use native fetch() for all HTTP requests (TsArr handles Servarr APIs)
+- Use native fetch() for all HTTP requests (Tsarr handles Servarr APIs)
 - Use `import { sql } from "bun"` for PostgreSQL database operations
+
+## Critical Rules
+- NEVER commit changes unless the user explicitly asks you to commit
+- NEVER create files unless they're absolutely necessary for achieving the goal
+- ALWAYS prefer editing an existing file to creating a new one
+- NEVER proactively create documentation files (*.md) or README files unless explicitly requested

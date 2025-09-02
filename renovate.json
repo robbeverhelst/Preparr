@@ -15,7 +15,7 @@
     },
     {
       "matchPackageNames": ["tsarr"],
-      "groupName": "TsArr",
+      "groupName": "Tsarr",
       "schedule": ["at any time"]
     }
   ],

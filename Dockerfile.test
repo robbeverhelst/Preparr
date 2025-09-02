@@ -1,0 +1,29 @@
+FROM oven/bun:1-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json bun.lockb* ./
+
+# Install dependencies
+RUN bun install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN bun run build
+
+# Create non-root user
+RUN addgroup -g 1001 -S preparr && \
+    adduser -S preparr -u 1001 -G preparr
+
+# Create directories and set permissions
+RUN mkdir -p /config /tv /downloads && \
+    chown -R preparr:preparr /app /config /tv /downloads
+
+USER preparr
+
+EXPOSE 9000
+
+CMD ["bun", "run", "start"]

@@ -13,8 +13,8 @@ export function loadEnvironmentConfig(): EnvironmentConfig {
     },
     servarr: {
       url: env.SERVARR_URL || '',
-      type:
-        (env.SERVARR_TYPE as 'sonarr' | 'radarr' | 'lidarr' | 'readarr' | 'prowlarr') || 'sonarr',
+      type: env.SERVARR_TYPE || 'auto',
+      apiKey: env.SERVARR_API_KEY || '',
       adminUser: env.SERVARR_ADMIN_USER,
       adminPassword: env.SERVARR_ADMIN_PASSWORD || '',
     },
@@ -33,11 +33,14 @@ export function loadEnvironmentConfig(): EnvironmentConfig {
           }
         : undefined,
     },
+    health: {
+      port: env.HEALTH_PORT ? Number.parseInt(env.HEALTH_PORT, 10) : undefined,
+    },
     logLevel: (env.LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info',
     logFormat: (env.LOG_FORMAT as 'json' | 'pretty') || 'json',
     configPath: env.CONFIG_PATH,
     configWatch: env.CONFIG_WATCH === 'false' ? false : undefined,
-    reconcileInterval: env.CONFIG_RECONCILE_INTERVAL
+    configReconcileInterval: env.CONFIG_RECONCILE_INTERVAL
       ? Number.parseInt(env.CONFIG_RECONCILE_INTERVAL, 10)
       : undefined,
   }
