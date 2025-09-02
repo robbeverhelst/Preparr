@@ -31,7 +31,7 @@ services:
       - ./test/tv:/tv
       - ./test/downloads:/downloads
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f -H \"X-Api-Key: $$SERVARR_API_KEY\" http://localhost:8989/api/v3/system/status"]
+      test: ["CMD", "curl", "-f", "http://localhost:8989"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -98,7 +98,7 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - sonarr_config:/servarr-config
+      - sonarr_config:/config
       - ./examples/sonarr-config.json:/config/sonarr-config.json:ro
       - ./test/tv:/tv
       - ./test/downloads:/downloads
@@ -107,7 +107,7 @@ services:
       postgres:
         condition: service_healthy
       sonarr:
-        condition: service_healthy
+        condition: service_started
       qbittorrent:
         condition: service_healthy
 

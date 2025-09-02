@@ -94,13 +94,26 @@ describe('ConfigLoader', () => {
     expect(() => configLoader.validateConfig(invalidConfig)).toThrow()
   })
 
-  test('rejects YAML files temporarily', async () => {
+  test('loads valid YAML configuration', async () => {
     const yamlPath = '/tmp/test-config.yaml'
-    writeFileSync(yamlPath, 'rootFolders:\n  - path: /tv')
+    const yamlContent = `
+rootFolders:
+  - path: /tv
+    accessible: true
+  - path: /movies
+    accessible: true
+qualityProfiles: []
+indexers: []
+downloadClients: []
+`
+    writeFileSync(yamlPath, yamlContent)
 
-    await expect(configLoader.loadConfig(yamlPath)).rejects.toThrow(
-      'YAML parsing not yet implemented',
-    )
+    const config = await configLoader.loadConfig(yamlPath)
+
+    expect(config.rootFolders).toHaveLength(2)
+    expect(config.rootFolders[0].path).toBe('/tv')
+    expect(config.rootFolders[1].path).toBe('/movies')
+    expect(config.qualityProfiles).toHaveLength(0)
 
     unlinkSync(yamlPath)
   })

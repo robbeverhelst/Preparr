@@ -103,21 +103,27 @@ export class PostgresClient {
     }
 
     try {
-      await this.withRetry(
-        async () => {
-          // Use unsafe query for DDL operations since Bun SQL doesn't support identifiers in template literals
-          await this.adminDb?.unsafe(`CREATE DATABASE ${dbName}`)
-        },
-        { maxRetries: 2, initialDelay: 500 },
-      )
-
+      // Try to create the database without retry wrapper for better error handling
+      await this.adminDb.unsafe(`CREATE DATABASE ${dbName}`)
       logger.info('Database created successfully', { database: dbName })
     } catch (error: unknown) {
+      // Check if database already exists - this is OK
       if (error instanceof Error && error.message.includes('already exists')) {
         logger.debug('Database already exists', { database: dbName })
       } else {
-        logger.error('Failed to create database', { database: dbName, error })
-        throw error
+        // For other errors, retry
+        try {
+          await this.withRetry(
+            async () => {
+              await this.adminDb?.unsafe(`CREATE DATABASE ${dbName}`)
+            },
+            { maxRetries: 2, initialDelay: 500 },
+          )
+          logger.info('Database created successfully after retry', { database: dbName })
+        } catch (retryError) {
+          logger.error('Failed to create database', { database: dbName, error: retryError })
+          throw retryError
+        }
       }
     }
   }

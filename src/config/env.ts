@@ -14,7 +14,7 @@ export function loadEnvironmentConfig(): EnvironmentConfig {
     servarr: {
       url: env.SERVARR_URL || '',
       type: env.SERVARR_TYPE || 'auto',
-      apiKey: env.SERVARR_API_KEY || '',
+      apiKey: env.SERVARR_API_KEY || undefined,
       adminUser: env.SERVARR_ADMIN_USER,
       adminPassword: env.SERVARR_ADMIN_PASSWORD || '',
     },

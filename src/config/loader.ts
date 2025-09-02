@@ -1,5 +1,6 @@
 import { logger } from '@/utils/logger'
 import { type ServarrApplicationConfig, ServarrApplicationConfigSchema } from './schema'
+import { YAML } from 'bun'
 
 export class ConfigLoader {
   async loadConfig(filePath: string): Promise<ServarrApplicationConfig> {
@@ -21,21 +22,11 @@ export class ConfigLoader {
         return ServarrApplicationConfigSchema.parse({})
       }
 
-      // Parse YAML content
+      // Parse configuration content
       let configData: unknown
 
       if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
-        // For now, we'll parse as JSON until we add a YAML parser
-        // In production, we should add a YAML parser library
-        try {
-          configData = JSON.parse(content)
-        } catch (jsonError) {
-          logger.error('Failed to parse configuration as JSON (YAML parser not implemented)', {
-            filePath,
-            error: jsonError,
-          })
-          throw new Error('YAML parsing not yet implemented. Use JSON format for now.')
-        }
+        configData = YAML.parse(content)
       } else {
         configData = JSON.parse(content)
       }

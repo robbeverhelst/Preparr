@@ -35,7 +35,7 @@ describe('Environment Configuration', () => {
     expect(config.postgres.database).toBe('servarr')
 
     expect(config.servarr.url).toBe('http://localhost:8989')
-    expect(config.servarr.type).toBe('sonarr')
+    expect(config.servarr.type).toBe('auto')
     expect(config.servarr.adminUser).toBe('admin')
     expect(config.servarr.adminPassword).toBe('admin')
 

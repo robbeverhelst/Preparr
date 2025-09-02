@@ -20,7 +20,7 @@ export class ServarrManager {
 
   constructor(config: ServarrConfig, configPath?: string) {
     this.config = config
-    this.configPath = configPath || '/config/config.xml'
+    this.configPath = configPath || process.env.SERVARR_CONFIG_PATH || '/config/config.xml'
   }
 
   private async detectServarrType(): Promise<string> {
@@ -129,7 +129,37 @@ export class ServarrManager {
     const port = process.env.POSTGRES_PORT || '5432'
     const password = process.env.POSTGRES_PASSWORD || ''
     const connectionString = `postgres://${this.config.type}:${password}@${host}:${port}/${mainDbName}`
+    
+    logger.debug('Creating database connection', {
+      type: this.config.type,
+      database: mainDbName,
+      connectionString: connectionString.replace(password, '***')
+    })
+    
     return new SQL(connectionString)
+  }
+
+  private async readExistingApiKey(): Promise<string | null> {
+    try {
+      const configFile = Bun.file(this.configPath)
+      if (await configFile.exists()) {
+        const content = await configFile.text()
+        const apiKeyMatch = content.match(/<ApiKey>([^<]+)<\/ApiKey>/)
+        if (apiKeyMatch) {
+          return apiKeyMatch[1]
+        }
+      }
+    } catch (error) {
+      logger.debug('Could not read existing config.xml', { error })
+    }
+    return null
+  }
+
+  private generateApiKey(): string {
+    // Generate a 32-character hexadecimal API key
+    const bytes = new Uint8Array(16)
+    crypto.getRandomValues(bytes)
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
   }
 
   private createClient(apiKey: string): ServarrClientType {
@@ -195,7 +225,26 @@ export class ServarrManager {
   }
 
   private async writeConfigXml(): Promise<boolean> {
-    this.apiKey = this.config.apiKey
+    // First, try to read existing config.xml to get current API key
+    const existingApiKey = await this.readExistingApiKey()
+    
+    // Use existing API key if available, otherwise generate or use provided one
+    if (existingApiKey) {
+      this.apiKey = existingApiKey
+      logger.info('Using existing API key from Servarr config', { 
+        apiKey: `${this.apiKey.slice(0, 8)}...` 
+      })
+    } else if (this.config.apiKey) {
+      this.apiKey = this.config.apiKey
+      logger.info('Using provided API key', { 
+        apiKey: `${this.apiKey.slice(0, 8)}...` 
+      })
+    } else {
+      this.apiKey = this.generateApiKey()
+      logger.info('Generated new API key for Servarr', { 
+        apiKey: `${this.apiKey.slice(0, 8)}...` 
+      })
+    }
 
     logger.info('Writing Servarr config.xml...', {
       type: this.config.type,
@@ -357,6 +406,10 @@ export class ServarrManager {
         requiredTables,
       })
 
+      logger.debug('About to close database connection in checkServarrTablesInitialized')
+      db.close()
+      logger.debug('Database connection closed in checkServarrTablesInitialized')
+
       return hasRequiredTables
     } catch (error) {
       logger.error('Failed to check database tables', { error })
@@ -381,7 +434,14 @@ export class ServarrManager {
 
       if (existingUsers.length > 0) {
         logger.info('Admin user already exists', { username: this.config.adminUser })
-        db.close()
+        logger.debug('Closing database connection after user check')
+        try {
+          db.close()
+          logger.debug('Database connection closed successfully')
+        } catch (closeError) {
+          logger.warn('Error closing database connection', { closeError })
+        }
+        logger.debug('Returning from createInitialUser')
         return
       }
 
@@ -515,6 +575,7 @@ export class ServarrManager {
 
   async testConnection(): Promise<boolean> {
     if (!this.isInitialized || !this.apiKey) {
+      logger.debug('testConnection failed: not initialized or no API key')
       return false
     }
 
@@ -524,8 +585,24 @@ export class ServarrManager {
           'X-Api-Key': this.apiKey,
         },
       })
+      
+      logger.debug('testConnection result', {
+        status: response.status,
+        ok: response.ok,
+        apiKey: `${this.apiKey.slice(0, 8)}...`
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        logger.warn('API connection test failed', {
+          status: response.status,
+          error: errorText
+        })
+      }
+      
       return response.ok
-    } catch (_error) {
+    } catch (error) {
+      logger.error('testConnection exception', { error })
       return false
     }
   }

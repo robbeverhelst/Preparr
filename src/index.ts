@@ -20,7 +20,7 @@ class PrepArr {
   constructor() {
     this.config = loadEnvironmentConfig()
     this.postgres = new PostgresClient(this.config.postgres)
-    this.servarr = new ServarrManager(this.config.servarr, '/servarr-config/config.xml')
+    this.servarr = new ServarrManager(this.config.servarr)
     this.health = new HealthServer(this.config.health.port)
     this.configLoader = new ConfigLoader()
   }
@@ -41,7 +41,15 @@ class PrepArr {
 
       // Initialize Servarr manager (auto-detects type, writes config.xml, waits for startup)
       logger.info('Initializing Servarr manager...')
-      await this.servarr.initialize()
+      try {
+        await this.servarr.initialize()
+      } catch (servarrError) {
+        logger.error('Servarr initialization failed', { 
+          error: servarrError instanceof Error ? servarrError.message : String(servarrError),
+          stack: servarrError instanceof Error ? servarrError.stack : undefined
+        })
+        throw servarrError
+      }
 
       // Now initialize Servarr-specific databases with the detected type
       await this.postgres.initializeServarrDatabases(this.servarr.getType())
@@ -66,7 +74,11 @@ class PrepArr {
       let tablesReady = false
       for (let i = 0; i < 10; i++) {
         tablesReady = await this.servarr.checkServarrTablesInitialized()
-        if (tablesReady) break
+        logger.debug('Table check result', { tablesReady, attempt: i + 1 })
+        if (tablesReady) {
+          logger.debug('Tables are ready, breaking out of loop')
+          break
+        }
 
         logger.debug('Database tables not ready yet, waiting...', { attempt: i + 1 })
         await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -76,17 +88,23 @@ class PrepArr {
         throw new Error('Servarr failed to initialize database tables')
       }
 
+      logger.debug('Database tables confirmed ready, about to create initial user...')
       // Create initial user now that everything is ready
+      logger.debug('About to call createInitialUser...')
       await this.servarr.createInitialUser()
+      logger.debug('createInitialUser returned successfully, testing connection...')
 
       // Final connection test
       const isConnected = await this.servarr.testConnection()
+      logger.debug('Connection test result', { isConnected })
       if (!isConnected) {
         throw new Error('Failed to verify Servarr connection after user creation')
       }
 
+      logger.debug('All initialization steps completed, updating health checks...')
       this.health.updateHealthCheck('servarr', true)
       this.health.updateHealthCheck('config', true)
+      logger.debug('Health checks updated successfully')
 
       // Initialize reconciler
       this.reconciler = new ConfigReconciler(this.servarr)

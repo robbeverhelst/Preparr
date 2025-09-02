@@ -1,0 +1,57 @@
+rootFolders:
+  - path: /tv
+    accessible: true
+  - path: /anime
+    accessible: true
+
+qualityProfiles: []
+
+indexers:
+  - name: NZBgeek
+    implementation: Newznab
+    implementationName: Newznab
+    configContract: NewznabSettings
+    infoLink: https://github.com/Sonarr/Sonarr/wiki/Supported-Indexers#newznab
+    tags: []
+    fields:
+      - name: baseUrl
+        value: https://api.nzbgeek.info
+      - name: apiPath
+        value: /api
+      - name: apiKey
+        value: your-api-key-here
+      - name: categories
+        value: "5030,5040"
+      - name: additionalParameters
+        value: ""
+      - name: removeYear
+        value: false
+      - name: searchByTitle
+        value: false
+    enable: true
+    priority: 25
+
+downloadClients:
+  - name: qBittorrent
+    implementation: QBittorrent
+    implementationName: qBittorrent
+    configContract: QBittorrentSettings
+    fields:
+      - name: host
+        value: qbittorrent
+      - name: port
+        value: 8080
+      - name: username
+        value: admin
+      - name: password
+        value: adminpass
+      - name: category
+        value: sonarr
+      - name: priority
+        value: 0
+      - name: removeCompletedDownloads
+        value: false
+      - name: removeFailedDownloads
+        value: false
+    enable: true
+    priority: 1

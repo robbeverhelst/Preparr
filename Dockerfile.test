@@ -14,15 +14,11 @@ COPY . .
 # Build the application
 RUN bun run build
 
-# Create non-root user
-RUN addgroup -g 1001 -S preparr && \
-    adduser -S preparr -u 1001 -G preparr
+# Use existing user 1000 and create directories with proper permissions
+RUN mkdir -p /config /tv /downloads /servarr-config && \
+    chown -R 1000:1000 /app /config /tv /downloads /servarr-config
 
-# Create directories and set permissions
-RUN mkdir -p /config /tv /downloads && \
-    chown -R preparr:preparr /app /config /tv /downloads
-
-USER preparr
+USER 1000
 
 EXPOSE 9000
 

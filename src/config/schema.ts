@@ -14,7 +14,8 @@ export const ServarrConfigSchema = z.object({
   apiKey: z
     .string()
     .length(32, 'API key must be exactly 32 characters')
-    .regex(/^[a-f0-9]+$/, 'API key must be hexadecimal'),
+    .regex(/^[a-f0-9]+$/, 'API key must be hexadecimal')
+    .optional(),
   adminUser: z.string().default('admin'),
   adminPassword: z.string(),
 })
