@@ -58,3 +58,12 @@ bun.lockb
 
 # Biome
 .biome/
+
+# Claude Code
+.claude/
+claude_settings.json
+settings.local.json
+
+# Implementation plans
+IMPLEMENTATION_PLAN.md
+IMPLEMENTATION_PLAN_v2.md
