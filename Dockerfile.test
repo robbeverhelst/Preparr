@@ -15,7 +15,7 @@ COPY . .
 RUN bun run build
 
 # Use existing user 1000 and create directories with proper permissions
-RUN mkdir -p /config /tv /downloads /servarr-config && \
+RUN mkdir -p /config /tv /downloads /servarr-config /config/qBittorrent && \
     chown -R 1000:1000 /app /config /tv /downloads /servarr-config
 
 USER 1000

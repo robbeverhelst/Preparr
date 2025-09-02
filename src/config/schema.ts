@@ -89,11 +89,34 @@ export const DownloadClientSchema = z.object({
   priority: z.number().default(1),
 })
 
+export const QBittorrentConfigSchema = z
+  .object({
+    webui: z
+      .object({
+        username: z.string().default('admin'),
+        password: z.string().default('adminpass'),
+      })
+      .optional(),
+    downloads: z
+      .object({
+        defaultPath: z.string().default('/downloads'),
+        categories: z.array(z.string()).default([]),
+      })
+      .optional(),
+    connection: z
+      .object({
+        port: z.number().default(6881),
+      })
+      .optional(),
+  })
+  .optional()
+
 export const ServarrApplicationConfigSchema = z.object({
   rootFolders: z.array(RootFolderSchema).default([]),
   qualityProfiles: z.array(QualityProfileSchema).default([]),
   indexers: z.array(IndexerSchema).default([]),
   downloadClients: z.array(DownloadClientSchema).default([]),
+  qbittorrent: QBittorrentConfigSchema,
 })
 
 export const EnvironmentConfigSchema = z.object({
@@ -119,5 +142,6 @@ export type RootFolder = z.infer<typeof RootFolderSchema>
 export type QualityProfile = z.infer<typeof QualityProfileSchema>
 export type Indexer = z.infer<typeof IndexerSchema>
 export type DownloadClient = z.infer<typeof DownloadClientSchema>
+export type QBittorrentConfig = z.infer<typeof QBittorrentConfigSchema>
 export type ServarrApplicationConfig = z.infer<typeof ServarrApplicationConfigSchema>
 export type EnvironmentConfig = z.infer<typeof EnvironmentConfigSchema>

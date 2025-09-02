@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: servarr
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: newpostgrespass123
     ports:
       - "5432:5432"
     volumes:
@@ -40,6 +40,19 @@ services:
       postgres:
         condition: service_healthy
 
+  qbittorrent-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      QBITTORRENT_USER: newqbuser
+      QBITTORRENT_PASSWORD: newqbpass789
+    volumes:
+      - qbittorrent_config:/config
+    user: "1000:1000"
+    command: ["bun", "run", "dist/qbittorrent-init.js"]
+    restart: "no"
+
   qbittorrent:
     image: linuxserver/qbittorrent:latest
     environment:
@@ -58,6 +71,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    depends_on:
+      qbittorrent-init:
+        condition: service_completed_successfully
 
   preparr:
     build:
@@ -68,21 +84,21 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: newpostgrespass123
       POSTGRES_DB: servarr
       
       # Servarr Configuration
       SERVARR_URL: http://sonarr:8989
       SERVARR_TYPE: auto
       SERVARR_API_KEY: a1b2c3d4e5f67890123456789abcdef0
-      SERVARR_ADMIN_USER: robbeverhelst
-      SERVARR_ADMIN_PASSWORD: secure123
+      SERVARR_ADMIN_USER: newadmin
+      SERVARR_ADMIN_PASSWORD: newsecurepass456
       SERVARR_INSTANCE_NAME: MyCustomTestInstance
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: adminpass
+      QBITTORRENT_USER: newqbuser
+      QBITTORRENT_PASSWORD: newqbpass789
       
       # Configuration
       CONFIG_PATH: /config/sonarr-config.json
@@ -102,6 +118,7 @@ services:
       - ./examples/sonarr-config.json:/config/sonarr-config.json:ro
       - ./test/tv:/tv
       - ./test/downloads:/downloads
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     user: "1000:1000"
     depends_on:
       postgres:

@@ -1,0 +1,255 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: servarr
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  qbittorrent:
+    image: linuxserver/qbittorrent:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - WEBUI_PORT=8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - qbittorrent_config:/config
+      - ./test/downloads:/downloads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Prowlarr with PrepArr init container
+  prowlarr:
+    image: linuxserver/prowlarr:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    ports:
+      - "9696:9696"
+    volumes:
+      - prowlarr_config:/config
+      - ./examples/prowlarr-config.json:/config/prowlarr-config.json:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9696"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      prowlarr-init:
+        condition: service_completed_successfully
+
+  prowlarr-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      # PostgreSQL Configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: servarr
+      
+      # Servarr Configuration
+      SERVARR_URL: http://prowlarr:9696
+      SERVARR_TYPE: prowlarr
+      SERVARR_ADMIN_USER: robbeverhelst
+      SERVARR_ADMIN_PASSWORD: secure123
+      SERVARR_INSTANCE_NAME: ProwlarrInstance
+      
+      # Service Integration
+      QBITTORRENT_URL: http://qbittorrent:8080
+      QBITTORRENT_USER: admin
+      QBITTORRENT_PASSWORD: adminpass
+      
+      # Configuration
+      CONFIG_PATH: /config/prowlarr-config.json
+      CONFIG_WATCH: false
+      CONFIG_RECONCILE_INTERVAL: 30
+      
+      # Logging
+      LOG_LEVEL: debug
+      LOG_FORMAT: pretty
+      
+      # Health
+      HEALTH_PORT: 9001
+    volumes:
+      - prowlarr_config:/config
+    user: "1000:1000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    command: ["bun", "run", "dist/index.js", "--init-only"]
+
+  # Radarr with PrepArr sidecar
+  radarr:
+    image: linuxserver/radarr:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    ports:
+      - "7878:7878"
+    volumes:
+      - radarr_config:/config
+      - ./test/movies:/movies
+      - ./test/downloads:/downloads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7878"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  radarr-preparr:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      # PostgreSQL Configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: servarr
+      
+      # Servarr Configuration
+      SERVARR_URL: http://radarr:7878
+      SERVARR_TYPE: radarr
+      SERVARR_ADMIN_USER: robbeverhelst
+      SERVARR_ADMIN_PASSWORD: secure123
+      SERVARR_INSTANCE_NAME: RadarrInstance
+      
+      # Service Integration
+      QBITTORRENT_URL: http://qbittorrent:8080
+      QBITTORRENT_USER: admin
+      QBITTORRENT_PASSWORD: adminpass
+      
+      # Configuration
+      CONFIG_PATH: /config/radarr-config.json
+      CONFIG_WATCH: true
+      CONFIG_RECONCILE_INTERVAL: 30
+      
+      # Logging
+      LOG_LEVEL: debug
+      LOG_FORMAT: pretty
+      
+      # Health
+      HEALTH_PORT: 9002
+    ports:
+      - "9002:9002"
+    volumes:
+      - radarr_config:/config
+      - ./examples/radarr-config.json:/config/radarr-config.json:ro
+      - ./test/movies:/movies
+      - ./test/downloads:/downloads
+    user: "1000:1000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      radarr:
+        condition: service_started
+
+  # Sonarr with PrepArr sidecar
+  sonarr:
+    image: linuxserver/sonarr:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    ports:
+      - "8989:8989"
+    volumes:
+      - sonarr_config:/config
+      - ./test/tv:/tv
+      - ./test/downloads:/downloads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  sonarr-preparr:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      # PostgreSQL Configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: servarr
+      
+      # Servarr Configuration
+      SERVARR_URL: http://sonarr:8989
+      SERVARR_TYPE: sonarr
+      SERVARR_ADMIN_USER: robbeverhelst
+      SERVARR_ADMIN_PASSWORD: secure123
+      SERVARR_INSTANCE_NAME: SonarrInstance
+      
+      # Service Integration
+      QBITTORRENT_URL: http://qbittorrent:8080
+      QBITTORRENT_USER: admin
+      QBITTORRENT_PASSWORD: adminpass
+      
+      # Configuration
+      CONFIG_PATH: /config/sonarr-config.json
+      CONFIG_WATCH: true
+      CONFIG_RECONCILE_INTERVAL: 30
+      
+      # Logging
+      LOG_LEVEL: debug
+      LOG_FORMAT: pretty
+      
+      # Health
+      HEALTH_PORT: 9003
+    ports:
+      - "9003:9003"
+    volumes:
+      - sonarr_config:/config
+      - ./examples/sonarr-config.json:/config/sonarr-config.json:ro
+      - ./test/tv:/tv
+      - ./test/downloads:/downloads
+    user: "1000:1000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      sonarr:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  prowlarr_config:
+  radarr_config:
+  sonarr_config:
+  qbittorrent_config:

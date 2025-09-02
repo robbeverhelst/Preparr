@@ -3,10 +3,6 @@
     {
       "path": "/tv",
       "accessible": true
-    },
-    {
-      "path": "/anime",
-      "accessible": true
     }
   ],
   "qualityProfiles": [],
@@ -50,5 +46,18 @@
       "enable": true,
       "priority": 1
     }
-  ]
+  ],
+  "qbittorrent": {
+    "webui": {
+      "username": "newqbuser",
+      "password": "newqbpass789"
+    },
+    "downloads": {
+      "defaultPath": "/downloads",
+      "categories": ["sonarr", "radarr", "prowlarr"]
+    },
+    "connection": {
+      "port": 6881
+    }
+  }
 }

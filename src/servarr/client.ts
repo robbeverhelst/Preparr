@@ -129,13 +129,13 @@ export class ServarrManager {
     const port = process.env.POSTGRES_PORT || '5432'
     const password = process.env.POSTGRES_PASSWORD || ''
     const connectionString = `postgres://${this.config.type}:${password}@${host}:${port}/${mainDbName}`
-    
+
     logger.debug('Creating database connection', {
       type: this.config.type,
       database: mainDbName,
-      connectionString: connectionString.replace(password, '***')
+      connectionString: connectionString.replace(password, '***'),
     })
-    
+
     return new SQL(connectionString)
   }
 
@@ -159,7 +159,7 @@ export class ServarrManager {
     // Generate a 32-character hexadecimal API key
     const bytes = new Uint8Array(16)
     crypto.getRandomValues(bytes)
-    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
   }
 
   private createClient(apiKey: string): ServarrClientType {
@@ -185,6 +185,15 @@ export class ServarrManager {
       default:
         throw new Error(`Unsupported Servarr type: ${type}`)
     }
+  }
+
+  async detectType(): Promise<string> {
+    if (this.config.type !== 'auto') {
+      return this.config.type
+    }
+
+    await this.waitForStartup()
+    return await this.detectServarrType()
   }
 
   async initialize(): Promise<void> {
@@ -227,22 +236,22 @@ export class ServarrManager {
   private async writeConfigXml(): Promise<boolean> {
     // First, try to read existing config.xml to get current API key
     const existingApiKey = await this.readExistingApiKey()
-    
+
     // Use existing API key if available, otherwise generate or use provided one
     if (existingApiKey) {
       this.apiKey = existingApiKey
-      logger.info('Using existing API key from Servarr config', { 
-        apiKey: `${this.apiKey.slice(0, 8)}...` 
+      logger.info('Using existing API key from Servarr config', {
+        apiKey: `${this.apiKey.slice(0, 8)}...`,
       })
     } else if (this.config.apiKey) {
       this.apiKey = this.config.apiKey
-      logger.info('Using provided API key', { 
-        apiKey: `${this.apiKey.slice(0, 8)}...` 
+      logger.info('Using provided API key', {
+        apiKey: `${this.apiKey.slice(0, 8)}...`,
       })
     } else {
       this.apiKey = this.generateApiKey()
-      logger.info('Generated new API key for Servarr', { 
-        apiKey: `${this.apiKey.slice(0, 8)}...` 
+      logger.info('Generated new API key for Servarr', {
+        apiKey: `${this.apiKey.slice(0, 8)}...`,
       })
     }
 
@@ -585,21 +594,21 @@ export class ServarrManager {
           'X-Api-Key': this.apiKey,
         },
       })
-      
+
       logger.debug('testConnection result', {
         status: response.status,
         ok: response.ok,
-        apiKey: `${this.apiKey.slice(0, 8)}...`
+        apiKey: `${this.apiKey.slice(0, 8)}...`,
       })
-      
+
       if (!response.ok) {
         const errorText = await response.text()
         logger.warn('API connection test failed', {
           status: response.status,
-          error: errorText
+          error: errorText,
         })
       }
-      
+
       return response.ok
     } catch (error) {
       logger.error('testConnection exception', { error })

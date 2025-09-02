@@ -1,0 +1,22 @@
+{
+  "rootFolders": [],
+  "qualityProfiles": [],
+  "indexers": [
+    {
+      "name": "NZBgeek",
+      "implementation": "Newznab",
+      "configContract": "NewznabSettings",
+      "settings": {
+        "baseUrl": "https://api.nzbgeek.info",
+        "apiPath": "/api",
+        "apiKey": "your-nzbgeek-api-key",
+        "categories": [5000, 5040]
+      },
+      "enableRss": true,
+      "enableAutomaticSearch": true,
+      "enableInteractiveSearch": true,
+      "priority": 25
+    }
+  ],
+  "downloadClients": []
+}

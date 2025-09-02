@@ -3,6 +3,7 @@ import { ConfigLoader } from '@/config/loader'
 import type { EnvironmentConfig, ServarrApplicationConfig } from '@/config/schema'
 import { HealthServer } from '@/health/server'
 import { PostgresClient } from '@/postgres/client'
+import { QBittorrentManager } from '@/qbittorrent/client'
 import { ConfigReconciler } from '@/reconciler'
 import { ServarrManager } from '@/servarr/client'
 import { logger } from '@/utils/logger'
@@ -12,6 +13,7 @@ class PrepArr {
   private config: EnvironmentConfig
   private postgres: PostgresClient
   private servarr: ServarrManager
+  private qbittorrent: QBittorrentManager | null = null
   private health: HealthServer
   private watcher: ConfigWatcher | null = null
   private configLoader: ConfigLoader
@@ -21,6 +23,9 @@ class PrepArr {
     this.config = loadEnvironmentConfig()
     this.postgres = new PostgresClient(this.config.postgres)
     this.servarr = new ServarrManager(this.config.servarr)
+    this.qbittorrent = this.config.services.qbittorrent
+      ? new QBittorrentManager(this.config.services.qbittorrent)
+      : null
     this.health = new HealthServer(this.config.health.port)
     this.configLoader = new ConfigLoader()
   }
@@ -39,20 +44,25 @@ class PrepArr {
       await this.postgres.initialize()
       this.health.updateHealthCheck('postgres', true)
 
-      // Initialize Servarr manager (auto-detects type, writes config.xml, waits for startup)
+      // Auto-detect Servarr type first (without writing config or restarting)
+      logger.info('Auto-detecting Servarr type...')
+      const servarrType = await this.servarr.detectType()
+
+      // Create PostgreSQL databases and users BEFORE writing config
+      logger.info('Initializing Servarr PostgreSQL databases...', { type: servarrType })
+      await this.postgres.initializeServarrDatabases(servarrType)
+
+      // Now initialize Servarr manager (writes config.xml with PostgreSQL, restarts)
       logger.info('Initializing Servarr manager...')
       try {
         await this.servarr.initialize()
       } catch (servarrError) {
-        logger.error('Servarr initialization failed', { 
+        logger.error('Servarr initialization failed', {
           error: servarrError instanceof Error ? servarrError.message : String(servarrError),
-          stack: servarrError instanceof Error ? servarrError.stack : undefined
+          stack: servarrError instanceof Error ? servarrError.stack : undefined,
         })
         throw servarrError
       }
-
-      // Now initialize Servarr-specific databases with the detected type
-      await this.postgres.initializeServarrDatabases(this.servarr.getType())
 
       // Verify PostgreSQL connection with retries
       logger.info('Verifying PostgreSQL connection...')
@@ -103,6 +113,19 @@ class PrepArr {
 
       logger.debug('All initialization steps completed, updating health checks...')
       this.health.updateHealthCheck('servarr', true)
+
+      // Initialize qBittorrent if configured
+      if (this.qbittorrent) {
+        logger.info('Initializing qBittorrent...')
+        try {
+          await this.qbittorrent.initialize()
+          this.health.updateHealthCheck('qbittorrent', true)
+        } catch (error) {
+          logger.error('qBittorrent initialization failed', { error })
+          this.health.updateHealthCheck('qbittorrent', false)
+        }
+      }
+
       this.health.updateHealthCheck('config', true)
       logger.debug('Health checks updated successfully')
 
@@ -155,6 +178,7 @@ class PrepArr {
       qualityProfiles: config.qualityProfiles.length,
       indexers: config.indexers.length,
       downloadClients: config.downloadClients.length,
+      qbittorrent: config.qbittorrent ? 'configured' : 'not configured',
     })
 
     try {
@@ -176,6 +200,17 @@ class PrepArr {
       }
 
       logger.info('Configuration applied successfully', { changes: result.changes })
+
+      // Apply qBittorrent configuration if provided
+      if (config.qbittorrent && this.qbittorrent) {
+        logger.info('Applying qBittorrent configuration...')
+        try {
+          await this.qbittorrent.applyConfiguration(config.qbittorrent)
+          logger.info('qBittorrent configuration applied successfully')
+        } catch (error) {
+          logger.error('Failed to apply qBittorrent configuration', { error })
+        }
+      }
     } catch (error) {
       logger.error('Failed to apply configuration', { error })
       throw error

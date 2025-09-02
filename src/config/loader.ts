@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger'
-import { type ServarrApplicationConfig, ServarrApplicationConfigSchema } from './schema'
 import { YAML } from 'bun'
+import { type ServarrApplicationConfig, ServarrApplicationConfigSchema } from './schema'
 
 export class ConfigLoader {
   async loadConfig(filePath: string): Promise<ServarrApplicationConfig> {
