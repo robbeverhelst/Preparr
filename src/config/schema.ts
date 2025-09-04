@@ -8,17 +8,41 @@ export const PostgresConfigSchema = z.object({
   database: z.string().default('servarr'),
 })
 
-export const ServarrConfigSchema = z.object({
-  url: z.string().url(),
-  type: z.enum(['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr', 'auto']).default('auto'),
-  apiKey: z
-    .string()
-    .length(32, 'API key must be exactly 32 characters')
-    .regex(/^[a-f0-9]+$/, 'API key must be hexadecimal')
-    .optional(),
-  adminUser: z.string().default('admin'),
-  adminPassword: z.string(),
-})
+export const ServarrConfigSchema = z
+  .object({
+    url: z.string().optional(),
+    type: z
+      .enum(['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr', 'qbittorrent', 'auto'])
+      .default('auto'),
+    apiKey: z
+      .string()
+      .length(32, 'API key must be exactly 32 characters')
+      .regex(/^[a-f0-9]+$/, 'API key must be hexadecimal')
+      .optional(),
+    adminUser: z.string().default('admin'),
+    adminPassword: z.string(),
+  })
+  .refine(
+    (data) => {
+      // URL validation: required for all Servarr types except qbittorrent
+      if (data.type !== 'qbittorrent') {
+        if (!data.url) {
+          return false
+        }
+        // Validate URL format for non-qbittorrent types
+        try {
+          new URL(data.url)
+        } catch {
+          return false
+        }
+      }
+      return true
+    },
+    {
+      message: 'Valid URL is required when type is not qbittorrent',
+      path: ['url'],
+    },
+  )
 
 export const ServiceIntegrationSchema = z.object({
   qbittorrent: z
@@ -67,11 +91,12 @@ export const IndexerSchema = z.object({
   fields: z.array(
     z.object({
       name: z.string(),
-      value: z.union([z.string(), z.number(), z.boolean()]),
+      value: z.union([z.string(), z.number(), z.boolean(), z.array(z.number())]),
     }),
   ),
   enable: z.boolean().default(true),
   priority: z.number().default(25),
+  appProfileId: z.number().optional(),
 })
 
 export const DownloadClientSchema = z.object({
@@ -82,7 +107,7 @@ export const DownloadClientSchema = z.object({
   fields: z.array(
     z.object({
       name: z.string(),
-      value: z.union([z.string(), z.number(), z.boolean()]),
+      value: z.union([z.string(), z.number(), z.boolean(), z.array(z.number())]),
     }),
   ),
   enable: z.boolean().default(true),
@@ -111,11 +136,28 @@ export const QBittorrentConfigSchema = z
   })
   .optional()
 
+export const ApplicationSchema = z.object({
+  name: z.string(),
+  implementation: z.string(),
+  implementationName: z.string(),
+  configContract: z.string(),
+  fields: z.array(
+    z.object({
+      name: z.string(),
+      value: z.union([z.string(), z.number(), z.boolean(), z.array(z.number())]),
+    }),
+  ),
+  enable: z.boolean().default(true),
+  syncLevel: z.string().default('addOnly'),
+  tags: z.array(z.number()).default([]),
+})
+
 export const ServarrApplicationConfigSchema = z.object({
   rootFolders: z.array(RootFolderSchema).default([]),
   qualityProfiles: z.array(QualityProfileSchema).default([]),
   indexers: z.array(IndexerSchema).default([]),
   downloadClients: z.array(DownloadClientSchema).default([]),
+  applications: z.array(ApplicationSchema).default([]),
   qbittorrent: QBittorrentConfigSchema,
 })
 
@@ -142,6 +184,7 @@ export type RootFolder = z.infer<typeof RootFolderSchema>
 export type QualityProfile = z.infer<typeof QualityProfileSchema>
 export type Indexer = z.infer<typeof IndexerSchema>
 export type DownloadClient = z.infer<typeof DownloadClientSchema>
+export type Application = z.infer<typeof ApplicationSchema>
 export type QBittorrentConfig = z.infer<typeof QBittorrentConfigSchema>
 export type ServarrApplicationConfig = z.infer<typeof ServarrApplicationConfigSchema>
 export type EnvironmentConfig = z.infer<typeof EnvironmentConfigSchema>

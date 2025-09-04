@@ -3,20 +3,81 @@
   "qualityProfiles": [],
   "indexers": [
     {
-      "name": "NZBgeek",
-      "implementation": "Newznab",
-      "configContract": "NewznabSettings",
-      "settings": {
-        "baseUrl": "https://api.nzbgeek.info",
-        "apiPath": "/api",
-        "apiKey": "your-nzbgeek-api-key",
-        "categories": [5000, 5040]
-      },
-      "enableRss": true,
-      "enableAutomaticSearch": true,
-      "enableInteractiveSearch": true,
-      "priority": 25
+      "name": "AnimeTosho",
+      "implementation": "Torznab",
+      "implementationName": "Torznab",
+      "configContract": "TorznabSettings",
+      "infoLink": "https://wiki.servarr.com/prowlarr/supported-indexers#torznab",
+      "tags": [],
+      "fields": [
+        {
+          "name": "baseUrl",
+          "value": "https://feed.animetosho.org"
+        },
+        {
+          "name": "apiPath",
+          "value": "/api"
+        },
+        {
+          "name": "apiKey",
+          "value": ""
+        }
+      ],
+      "enable": true,
+      "priority": 25,
+      "appProfileId": 1
     }
   ],
-  "downloadClients": []
+  "downloadClients": [
+    {
+      "name": "qBittorrent",
+      "implementation": "QBittorrent",
+      "implementationName": "qBittorrent",
+      "configContract": "QBittorrentSettings",
+      "fields": [
+        { "name": "host", "value": "qbittorrent" },
+        { "name": "port", "value": 8080 },
+        { "name": "username", "value": "admin" },
+        { "name": "password", "value": "admin123" },
+        { "name": "category", "value": "" },
+        { "name": "priority", "value": 0 },
+        { "name": "removeCompletedDownloads", "value": false },
+        { "name": "removeFailedDownloads", "value": false }
+      ],
+      "enable": true,
+      "priority": 1
+    }
+  ],
+  "applications": [
+    {
+      "name": "Sonarr",
+      "implementation": "Sonarr",
+      "implementationName": "Sonarr",
+      "configContract": "SonarrSettings",
+      "fields": [
+        { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
+        { "name": "baseUrl", "value": "http://sonarr:8989" },
+        { "name": "apiKey", "value": "491991348fc9c54da959a7a2f1a164fe" },
+        { "name": "syncCategories", "value": [5000, 5030, 5040] }
+      ],
+      "enable": true,
+      "syncLevel": "fullSync",
+      "tags": []
+    },
+    {
+      "name": "Radarr",
+      "implementation": "Radarr",
+      "implementationName": "Radarr",
+      "configContract": "RadarrSettings",
+      "fields": [
+        { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
+        { "name": "baseUrl", "value": "http://radarr:7878" },
+        { "name": "apiKey", "value": "be33294b2592e51e6d27ead2ef0b5263" },
+        { "name": "syncCategories", "value": [2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060] }
+      ],
+      "enable": true,
+      "syncLevel": "fullSync",
+      "tags": []
+    }
+  ]
 }

@@ -102,29 +102,42 @@ export class PostgresClient {
       throw new Error('Admin database connection not established')
     }
 
+    // Check if database already exists first
+    const exists = await this.databaseExists(dbName)
+    if (exists) {
+      logger.debug('Database already exists', { database: dbName })
+      return
+    }
+
     try {
-      // Try to create the database without retry wrapper for better error handling
-      await this.adminDb.unsafe(`CREATE DATABASE ${dbName}`)
+      await this.withRetry(
+        async () => {
+          await this.adminDb?.unsafe(`CREATE DATABASE ${dbName}`)
+        },
+        { maxRetries: 2, initialDelay: 500 },
+      )
       logger.info('Database created successfully', { database: dbName })
-    } catch (error: unknown) {
-      // Check if database already exists - this is OK
-      if (error instanceof Error && error.message.includes('already exists')) {
-        logger.debug('Database already exists', { database: dbName })
-      } else {
-        // For other errors, retry
-        try {
-          await this.withRetry(
-            async () => {
-              await this.adminDb?.unsafe(`CREATE DATABASE ${dbName}`)
-            },
-            { maxRetries: 2, initialDelay: 500 },
-          )
-          logger.info('Database created successfully after retry', { database: dbName })
-        } catch (retryError) {
-          logger.error('Failed to create database', { database: dbName, error: retryError })
-          throw retryError
-        }
-      }
+    } catch (error) {
+      logger.error('Failed to create database', { database: dbName, error })
+      throw error
+    }
+  }
+
+  async databaseExists(dbName: string): Promise<boolean> {
+    this.connect()
+
+    if (!this.adminDb) {
+      throw new Error('Admin database connection not established')
+    }
+
+    try {
+      const result = await this.adminDb`
+        SELECT 1 FROM pg_database WHERE datname = ${dbName}
+      `
+      return result.length > 0
+    } catch (error) {
+      logger.error('Failed to check database existence', { database: dbName, error })
+      return false
     }
   }
 
@@ -133,6 +146,20 @@ export class PostgresClient {
 
     if (!this.adminDb) {
       throw new Error('Admin database connection not established')
+    }
+
+    // Check if user already exists first
+    const exists = await this.userExists(username)
+    if (exists) {
+      logger.debug('User already exists', { username })
+      // Update password if user exists
+      try {
+        await this.adminDb?.unsafe(`ALTER USER ${username} WITH ENCRYPTED PASSWORD '${password}'`)
+        logger.info('User password updated', { username })
+      } catch (updateError) {
+        logger.error('Failed to update user password', { username, error: updateError })
+      }
+      return
     }
 
     try {
@@ -147,20 +174,27 @@ export class PostgresClient {
       )
 
       logger.info('User created successfully', { username })
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message.includes('already exists')) {
-        logger.debug('User already exists', { username })
-        // Update password if user exists
-        try {
-          await this.adminDb?.unsafe(`ALTER USER ${username} WITH ENCRYPTED PASSWORD '${password}'`)
-          logger.info('User password updated', { username })
-        } catch (updateError) {
-          logger.error('Failed to update user password', { username, error: updateError })
-        }
-      } else {
-        logger.error('Failed to create user', { username, error })
-        throw error
-      }
+    } catch (error) {
+      logger.error('Failed to create user', { username, error })
+      throw error
+    }
+  }
+
+  async userExists(username: string): Promise<boolean> {
+    this.connect()
+
+    if (!this.adminDb) {
+      throw new Error('Admin database connection not established')
+    }
+
+    try {
+      const result = await this.adminDb`
+        SELECT 1 FROM pg_user WHERE usename = ${username}
+      `
+      return result.length > 0
+    } catch (error) {
+      logger.error('Failed to check user existence', { username, error })
+      return false
     }
   }
 

@@ -10,7 +10,7 @@ export class QBittorrentManager {
 
   constructor(config: ServiceIntegration['qbittorrent'], configPath?: string) {
     this.config = config
-    this.configPath = configPath || '/config/qBittorrent/qBittorrent.conf'
+    this.configPath = configPath || '/config/qBittorrent.conf'
   }
 
   async writeInitialConfig(): Promise<void> {
@@ -61,6 +61,16 @@ WebUI\\ServerDomains=*
 WebUI\\Username=${this.config.username}
 WebUI\\Password_PBKDF2="${passwordHash}"
 `
+
+    // Ensure the qBittorrent directory exists
+    try {
+      const configDir = this.configPath.substring(0, this.configPath.lastIndexOf('/'))
+      await Bun.spawn(['mkdir', '-p', configDir]).exited
+      logger.debug('qBittorrent directory created successfully')
+    } catch (error) {
+      logger.error('Failed to create qBittorrent directory:', error)
+      throw error
+    }
 
     await Bun.write(this.configPath, configContent)
     logger.info('qBittorrent config written successfully')

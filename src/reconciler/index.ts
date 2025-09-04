@@ -1,6 +1,30 @@
-import type { DownloadClient, Indexer, RootFolder, ServarrApplicationConfig } from '@/config/schema'
+import type {
+  Application,
+  DownloadClient,
+  Indexer,
+  RootFolder,
+  ServarrApplicationConfig,
+} from '@/config/schema'
 import type { ServarrManager } from '@/servarr/client'
 import { logger } from '@/utils/logger'
+
+// Define types for API responses
+interface ApiApplication {
+  id?: number
+  name: string
+  implementation: string
+  implementationName?: string
+  configContract?: string
+  fields?: Array<{ name: string; value?: unknown }>
+  enable?: boolean
+  priority?: number
+  syncLevel?: string
+}
+
+interface ApiField {
+  name: string
+  value?: unknown
+}
 
 interface ReconciliationResult {
   applied: boolean
@@ -8,6 +32,7 @@ interface ReconciliationResult {
     rootFoldersAdded: number
     indexersAdded: number
     downloadClientsAdded: number
+    applicationsAdded: number
   }
   errors: string[]
 }
@@ -28,14 +53,22 @@ export class ConfigReconciler {
         rootFoldersAdded: 0,
         indexersAdded: 0,
         downloadClientsAdded: 0,
+        applicationsAdded: 0,
       },
       errors: [],
     }
 
     try {
-      // Reconcile root folders
-      const rootFolderChanges = await this.reconcileRootFolders(desiredConfig.rootFolders)
-      result.changes.rootFoldersAdded = rootFolderChanges.added
+      // Get the Servarr type to determine what features are supported
+      const servarrType = await this.servarrManager.detectType()
+
+      // Reconcile root folders (skip for Prowlarr as it doesn't have root folders)
+      if (servarrType !== 'prowlarr') {
+        const rootFolderChanges = await this.reconcileRootFolders(desiredConfig.rootFolders)
+        result.changes.rootFoldersAdded = rootFolderChanges.added
+      } else {
+        logger.debug('Skipping root folder reconciliation for Prowlarr (not supported)')
+      }
 
       // Reconcile indexers
       const indexerChanges = await this.reconcileIndexers(desiredConfig.indexers)
@@ -46,6 +79,16 @@ export class ConfigReconciler {
         desiredConfig.downloadClients,
       )
       result.changes.downloadClientsAdded = downloadClientChanges.added
+
+      // Reconcile applications (only for Prowlarr)
+      if (servarrType === 'prowlarr') {
+        const applicationChanges = await this.reconcileApplications(
+          desiredConfig.applications || [],
+        )
+        result.changes.applicationsAdded = applicationChanges.added
+      } else {
+        logger.debug('Skipping application reconciliation (only supported by Prowlarr)')
+      }
 
       result.applied = true
       logger.info('Configuration reconciliation completed successfully', {
@@ -138,7 +181,19 @@ export class ConfigReconciler {
         } catch (error) {
           logger.error('Failed to add indexer during reconciliation', {
             name: indexer.name,
-            error,
+            implementation: indexer.implementation,
+            error:
+              error instanceof Error
+                ? {
+                    message: error.message,
+                    stack: error.stack,
+                  }
+                : error,
+            indexerConfig: {
+              fields: indexer.fields?.map((f) => ({ name: f.name, hasValue: !!f.value })),
+              enabled: indexer.enable,
+              priority: indexer.priority,
+            },
           })
         }
       }
@@ -256,5 +311,131 @@ export class ConfigReconciler {
 
     logger.info('Configuration validation passed')
     return true
+  }
+
+  private async reconcileApplications(
+    desired: Application[],
+  ): Promise<{ added: number; removed: number }> {
+    logger.debug('Reconciling applications...', { desired: desired.length })
+
+    try {
+      const current = await this.servarrManager.getApplications()
+
+      let added = 0
+      let updated = 0
+
+      for (const application of desired) {
+        const existingApp = current.find((app) => app.name === application.name)
+
+        if (!existingApp) {
+          // Application doesn't exist, add it
+          try {
+            await this.servarrManager.addApplication(application)
+            added++
+            logger.debug('Added new application', { name: application.name })
+          } catch (error) {
+            logger.error('Failed to add application during reconciliation', {
+              name: application.name,
+              implementation: application.implementation,
+              error,
+            })
+          }
+        } else {
+          // Application exists, check if it needs updating
+          const needsUpdate = this.applicationNeedsUpdate(existingApp, application)
+
+          if (needsUpdate) {
+            try {
+              logger.info('Application configuration changed, recreating', {
+                name: application.name,
+                changes: this.getApplicationChanges(existingApp, application),
+              })
+
+              // Delete existing application
+              await this.servarrManager.deleteApplication(existingApp.id)
+
+              // Add updated application
+              await this.servarrManager.addApplication(application)
+              updated++
+              logger.debug('Updated application', { name: application.name })
+            } catch (error) {
+              logger.error('Failed to update application during reconciliation', {
+                name: application.name,
+                error,
+              })
+            }
+          } else {
+            logger.debug('Application already exists with correct configuration', {
+              name: application.name,
+            })
+          }
+        }
+      }
+
+      logger.debug('Application reconciliation completed', { added, updated, removed: 0 })
+      return { added: added + updated, removed: 0 }
+    } catch (error) {
+      logger.error('Failed to reconcile applications', { error })
+      throw error
+    }
+  }
+
+  private applicationNeedsUpdate(current: ApiApplication, desired: Application): boolean {
+    // Compare syncLevel - this is the main field we're interested in
+    if (current.syncLevel !== desired.syncLevel) {
+      return true
+    }
+
+    // Compare other key fields that might change
+    if (current.implementation !== desired.implementation) {
+      return true
+    }
+
+    if (current.enable !== desired.enable) {
+      return true
+    }
+
+    // Compare fields array (API keys, URLs, etc.)
+    if (this.fieldsHaveChanged(current.fields || [], desired.fields || [])) {
+      return true
+    }
+
+    return false
+  }
+
+  private fieldsHaveChanged(currentFields: ApiField[], desiredFields: ApiField[]): boolean {
+    if (currentFields.length !== desiredFields.length) {
+      return true
+    }
+
+    for (const desiredField of desiredFields) {
+      const currentField = currentFields.find((f) => f.name === desiredField.name)
+      if (!currentField || currentField.value !== desiredField.value) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  private getApplicationChanges(
+    current: ApiApplication,
+    desired: Application,
+  ): Record<string, { from: unknown; to: unknown }> {
+    const changes: Record<string, { from: unknown; to: unknown }> = {}
+
+    if (current.syncLevel !== desired.syncLevel) {
+      changes.syncLevel = { from: current.syncLevel, to: desired.syncLevel }
+    }
+
+    if (current.implementation !== desired.implementation) {
+      changes.implementation = { from: current.implementation, to: desired.implementation }
+    }
+
+    if (current.enable !== desired.enable) {
+      changes.enable = { from: current.enable, to: desired.enable }
+    }
+
+    return changes
   }
 }

@@ -6,27 +6,7 @@
     }
   ],
   "qualityProfiles": [],
-  "indexers": [
-    {
-      "name": "NZBgeek",
-      "implementation": "Newznab",
-      "implementationName": "Newznab",
-      "configContract": "NewznabSettings",
-      "infoLink": "https://github.com/Sonarr/Sonarr/wiki/Supported-Indexers#newznab",
-      "tags": [],
-      "fields": [
-        { "name": "baseUrl", "value": "https://api.nzbgeek.info" },
-        { "name": "apiPath", "value": "/api" },
-        { "name": "apiKey", "value": "your-api-key-here" },
-        { "name": "categories", "value": "5030,5040" },
-        { "name": "additionalParameters", "value": "" },
-        { "name": "removeYear", "value": false },
-        { "name": "searchByTitle", "value": false }
-      ],
-      "enable": true,
-      "priority": 25
-    }
-  ],
+  "indexers": [],
   "downloadClients": [
     {
       "name": "qBittorrent",
@@ -37,8 +17,8 @@
         { "name": "host", "value": "qbittorrent" },
         { "name": "port", "value": 8080 },
         { "name": "username", "value": "admin" },
-        { "name": "password", "value": "adminpass" },
-        { "name": "category", "value": "sonarr" },
+        { "name": "password", "value": "admin123" },
+        { "name": "category", "value": "tv" },
         { "name": "priority", "value": 0 },
         { "name": "removeCompletedDownloads", "value": false },
         { "name": "removeFailedDownloads", "value": false }
@@ -49,12 +29,12 @@
   ],
   "qbittorrent": {
     "webui": {
-      "username": "newqbuser",
-      "password": "newqbpass789"
+      "username": "admin",
+      "password": "admin123"
     },
     "downloads": {
       "defaultPath": "/downloads",
-      "categories": ["sonarr", "radarr", "prowlarr"]
+      "categories": ["tv", "movies"]
     },
     "connection": {
       "port": 6881

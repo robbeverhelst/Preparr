@@ -1,42 +1,43 @@
 {
   "rootFolders": [
     {
-      "path": "/movies"
+      "path": "/movies",
+      "accessible": true
     }
   ],
   "qualityProfiles": [],
-  "indexers": [
-    {
-      "name": "NZBgeek",
-      "implementation": "Newznab",
-      "configContract": "NewznabSettings",
-      "settings": {
-        "baseUrl": "https://api.nzbgeek.info",
-        "apiPath": "/api",
-        "apiKey": "your-nzbgeek-api-key",
-        "categories": [2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060]
-      },
-      "enableRss": true,
-      "enableAutomaticSearch": true,
-      "enableInteractiveSearch": true,
-      "priority": 25
-    }
-  ],
+  "indexers": [],
   "downloadClients": [
     {
       "name": "qBittorrent",
       "implementation": "QBittorrent",
+      "implementationName": "qBittorrent",
       "configContract": "QBittorrentSettings",
-      "settings": {
-        "host": "qbittorrent",
-        "port": 8080,
-        "username": "admin",
-        "password": "adminpass",
-        "category": "radarr",
-        "priority": 0,
-        "initialState": 0
-      },
-      "enable": true
+      "fields": [
+        { "name": "host", "value": "qbittorrent" },
+        { "name": "port", "value": 8080 },
+        { "name": "username", "value": "admin" },
+        { "name": "password", "value": "admin123" },
+        { "name": "category", "value": "movies" },
+        { "name": "priority", "value": 0 },
+        { "name": "removeCompletedDownloads", "value": false },
+        { "name": "removeFailedDownloads", "value": false }
+      ],
+      "enable": true,
+      "priority": 1
     }
-  ]
+  ],
+  "qbittorrent": {
+    "webui": {
+      "username": "admin",
+      "password": "admin123"
+    },
+    "downloads": {
+      "defaultPath": "/downloads",
+      "categories": ["tv", "movies"]
+    },
+    "connection": {
+      "port": 6881
+    }
+  }
 }

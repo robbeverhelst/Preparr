@@ -39,6 +39,7 @@ export class ConfigLoader {
         qualityProfiles: config.qualityProfiles.length,
         indexers: config.indexers.length,
         downloadClients: config.downloadClients.length,
+        applications: config.applications.length,
       })
 
       return config

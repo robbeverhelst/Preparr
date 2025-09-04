@@ -26,7 +26,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - qbittorrent_config:/config
+      - shared_qbittorrent_config:/config
       - ./test/downloads:/downloads
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080"]
@@ -34,6 +34,35 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  qbittorrent-preparr:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      # qBittorrent Configuration (special case - not a Servarr)
+      SERVARR_TYPE: qbittorrent
+      SERVARR_URL: "" # Not used for qBittorrent
+      
+      # Service Integration
+      QBITTORRENT_URL: http://qbittorrent:8080
+      QBITTORRENT_USER: admin
+      QBITTORRENT_PASSWORD: admin123
+      
+      # Logging
+      LOG_LEVEL: debug
+      LOG_FORMAT: pretty
+    volumes:
+      - shared_qbittorrent_config:/shared-qbittorrent
+    user: "1000:1000"
+    command: ["bun", "run", "dist/index.js", "--init"]
+    depends_on:
+      qbittorrent:
+        condition: service_started
+    restart: "no"
 
   # Prowlarr with PrepArr init container
   prowlarr:
@@ -74,14 +103,14 @@ services:
       # Servarr Configuration
       SERVARR_URL: http://prowlarr:9696
       SERVARR_TYPE: prowlarr
-      SERVARR_ADMIN_USER: robbeverhelst
-      SERVARR_ADMIN_PASSWORD: secure123
+      SERVARR_ADMIN_USER: admin
+      SERVARR_ADMIN_PASSWORD: admin123
       SERVARR_INSTANCE_NAME: ProwlarrInstance
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
       QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: adminpass
+      QBITTORRENT_PASSWORD: admin123
       
       # Configuration
       CONFIG_PATH: /config/prowlarr-config.json
@@ -96,12 +125,107 @@ services:
       HEALTH_PORT: 9001
     volumes:
       - prowlarr_config:/config
+      - shared_qbittorrent_config:/shared-qbittorrent
     user: "1000:1000"
     depends_on:
       postgres:
         condition: service_healthy
     restart: "no"
-    command: ["bun", "run", "dist/index.js", "--init-only"]
+    command: ["bun", "run", "dist/index.js", "--init"]
+
+  prowlarr-preparr:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      # PostgreSQL Configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: servarr
+      
+      # Servarr Configuration
+      SERVARR_URL: http://prowlarr:9696
+      SERVARR_TYPE: prowlarr
+      SERVARR_ADMIN_USER: admin
+      SERVARR_ADMIN_PASSWORD: admin123
+      SERVARR_INSTANCE_NAME: ProwlarrInstance
+      
+      # Service Integration
+      QBITTORRENT_URL: http://qbittorrent:8080
+      QBITTORRENT_USER: admin
+      QBITTORRENT_PASSWORD: admin123
+      
+      # Configuration
+      CONFIG_PATH: /config/prowlarr-config.json
+      CONFIG_WATCH: true
+      CONFIG_RECONCILE_INTERVAL: 30
+      
+      # Logging
+      LOG_LEVEL: debug
+      LOG_FORMAT: pretty
+      
+      # Health
+      HEALTH_PORT: 9001
+    ports:
+      - "9001:9001"
+    volumes:
+      - prowlarr_config:/config
+      - ./examples/prowlarr-config.json:/config/prowlarr-config.json:ro
+      - shared_qbittorrent_config:/shared-qbittorrent
+    user: "1000:1000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      prowlarr:
+        condition: service_started
+
+  radarr-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      # PostgreSQL Configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: servarr
+      
+      # Servarr Configuration
+      SERVARR_URL: http://radarr:7878
+      SERVARR_TYPE: radarr
+      SERVARR_API_KEY: be33294b2592e51e6d27ead2ef0b5263
+      SERVARR_ADMIN_USER: admin
+      SERVARR_ADMIN_PASSWORD: admin123
+      SERVARR_INSTANCE_NAME: RadarrInstance
+      
+      # Service Integration
+      QBITTORRENT_URL: http://qbittorrent:8080
+      QBITTORRENT_USER: admin
+      QBITTORRENT_PASSWORD: admin123
+      
+      # Configuration
+      CONFIG_PATH: /config/radarr-config.json
+      CONFIG_WATCH: false
+      CONFIG_RECONCILE_INTERVAL: 30
+      
+      # Logging
+      LOG_LEVEL: debug
+      LOG_FORMAT: pretty
+      
+      # Health
+      HEALTH_PORT: 9002
+    volumes:
+      - radarr_config:/config
+      - shared_qbittorrent_config:/shared-qbittorrent
+    user: "1000:1000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    command: ["bun", "run", "dist/index.js", "--init"]
 
   # Radarr with PrepArr sidecar
   radarr:
@@ -125,6 +249,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      radarr-init:
+        condition: service_completed_successfully
 
   radarr-preparr:
     build:
@@ -141,14 +267,14 @@ services:
       # Servarr Configuration
       SERVARR_URL: http://radarr:7878
       SERVARR_TYPE: radarr
-      SERVARR_ADMIN_USER: robbeverhelst
-      SERVARR_ADMIN_PASSWORD: secure123
+      SERVARR_ADMIN_USER: admin
+      SERVARR_ADMIN_PASSWORD: admin123
       SERVARR_INSTANCE_NAME: RadarrInstance
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
       QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: adminpass
+      QBITTORRENT_PASSWORD: admin123
       
       # Configuration
       CONFIG_PATH: /config/radarr-config.json
@@ -168,12 +294,59 @@ services:
       - ./examples/radarr-config.json:/config/radarr-config.json:ro
       - ./test/movies:/movies
       - ./test/downloads:/downloads
+      - shared_qbittorrent_config:/shared-qbittorrent
     user: "1000:1000"
     depends_on:
       postgres:
         condition: service_healthy
       radarr:
         condition: service_started
+
+  sonarr-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      # PostgreSQL Configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: servarr
+      
+      # Servarr Configuration
+      SERVARR_URL: http://sonarr:8989
+      SERVARR_TYPE: sonarr
+      SERVARR_API_KEY: 491991348fc9c54da959a7a2f1a164fe
+      SERVARR_ADMIN_USER: admin
+      SERVARR_ADMIN_PASSWORD: admin123
+      SERVARR_INSTANCE_NAME: SonarrInstance
+      
+      # Service Integration
+      QBITTORRENT_URL: http://qbittorrent:8080
+      QBITTORRENT_USER: admin
+      QBITTORRENT_PASSWORD: admin123
+      
+      # Configuration
+      CONFIG_PATH: /config/sonarr-config.json
+      CONFIG_WATCH: false
+      CONFIG_RECONCILE_INTERVAL: 30
+      
+      # Logging
+      LOG_LEVEL: debug
+      LOG_FORMAT: pretty
+      
+      # Health
+      HEALTH_PORT: 9003
+    volumes:
+      - sonarr_config:/config
+      - shared_qbittorrent_config:/shared-qbittorrent
+    user: "1000:1000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    command: ["bun", "run", "dist/index.js", "--init"]
 
   # Sonarr with PrepArr sidecar
   sonarr:
@@ -197,6 +370,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      sonarr-init:
+        condition: service_completed_successfully
 
   sonarr-preparr:
     build:
@@ -213,14 +388,14 @@ services:
       # Servarr Configuration
       SERVARR_URL: http://sonarr:8989
       SERVARR_TYPE: sonarr
-      SERVARR_ADMIN_USER: robbeverhelst
-      SERVARR_ADMIN_PASSWORD: secure123
+      SERVARR_ADMIN_USER: admin
+      SERVARR_ADMIN_PASSWORD: admin123
       SERVARR_INSTANCE_NAME: SonarrInstance
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
       QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: adminpass
+      QBITTORRENT_PASSWORD: admin123
       
       # Configuration
       CONFIG_PATH: /config/sonarr-config.json
@@ -240,6 +415,7 @@ services:
       - ./examples/sonarr-config.json:/config/sonarr-config.json:ro
       - ./test/tv:/tv
       - ./test/downloads:/downloads
+      - shared_qbittorrent_config:/shared-qbittorrent
     user: "1000:1000"
     depends_on:
       postgres:
@@ -253,3 +429,4 @@ volumes:
   radarr_config:
   sonarr_config:
   qbittorrent_config:
+  shared_qbittorrent_config:

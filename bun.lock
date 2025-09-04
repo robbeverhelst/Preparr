@@ -4,7 +4,7 @@
     "": {
       "name": "preparr",
       "dependencies": {
-        "tsarr": "^1.5.0",
+        "tsarr": "^1.7.0",
         "zod": "^3.24.1",
       },
       "devDependencies": {
@@ -12,8 +12,9 @@
         "@semantic-release/changelog": "^6.0.3",
         "@semantic-release/git": "^10.0.1",
         "@semantic-release/github": "^11.0.1",
-        "@types/bun": "latest",
+        "@types/bun": "^1.2.21",
         "@types/node": "^22.10.2",
+        "bun-types": "^1.2.21",
         "semantic-release": "^24.2.0",
         "typescript": "^5.7.2",
       },
@@ -506,7 +507,7 @@
 
     "traverse": ["traverse@0.6.8", "", {}, "sha512-aXJDbk6SnumuaZSANd21XAo15ucCDE38H4fkqiGsc3MhCK+wOlZvLP9cB/TvpHT0mOyWgC4Z8EwRlzqYSUzdsA=="],
 
-    "tsarr": ["tsarr@1.5.0", "", {}, "sha512-oylBe0EQtmxymPF6ZSkyKkots5QOfuLxORZBkY/6p0u7wuLEBT3jtc1V1Rb8fsfE7Ghcd35FEYJz3vsLXXOEuA=="],
+    "tsarr": ["tsarr@1.7.0", "", {}, "sha512-ssTdrSj4Ah9YtSr79imZWCgAfN9HEITExlMj6oWsYKyJguECbxlCrFiXZd85xF9FGq/u57pxGSQDFJEQkf+akg=="],
 
     "type-fest": ["type-fest@4.41.0", "", {}, "sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA=="],
 
