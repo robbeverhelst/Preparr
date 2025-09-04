@@ -51,6 +51,7 @@ describe('HealthServer', () => {
     testServer.updateHealthCheck('postgres', true)
     testServer.updateHealthCheck('servarr', true)
     testServer.updateHealthCheck('config', true)
+    testServer.updateHealthCheck('qbittorrent', true)
 
     testServer.start()
 
@@ -68,6 +69,7 @@ describe('HealthServer', () => {
     expect(data.checks.postgres).toBe(true)
     expect(data.checks.servarr).toBe(true)
     expect(data.checks.config).toBe(true)
+    expect(data.checks.qbittorrent).toBe(true)
 
     testServer.stop()
   })

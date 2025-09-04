@@ -1,14 +1,14 @@
-import { createHash, pbkdf2Sync, randomBytes } from 'node:crypto'
-import type { QBittorrentConfig, ServiceIntegrationConfig } from '@/config/schema'
+import { pbkdf2Sync, randomBytes } from 'node:crypto'
+import type { QBittorrentConfig, ServiceIntegration } from '@/config/schema'
 import { logger } from '@/utils/logger'
 
 export class QBittorrentManager {
-  private config: ServiceIntegrationConfig['qbittorrent']
+  private config: ServiceIntegration['qbittorrent']
   private configPath: string
   private isInitialized = false
   private sessionCookie: string | null = null
 
-  constructor(config: ServiceIntegrationConfig['qbittorrent'], configPath?: string) {
+  constructor(config: ServiceIntegration['qbittorrent'], configPath?: string) {
     this.config = config
     this.configPath = configPath || '/config/qBittorrent/qBittorrent.conf'
   }
@@ -259,7 +259,7 @@ WebUI\\Password_PBKDF2="${passwordHash}"
     return this.isInitialized
   }
 
-  getConfig(): ServiceIntegrationConfig['qbittorrent'] {
+  getConfig(): ServiceIntegration['qbittorrent'] {
     return this.config
   }
 }

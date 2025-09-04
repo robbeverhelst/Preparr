@@ -23,7 +23,7 @@ class PrepArr {
     this.config = loadEnvironmentConfig()
     this.postgres = new PostgresClient(this.config.postgres)
     this.servarr = new ServarrManager(this.config.servarr)
-    this.qbittorrent = this.config.services.qbittorrent
+    this.qbittorrent = this.config.services?.qbittorrent
       ? new QBittorrentManager(this.config.services.qbittorrent)
       : null
     this.health = new HealthServer(this.config.health.port)

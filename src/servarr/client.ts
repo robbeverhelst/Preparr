@@ -29,7 +29,7 @@ export class ServarrManager {
     try {
       const clientConfig = {
         baseUrl: this.config.url,
-        apiKey: this.config.apiKey,
+        apiKey: this.config.apiKey || '',
       }
 
       const servarrTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr']
@@ -82,16 +82,17 @@ export class ServarrManager {
 
       logger.debug('TsArr API detection failed, trying direct API call')
       try {
-        const response = await fetch(`${this.config.url}/api/v3/system/status`, {
-          headers: { 'X-Api-Key': this.config.apiKey },
+        const tempClient = new SonarrClient({
+          baseUrl: this.config.url,
+          apiKey: this.config.apiKey || '',
         })
+        const result = await tempClient.getSystemStatus()
 
-        if (response.ok) {
-          const status = (await response.json()) as { appName?: string; instanceName?: string }
-
+        if (result.data) {
+          const status = result.data as { appName?: string; instanceName?: string }
           if (status.appName) {
             const detectedType = status.appName.toLowerCase()
-            logger.info('Detected Servarr type from direct API', {
+            logger.info('Detected Servarr type from Tsarr API', {
               detectedType,
               appName: status.appName,
             })
@@ -99,7 +100,7 @@ export class ServarrManager {
           }
         }
       } catch (error) {
-        logger.debug('Direct API detection failed', {
+        logger.debug('Tsarr API detection failed', {
           error: error instanceof Error ? error.message : String(error),
         })
       }
@@ -145,7 +146,7 @@ export class ServarrManager {
       if (await configFile.exists()) {
         const content = await configFile.text()
         const apiKeyMatch = content.match(/<ApiKey>([^<]+)<\/ApiKey>/)
-        if (apiKeyMatch) {
+        if (apiKeyMatch?.[1]) {
           return apiKeyMatch[1]
         }
       }
@@ -329,9 +330,10 @@ export class ServarrManager {
 
     for (let i = 0; i < maxRetries; i++) {
       try {
-        const response = await fetch(`${this.config.url}/api/v3/system/status`)
-        if (response.ok || response.status === 401) {
-          logger.info('Servarr is ready', { type: this.config.type, status: response.status })
+        const tempClient = new SonarrClient({ baseUrl: this.config.url, apiKey: '' })
+        const result = await tempClient.getSystemStatus()
+        if (result.data || (result.error && String(result.error).includes('401'))) {
+          logger.info('Servarr is ready', { type: this.config.type })
           return
         }
       } catch (_error) {
@@ -356,18 +358,13 @@ export class ServarrManager {
     })
 
     try {
-      const response = await fetch(`${this.config.url}/api/v3/system/restart`, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': this.apiKey,
-        },
-      })
+      const result = await this.client?.restartSystem()
 
-      if (response.ok) {
+      if (result?.data) {
         logger.info('Restart command sent successfully')
         await new Promise((resolve) => setTimeout(resolve, 5000))
       } else {
-        logger.warn('Failed to restart via API, but continuing...', { status: response.status })
+        logger.warn('Failed to restart via API, but continuing...', { error: result?.error })
       }
     } catch (error) {
       logger.warn('Could not restart via API, but continuing...', { error })
@@ -542,12 +539,7 @@ export class ServarrManager {
     }
 
     try {
-      await fetch(`${this.config.url}/api/v3/system/restart`, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': this.apiKey,
-        },
-      })
+      await this.client?.restartSystem()
 
       await new Promise((resolve) => setTimeout(resolve, 5000))
 
@@ -589,27 +581,26 @@ export class ServarrManager {
     }
 
     try {
-      const response = await fetch(`${this.config.url}/api/v3/system/status`, {
-        headers: {
-          'X-Api-Key': this.apiKey,
-        },
-      })
+      const result = await this.client?.getSystemStatus()
+
+      if (!result) {
+        logger.warn('No result from system status call')
+        return false
+      }
 
       logger.debug('testConnection result', {
-        status: response.status,
-        ok: response.ok,
+        success: !!result.data,
+        hasError: !!result.error,
         apiKey: `${this.apiKey.slice(0, 8)}...`,
       })
 
-      if (!response.ok) {
-        const errorText = await response.text()
+      if (result.error) {
         logger.warn('API connection test failed', {
-          status: response.status,
-          error: errorText,
+          error: result.error,
         })
       }
 
-      return response.ok
+      return !!result.data
     } catch (error) {
       logger.error('testConnection exception', { error })
       return false
@@ -776,30 +767,21 @@ export class ServarrManager {
     }
 
     try {
-      const response = await fetch(`${this.config.url}/api/v3/indexer`, {
-        headers: {
-          'X-Api-Key': this.apiKey,
-        },
-      })
+      const result = await this.client?.getIndexers()
 
-      if (!response.ok) {
-        throw new Error(`Failed to get indexers: ${response.statusText}`)
+      if (!result) {
+        throw new Error('No result from getIndexers call')
       }
 
-      const indexers = (await response.json()) as Array<{
-        id: number
-        name: string
-        implementation: string
-        implementationName: string
-        configContract: string
-        infoLink?: string
-        tags: number[]
-        fields: Array<{ name: string; value: string | number | boolean }>
-        enable: boolean
-        priority: number
-      }>
+      if (result.error) {
+        throw new Error(`Failed to get indexers: ${result.error}`)
+      }
 
-      return indexers.map((indexer) => ({
+      if (!result.data) {
+        return []
+      }
+
+      return result.data.map((indexer: any) => ({
         name: indexer.name,
         implementation: indexer.implementation,
         implementationName: indexer.implementationName,
@@ -832,18 +814,14 @@ export class ServarrManager {
         return
       }
 
-      const response = await fetch(`${this.config.url}/api/v3/indexer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Api-Key': this.apiKey,
-        },
-        body: JSON.stringify(indexer),
-      })
+      const result = await this.client?.addIndexer(indexer as any)
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Failed to add indexer: ${response.status} - ${errorText}`)
+      if (!result) {
+        throw new Error('No result from addIndexer call')
+      }
+
+      if (result.error) {
+        throw new Error(`Failed to add indexer: ${result.error}`)
       }
 
       logger.info('Indexer added successfully', { name: indexer.name })
@@ -886,27 +864,20 @@ export class ServarrManager {
 
       for (const indexer of indexers) {
         try {
-          const testResponse = await fetch(`${this.config.url}/api/v3/indexer/test`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Api-Key': this.apiKey,
-            },
-            body: JSON.stringify({
-              name: indexer.name,
-              implementation: indexer.implementation,
-              implementationName: indexer.implementationName,
-              configContract: indexer.configContract,
-              fields: indexer.fields,
-            }),
-          })
+          const testResult = await this.client?.testIndexer({
+            name: indexer.name,
+            implementation: indexer.implementation,
+            implementationName: indexer.implementationName,
+            configContract: indexer.configContract,
+            fields: indexer.fields,
+          } as any)
 
-          if (testResponse.ok) {
+          if (testResult?.data) {
             logger.info('Indexer test successful', { name: indexer.name })
           } else {
             logger.warn('Indexer test failed', {
               name: indexer.name,
-              status: testResponse.status,
+              error: testResult?.error,
             })
           }
         } catch (error) {
@@ -929,34 +900,40 @@ export class ServarrManager {
     logger.info('Removing indexer...', { name })
 
     try {
-      const response = await fetch(`${this.config.url}/api/v3/indexer`, {
-        headers: {
-          'X-Api-Key': this.apiKey,
-        },
-      })
+      const result = await this.client?.getIndexers()
 
-      if (!response.ok) {
-        throw new Error(`Failed to get indexers: ${response.statusText}`)
+      if (!result) {
+        throw new Error('No result from getIndexers call')
       }
 
-      const indexers = (await response.json()) as Array<{ id: number; name: string }>
-      const indexer = indexers.find((i) => i.name === name)
+      if (result.error) {
+        throw new Error(`Failed to get indexers: ${result.error}`)
+      }
+
+      if (!result.data) {
+        logger.debug('No indexers found', { name })
+        return
+      }
+
+      const indexer = result.data.find((i: any) => i.name === name)
 
       if (!indexer) {
         logger.debug('Indexer not found for removal', { name })
         return
       }
 
-      const deleteResponse = await fetch(`${this.config.url}/api/v3/indexer/${indexer.id}`, {
-        method: 'DELETE',
-        headers: {
-          'X-Api-Key': this.apiKey,
-        },
-      })
+      if (!indexer.id) {
+        throw new Error('Indexer ID is required for deletion')
+      }
 
-      if (!deleteResponse.ok) {
-        const errorText = await deleteResponse.text()
-        throw new Error(`Failed to remove indexer: ${deleteResponse.status} - ${errorText}`)
+      const deleteResult = await this.client?.deleteIndexer(indexer.id)
+
+      if (!deleteResult) {
+        throw new Error('No result from deleteIndexer call')
+      }
+
+      if (deleteResult.error) {
+        throw new Error(`Failed to remove indexer: ${deleteResult.error}`)
       }
 
       logger.info('Indexer removed successfully', { name })
@@ -972,28 +949,22 @@ export class ServarrManager {
     }
 
     try {
-      const response = await fetch(`${this.config.url}/api/v3/downloadclient`, {
-        headers: {
-          'X-Api-Key': this.apiKey,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to get download clients: ${response.statusText}`)
+      if (!this.client || !('getDownloadClients' in this.client)) {
+        logger.debug('Download client operations not supported for this Servarr type')
+        return []
       }
 
-      const clients = (await response.json()) as Array<{
-        id: number
-        name: string
-        implementation: string
-        implementationName: string
-        configContract: string
-        fields: Array<{ name: string; value: string | number | boolean }>
-        enable: boolean
-        priority: number
-      }>
+      const result = await this.client.getDownloadClients()
 
-      return clients.map((client) => ({
+      if (result.error) {
+        throw new Error(`Failed to get download clients: ${result.error}`)
+      }
+
+      if (!result.data) {
+        return []
+      }
+
+      return result.data.map((client: any) => ({
         name: client.name,
         implementation: client.implementation,
         implementationName: client.implementationName,
@@ -1019,6 +990,11 @@ export class ServarrManager {
     })
 
     try {
+      if (!this.client || !('addDownloadClient' in this.client)) {
+        logger.debug('Download client operations not supported for this Servarr type')
+        return
+      }
+
       const existingClients = await this.getDownloadClients()
       const exists = existingClients.some((existing) => existing.name === client.name)
 
@@ -1027,18 +1003,14 @@ export class ServarrManager {
         return
       }
 
-      const response = await fetch(`${this.config.url}/api/v3/downloadclient`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Api-Key': this.apiKey,
-        },
-        body: JSON.stringify(client),
-      })
+      const result = await this.client.addDownloadClient(client as any)
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Failed to add download client: ${response.status} - ${errorText}`)
+      if (!result) {
+        throw new Error('No result from addDownloadClient call')
+      }
+
+      if (result.error) {
+        throw new Error(`Failed to add download client: ${result.error}`)
       }
 
       logger.info('Download client added successfully', { name: client.name })
@@ -1077,31 +1049,29 @@ export class ServarrManager {
     logger.info('Testing all download clients...')
 
     try {
+      if (!this.client || !('testDownloadClient' in this.client)) {
+        logger.debug('Download client operations not supported for this Servarr type')
+        return
+      }
+
       const clients = await this.getDownloadClients()
 
       for (const client of clients) {
         try {
-          const testResponse = await fetch(`${this.config.url}/api/v3/downloadclient/test`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Api-Key': this.apiKey,
-            },
-            body: JSON.stringify({
-              name: client.name,
-              implementation: client.implementation,
-              implementationName: client.implementationName,
-              configContract: client.configContract,
-              fields: client.fields,
-            }),
-          })
+          const testResult = await this.client.testDownloadClient({
+            name: client.name,
+            implementation: client.implementation,
+            implementationName: client.implementationName,
+            configContract: client.configContract,
+            fields: client.fields,
+          } as any)
 
-          if (testResponse.ok) {
+          if (testResult?.data) {
             logger.info('Download client test successful', { name: client.name })
           } else {
             logger.warn('Download client test failed', {
               name: client.name,
-              status: testResponse.status,
+              error: testResult?.error,
             })
           }
         } catch (error) {
@@ -1124,34 +1094,49 @@ export class ServarrManager {
     logger.info('Removing download client...', { name })
 
     try {
-      const response = await fetch(`${this.config.url}/api/v3/downloadclient`, {
-        headers: {
-          'X-Api-Key': this.apiKey,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to get download clients: ${response.statusText}`)
+      if (
+        !this.client ||
+        !('getDownloadClients' in this.client) ||
+        !('deleteDownloadClient' in this.client)
+      ) {
+        logger.debug('Download client operations not supported for this Servarr type')
+        return
       }
 
-      const clients = (await response.json()) as Array<{ id: number; name: string }>
-      const client = clients.find((c) => c.name === name)
+      const result = await this.client.getDownloadClients()
+
+      if (!result) {
+        throw new Error('No result from getDownloadClients call')
+      }
+
+      if (result.error) {
+        throw new Error(`Failed to get download clients: ${result.error}`)
+      }
+
+      if (!result.data) {
+        logger.debug('No download clients found', { name })
+        return
+      }
+
+      const client = result.data.find((c: any) => c.name === name)
 
       if (!client) {
         logger.debug('Download client not found for removal', { name })
         return
       }
 
-      const deleteResponse = await fetch(`${this.config.url}/api/v3/downloadclient/${client.id}`, {
-        method: 'DELETE',
-        headers: {
-          'X-Api-Key': this.apiKey,
-        },
-      })
+      if (!client.id) {
+        throw new Error('Download client ID is required for deletion')
+      }
 
-      if (!deleteResponse.ok) {
-        const errorText = await deleteResponse.text()
-        throw new Error(`Failed to remove download client: ${deleteResponse.status} - ${errorText}`)
+      const deleteResult = await this.client.deleteDownloadClient(client.id)
+
+      if (!deleteResult) {
+        throw new Error('No result from deleteDownloadClient call')
+      }
+
+      if (deleteResult.error) {
+        throw new Error(`Failed to remove download client: ${deleteResult.error}`)
       }
 
       logger.info('Download client removed successfully', { name })

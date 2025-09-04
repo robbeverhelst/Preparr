@@ -25,7 +25,7 @@
     "allowUnreachableCode": false,
     "exactOptionalPropertyTypes": true,
     "noPropertyAccessFromIndexSignature": false,
-    "types": ["bun", "node"],
+    "types": ["bun"],
     "paths": {
       "@/*": ["./src/*"],
       "@config/*": ["./src/config/*"],

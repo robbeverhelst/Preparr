@@ -7,6 +7,7 @@ interface HealthStatus {
     postgres: boolean
     servarr: boolean
     config: boolean
+    qbittorrent?: boolean
   }
   version?: string
 }
@@ -25,6 +26,7 @@ export class HealthServer {
         postgres: false,
         servarr: false,
         config: false,
+        qbittorrent: false,
       },
     }
   }
