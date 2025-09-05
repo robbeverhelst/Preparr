@@ -29,7 +29,8 @@
         "noUselessCatch": "error",
         "noUselessConstructor": "error",
         "noUselessTypeConstraint": "error",
-        "noWith": "error"
+        "noWith": "error",
+        "useArrowFunction": "error"
       },
       "correctness": {
         "noConstAssign": "error",
@@ -55,18 +56,29 @@
         "noUnusedVariables": "error",
         "useIsNan": "error",
         "useValidForDirection": "error",
-        "useYield": "error"
+        "useYield": "error",
+        "useHookAtTopLevel": "error"
       },
       "style": {
+        "noDefaultExport": "warn",
         "noNamespace": "error",
+        "noParameterAssign": "error",
+        "noVar": "error",
         "useAsConstAssertion": "error",
-        "useBlockStatements": "off"
+        "useBlockStatements": "off",
+        "useConst": "error",
+        "useExportType": "error",
+        "useImportType": "error",
+        "useNodejsImportProtocol": "error",
+        "useTemplate": "error"
       },
       "suspicious": {
+        "noArrayIndexKey": "error",
         "noAsyncPromiseExecutor": "error",
         "noCatchAssign": "error",
         "noClassAssign": "error",
         "noCompareNegZero": "error",
+        "noConsole": "warn",
         "noControlCharactersInRegex": "error",
         "noDebugger": "error",
         "noDuplicateCase": "error",
@@ -89,6 +101,12 @@
         "noUnsafeNegation": "error",
         "useAwait": "error",
         "useGetterReturn": "error"
+      },
+      "performance": {
+        "noAccumulatingSpread": "error",
+        "noBarrelFile": "error",
+        "noDelete": "error",
+        "noReExportAll": "error"
       }
     },
     "ignore": ["**/dist", "**/node_modules", "**/.git", "**/coverage", "**/.claude"]
@@ -112,6 +130,16 @@
       "include": ["*.json", "*.jsonc"],
       "formatter": {
         "indentWidth": 2
+      }
+    },
+    {
+      "include": ["src/utils/logger.ts", "src/index.ts", "generate-*.ts", "*.test.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
       }
     }
   ],

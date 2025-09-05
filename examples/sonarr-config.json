@@ -5,8 +5,48 @@
       "accessible": true
     }
   ],
-  "qualityProfiles": [],
-  "indexers": [],
+  "qualityProfiles": [
+    {
+      "name": "HD - 1080p",
+      "cutoff": 1080,
+      "items": [
+        {
+          "quality": {
+            "id": 1,
+            "name": "HDTV-1080p"
+          },
+          "allowed": true
+        },
+        {
+          "quality": {
+            "id": 2,
+            "name": "WEBDL-1080p"
+          },
+          "allowed": true
+        }
+      ]
+    }
+  ],
+  "indexers": [
+    {
+      "name": "Test Indexer",
+      "implementation": "Torznab",
+      "implementationName": "Torznab",
+      "configContract": "TorznabSettings",
+      "fields": [
+        {
+          "name": "baseUrl",
+          "value": "https://test-indexer.example.com/api"
+        },
+        {
+          "name": "apiKey",
+          "value": "test-api-key-123"
+        }
+      ],
+      "enable": true,
+      "priority": 25
+    }
+  ],
   "downloadClients": [
     {
       "name": "qBittorrent",
@@ -16,8 +56,8 @@
       "fields": [
         { "name": "host", "value": "qbittorrent" },
         { "name": "port", "value": 8080 },
-        { "name": "username", "value": "admin" },
-        { "name": "password", "value": "admin123" },
+        { "name": "username", "value": "newqbuser" },
+        { "name": "password", "value": "newqbpass789" },
         { "name": "category", "value": "tv" },
         { "name": "priority", "value": 0 },
         { "name": "removeCompletedDownloads", "value": false },
@@ -29,8 +69,8 @@
   ],
   "qbittorrent": {
     "webui": {
-      "username": "admin",
-      "password": "admin123"
+      "username": "newqbuser",
+      "password": "newqbpass789"
     },
     "downloads": {
       "defaultPath": "/downloads",

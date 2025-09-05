@@ -37,31 +37,40 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      qbittorrent-preparr:
+        condition: service_completed_successfully
 
   qbittorrent-preparr:
     build:
       context: .
       dockerfile: Dockerfile.test
     environment:
+      # PostgreSQL Configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: servarr
+      
       # qBittorrent Configuration (special case - not a Servarr)
       SERVARR_TYPE: qbittorrent
       SERVARR_URL: "" # Not used for qBittorrent
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: admin123
+      QBITTORRENT_USER: newqbuser
+      QBITTORRENT_PASSWORD: newqbpass789
       
       # Logging
       LOG_LEVEL: debug
       LOG_FORMAT: pretty
     volumes:
-      - shared_qbittorrent_config:/shared-qbittorrent
+      - shared_qbittorrent_config:/config
     user: "1000:1000"
     command: ["bun", "run", "dist/index.js", "--init"]
     depends_on:
-      qbittorrent:
-        condition: service_started
+      postgres:
+        condition: service_healthy
     restart: "no"
 
   # Prowlarr with PrepArr init container
@@ -109,8 +118,8 @@ services:
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: admin123
+      QBITTORRENT_USER: newqbuser
+      QBITTORRENT_PASSWORD: newqbpass789
       
       # Configuration
       CONFIG_PATH: /config/prowlarr-config.json
@@ -154,8 +163,8 @@ services:
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: admin123
+      QBITTORRENT_USER: newqbuser
+      QBITTORRENT_PASSWORD: newqbpass789
       
       # Configuration
       CONFIG_PATH: /config/prowlarr-config.json
@@ -203,8 +212,8 @@ services:
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: admin123
+      QBITTORRENT_USER: newqbuser
+      QBITTORRENT_PASSWORD: newqbpass789
       
       # Configuration
       CONFIG_PATH: /config/radarr-config.json
@@ -273,8 +282,8 @@ services:
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: admin123
+      QBITTORRENT_USER: newqbuser
+      QBITTORRENT_PASSWORD: newqbpass789
       
       # Configuration
       CONFIG_PATH: /config/radarr-config.json
@@ -324,8 +333,8 @@ services:
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: admin123
+      QBITTORRENT_USER: newqbuser
+      QBITTORRENT_PASSWORD: newqbpass789
       
       # Configuration
       CONFIG_PATH: /config/sonarr-config.json
@@ -394,8 +403,8 @@ services:
       
       # Service Integration
       QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: admin123
+      QBITTORRENT_USER: newqbuser
+      QBITTORRENT_PASSWORD: newqbpass789
       
       # Configuration
       CONFIG_PATH: /config/sonarr-config.json

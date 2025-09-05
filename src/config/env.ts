@@ -1,8 +1,7 @@
+import { env } from 'bun'
 import { type EnvironmentConfig, EnvironmentConfigSchema } from './schema'
 
 export function loadEnvironmentConfig(): EnvironmentConfig {
-  const env = process.env
-
   const config = {
     postgres: {
       host: env.POSTGRES_HOST,

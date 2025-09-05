@@ -86,7 +86,7 @@ export const IndexerSchema = z.object({
   implementation: z.string(),
   implementationName: z.string(),
   configContract: z.string(),
-  infoLink: z.string().optional(),
+  infoLink: z.string().nullable().optional(),
   tags: z.array(z.number()).default([]),
   fields: z.array(
     z.object({
@@ -137,6 +137,7 @@ export const QBittorrentConfigSchema = z
   .optional()
 
 export const ApplicationSchema = z.object({
+  id: z.number().optional(),
   name: z.string(),
   implementation: z.string(),
   implementationName: z.string(),

@@ -29,7 +29,7 @@ describe('HealthServer', () => {
 
     // Since we can't easily access private properties, we'll test the behavior
     // by starting the server and making requests (in a more comprehensive test)
-    expect(() => healthServer.updateHealthCheck('test', true)).not.toThrow()
+    expect(() => healthServer.updateHealthCheck('postgres', true)).not.toThrow()
   })
 
   test('handles multiple start calls gracefully', () => {

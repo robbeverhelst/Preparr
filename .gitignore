@@ -50,6 +50,9 @@ Thumbs.db
 .temp/
 .tmp/
 
+# Docker/curl generated files
+cookies.txt
+
 # Bun
 bun.lockb
 

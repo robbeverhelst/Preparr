@@ -17,6 +17,37 @@ services:
       timeout: 5s
       retries: 5
 
+  sonarr-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      # PostgreSQL Configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: newpostgrespass123
+      POSTGRES_DB: servarr
+      
+      # Servarr Configuration
+      SERVARR_TYPE: sonarr
+      SERVARR_URL: http://sonarr:8989
+      SERVARR_ADMIN_USER: newadmin
+      SERVARR_ADMIN_PASSWORD: newsecurepass456
+    volumes:
+      - sonarr_config:/config
+      - ./examples/sonarr-config.json:/config/sonarr-config.json:ro
+      - ./examples/radarr-config.json:/config/radarr-config.json:ro
+      - ./examples/prowlarr-config.json:/config/prowlarr-config.json:ro
+      - ./test/tv:/tv
+      - ./test/downloads:/downloads
+    user: "1000:1000"
+    command: ["bun", "run", "dist/index.js", "--init"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   sonarr:
     image: linuxserver/sonarr:latest
     environment:
@@ -39,19 +70,37 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      sonarr-init:
+        condition: service_completed_successfully
 
   qbittorrent-init:
     build:
       context: .
       dockerfile: Dockerfile.test
     environment:
+      # PostgreSQL Configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: newpostgrespass123
+      POSTGRES_DB: servarr
+      
+      # Servarr Configuration
+      SERVARR_TYPE: qbittorrent
+      SERVARR_ADMIN_USER: newadmin
+      SERVARR_ADMIN_PASSWORD: newsecurepass456
+      
+      # qBittorrent Configuration
       QBITTORRENT_USER: newqbuser
       QBITTORRENT_PASSWORD: newqbpass789
     volumes:
       - qbittorrent_config:/config
     user: "1000:1000"
-    command: ["bun", "run", "dist/qbittorrent-init.js"]
+    command: ["bun", "run", "dist/index.js", "--init"]
     restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   qbittorrent:
     image: linuxserver/qbittorrent:latest
@@ -89,7 +138,7 @@ services:
       
       # Servarr Configuration
       SERVARR_URL: http://sonarr:8989
-      SERVARR_TYPE: auto
+      SERVARR_TYPE: sonarr
       SERVARR_API_KEY: a1b2c3d4e5f67890123456789abcdef0
       SERVARR_ADMIN_USER: newadmin
       SERVARR_ADMIN_PASSWORD: newsecurepass456
@@ -116,6 +165,8 @@ services:
     volumes:
       - sonarr_config:/config
       - ./examples/sonarr-config.json:/config/sonarr-config.json:ro
+      - ./examples/radarr-config.json:/config/radarr-config.json:ro
+      - ./examples/prowlarr-config.json:/config/prowlarr-config.json:ro
       - ./test/tv:/tv
       - ./test/downloads:/downloads
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -123,6 +174,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      sonarr-init:
+        condition: service_completed_successfully
       sonarr:
         condition: service_started
       qbittorrent:

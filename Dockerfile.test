@@ -2,6 +2,9 @@ FROM oven/bun:1-alpine
 
 WORKDIR /app
 
+# Add build arg to bust cache
+ARG CACHEBUST=1
+
 # Copy package files
 COPY package.json bun.lockb* ./
 
@@ -12,7 +15,7 @@ RUN bun install --frozen-lockfile
 COPY . .
 
 # Build the application
-RUN bun run build
+RUN echo "Cache bust: $CACHEBUST" && bun run build
 
 # Use existing user 1000 and create directories with proper permissions
 RUN mkdir -p /config /tv /downloads /servarr-config /config/qBittorrent && \

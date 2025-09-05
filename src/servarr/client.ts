@@ -7,13 +7,13 @@ import type {
   ServarrConfig,
 } from '@/config/schema'
 import { logger } from '@/utils/logger'
-import { SQL } from 'bun'
+import { SQL, file, write } from 'bun'
 import { LidarrClient, ProwlarrClient, RadarrClient, ReadarrClient, SonarrClient } from 'tsarr'
 
 type ServarrClientType = SonarrClient | RadarrClient | LidarrClient | ReadarrClient | ProwlarrClient
 
-// Define types for API responses
-interface ApiFolder {
+// Types for API responses that match tsarr library types
+type ApiFolder = {
   id?: number
   path: string
   accessible?: boolean
@@ -21,40 +21,41 @@ interface ApiFolder {
   unmappedFolders?: Array<{ path: string }>
 }
 
-interface ApiIndexer {
+type ApiIndexer = {
   id?: number
-  name: string
-  implementation: string
-  implementationName?: string
-  configContract?: string
-  infoLink?: string
-  tags?: string[]
-  fields?: Array<{ name: string; value?: unknown }>
+  name?: string | null
+  implementation?: string | null
+  implementationName?: string | null
+  configContract?: string | null
+  infoLink?: string | null
+  tags?: number[] | null
+  fields?: Array<{ name: string; value?: unknown }> | null
   enable?: boolean
   priority?: number
 }
 
-interface ApiDownloadClient {
+type ApiDownloadClient = {
   id?: number
-  name: string
-  implementation: string
-  implementationName?: string
-  configContract?: string
-  fields?: Array<{ name: string; value?: unknown }>
+  name?: string | null
+  implementation?: string | null
+  implementationName?: string | null
+  configContract?: string | null
+  fields?: Array<{ name: string; value?: unknown }> | null
   enable?: boolean
   priority?: number
 }
 
-interface ApiApplication {
-  id?: number
+type ApiApplication = {
+  id?: number | undefined
   name: string
   implementation: string
-  implementationName?: string
-  configContract?: string
-  fields?: Array<{ name: string; value?: unknown }>
-  enable?: boolean
-  priority?: number
-  syncLevel?: string
+  implementationName: string
+  configContract: string
+  fields: Array<{ name: string; value?: unknown }>
+  enable: boolean
+  priority: number
+  syncLevel: 'disabled' | 'addOnly' | 'fullSync'
+  tags: number[]
 }
 
 export class ServarrManager {
@@ -67,6 +68,22 @@ export class ServarrManager {
   constructor(config: ServarrConfig, configPath?: string) {
     this.config = config
     this.configPath = configPath || process.env.SERVARR_CONFIG_PATH || '/config/config.xml'
+  }
+
+  // Helper to convert our types to tsarr-compatible types
+  private convertIndexerForTsarr(indexer: Indexer): Record<string, unknown> {
+    return {
+      ...indexer,
+      infoLink: indexer.infoLink ?? null,
+      appProfileId: indexer.appProfileId ?? undefined,
+    }
+  }
+
+  private convertApplicationForTsarr(application: Application): Record<string, unknown> {
+    return {
+      ...application,
+      syncLevel: application.syncLevel as 'disabled' | 'addOnly' | 'fullSync',
+    }
   }
 
   private async detectServarrType(): Promise<string> {
@@ -188,7 +205,7 @@ export class ServarrManager {
 
   private async readExistingApiKey(): Promise<string | null> {
     try {
-      const configFile = Bun.file(this.configPath)
+      const configFile = file(this.configPath)
       if (await configFile.exists()) {
         const content = await configFile.text()
         const apiKeyMatch = content.match(/<ApiKey>([^<]+)<\/ApiKey>/)
@@ -324,11 +341,15 @@ export class ServarrManager {
 
     const configChanged = await this.writeConfigXml()
 
-    await this.waitForStartup()
-
-    if (configChanged) {
-      await this.restartToApplyConfig()
+    // Skip connectivity checks in init mode
+    const isInitMode = process.argv.includes('--init')
+    if (!isInitMode) {
       await this.waitForStartup()
+
+      if (configChanged) {
+        await this.restartToApplyConfig()
+        await this.waitForStartup()
+      }
     }
 
     try {
@@ -336,6 +357,20 @@ export class ServarrManager {
         throw new Error('API key is required but not available')
       }
       this.client = this.createClient(this.apiKey)
+
+      // Debug: Check what methods are available on the client
+      if (this.client) {
+        const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(this.client)).filter(
+          (name) => typeof (this.client as unknown as Record<string, unknown>)[name] === 'function',
+        )
+        logger.debug('Available client methods', {
+          type: this.config.type,
+          methods: methods.slice(0, 20), // Just show first 20 methods
+          hasAddDownloadClient: methods.includes('addDownloadClient'),
+          hasGetDownloadClients: methods.includes('getDownloadClients'),
+        })
+      }
+
       this.isInitialized = true
       logger.info('ServarrManager initialized successfully', { type: this.config.type })
     } catch (error) {
@@ -414,7 +449,7 @@ export class ServarrManager {
 </Config>`
 
     try {
-      const configFile = Bun.file(this.configPath)
+      const configFile = file(this.configPath)
       let configChanged = true
 
       if (await configFile.exists()) {
@@ -423,7 +458,7 @@ export class ServarrManager {
       }
 
       if (configChanged) {
-        await Bun.write(this.configPath, configXml)
+        await write(this.configPath, configXml)
         logger.info('Config.xml written successfully', {
           type: this.config.type,
           apiKey: `${this.apiKey.slice(0, 8)}...`,
@@ -710,8 +745,10 @@ export class ServarrManager {
         throw new Error('No result from updateHostConfig call')
       }
 
-      if (result.error) {
-        throw new Error(`Database configuration failed: ${result.error}`)
+      if ((result as Record<string, unknown>).error) {
+        throw new Error(
+          `Database configuration failed: ${(result as Record<string, unknown>).error}`,
+        )
       }
 
       logger.info('Database configuration updated')
@@ -824,12 +861,17 @@ export class ServarrManager {
         return []
       }
 
-      return result.data.map((folder: ApiFolder) => ({
-        path: folder.path,
-        accessible: folder.accessible,
-        freeSpace: folder.freeSpace,
-        unmappedFolders: folder.unmappedFolders?.map((f) => f.path) || [],
-      }))
+      return (result.data as unknown[]).map((folder: unknown) => {
+        const f = folder as Record<string, unknown>
+        return {
+          path: (f.path as string) || '',
+          accessible: (f.accessible as boolean) || false,
+          freeSpace: f.freeSpace as number,
+          unmappedFolders: ((f.unmappedFolders as Array<{ path: string }>) || []).map(
+            (item) => item.path,
+          ),
+        }
+      })
     } catch (error) {
       logger.error('Failed to get root folders', { error })
       throw error
@@ -962,7 +1004,10 @@ export class ServarrManager {
         return
       }
 
-      const folder = result.data.find((f: ApiFolder) => f.path === path)
+      const folder = (result.data as unknown[]).find((f: unknown) => {
+        const folder = f as ApiFolder
+        return folder.path === path
+      }) as ApiFolder | undefined
 
       if (!folder) {
         logger.debug('Root folder not found for removal', { path })
@@ -1031,17 +1076,22 @@ export class ServarrManager {
       }
 
       logger.debug('Mapping indexers data', { count: result.data.length })
-      return result.data.map((indexer: ApiIndexer) => ({
-        name: indexer.name,
-        implementation: indexer.implementation,
-        implementationName: indexer.implementationName,
-        configContract: indexer.configContract,
-        infoLink: indexer.infoLink,
-        tags: indexer.tags,
-        fields: indexer.fields,
-        enable: indexer.enable,
-        priority: indexer.priority,
-      }))
+      return (result.data as unknown[]).map((indexer: unknown) => {
+        const i = indexer as Record<string, unknown>
+        return {
+          name: (i.name as string) || '',
+          implementation: i.implementation as string,
+          implementationName: (i.implementationName as string) || '',
+          configContract: (i.configContract as string) || '',
+          infoLink: i.infoLink as string,
+          tags: (i.tags as number[]) || [],
+          fields:
+            (i.fields as Array<{ name: string; value: string | number | boolean | number[] }>) ||
+            [],
+          enable: (i.enable as boolean) || false,
+          priority: (i.priority as number) || 0,
+        }
+      })
     } catch (error) {
       logger.error('Failed to get indexers', { error })
       throw error
@@ -1072,7 +1122,7 @@ export class ServarrManager {
         indexerFields: indexer.fields?.map((f) => ({ name: f.name, hasValue: !!f.value })),
       })
 
-      const result = await this.client?.addIndexer(indexer as unknown)
+      const result = await this.client?.addIndexer(this.convertIndexerForTsarr(indexer))
 
       logger.debug('Tsarr addIndexer result', {
         hasResult: !!result,
@@ -1152,13 +1202,7 @@ export class ServarrManager {
 
       for (const indexer of indexers) {
         try {
-          const testResult = await this.client?.testIndexer({
-            name: indexer.name,
-            implementation: indexer.implementation,
-            implementationName: indexer.implementationName,
-            configContract: indexer.configContract,
-            fields: indexer.fields,
-          } as unknown)
+          const testResult = await this.client?.testIndexer(this.convertIndexerForTsarr(indexer))
 
           if (testResult?.data) {
             logger.info('Indexer test successful', { name: indexer.name })
@@ -1203,7 +1247,10 @@ export class ServarrManager {
         return
       }
 
-      const indexer = result.data.find((i: ApiIndexer) => i.name === name)
+      const indexer = (result.data as unknown[]).find((i: unknown) => {
+        const idx = i as ApiIndexer
+        return idx.name === name
+      }) as ApiIndexer | undefined
 
       if (!indexer) {
         logger.debug('Indexer not found for removal', { name })
@@ -1252,15 +1299,20 @@ export class ServarrManager {
         return []
       }
 
-      return result.data.map((client: ApiDownloadClient) => ({
-        name: client.name,
-        implementation: client.implementation,
-        implementationName: client.implementationName,
-        configContract: client.configContract,
-        fields: client.fields,
-        enable: client.enable,
-        priority: client.priority,
-      }))
+      return (result.data as unknown[]).map((client: unknown) => {
+        const c = client as Record<string, unknown>
+        return {
+          name: (c.name as string) || '',
+          implementation: c.implementation as string,
+          implementationName: (c.implementationName as string) || '',
+          configContract: (c.configContract as string) || '',
+          fields:
+            (c.fields as Array<{ name: string; value: string | number | boolean | number[] }>) ||
+            [],
+          enable: (c.enable as boolean) || false,
+          priority: (c.priority as number) || 0,
+        }
+      })
     } catch (error) {
       logger.error('Failed to get download clients', { error })
       throw error
@@ -1268,6 +1320,12 @@ export class ServarrManager {
   }
 
   async addDownloadClient(client: DownloadClient): Promise<void> {
+    logger.debug('addDownloadClient called', {
+      isInitialized: this.isInitialized,
+      hasApiKey: !!this.apiKey,
+      clientName: client.name,
+    })
+
     if (!this.isInitialized || !this.apiKey) {
       throw new Error('ServarrManager not initialized')
     }
@@ -1277,7 +1335,14 @@ export class ServarrManager {
       implementation: client.implementation,
     })
 
+    logger.debug('Entering try block...')
     try {
+      logger.debug('Checking client capability...', {
+        hasClient: !!this.client,
+        clientType: this.config.type,
+        hasMethod: this.client && 'addDownloadClient' in this.client,
+      })
+
       if (!this.client || !('addDownloadClient' in this.client)) {
         logger.debug('Download client operations not supported for this Servarr type')
         return
@@ -1291,20 +1356,75 @@ export class ServarrManager {
         return
       }
 
-      const result = await this.client.addDownloadClient(client as unknown)
+      // Convert fields array to properties on the object
+      const downloadClientPayload: Record<string, unknown> & {
+        name: string
+        implementation: string
+        implementationName: string
+        configContract: string
+        enable: boolean
+        protocol: 'torrent'
+        priority: number
+        fields: { name: string; value: unknown }[]
+      } = {
+        name: client.name,
+        implementation: client.implementation,
+        implementationName: client.implementationName || client.implementation.toLowerCase(),
+        configContract: client.configContract,
+        enable: client.enable !== false,
+        protocol: 'torrent',
+        priority: client.priority ?? 1,
+        fields: [], // Initialize fields array
+      }
+
+      // Map field values to direct properties AND build fields array
+      if (client.fields && Array.isArray(client.fields)) {
+        for (const field of client.fields) {
+          downloadClientPayload[field.name] = field.value
+
+          // Add to fields array with proper structure
+          downloadClientPayload.fields.push({
+            name: field.name,
+            value: field.value,
+          })
+        }
+      }
+
+      logger.info('DOWNLOAD CLIENT PAYLOAD v2', {
+        payload: JSON.stringify(downloadClientPayload),
+        timestamp: new Date().toISOString(),
+        hasFields: !!downloadClientPayload.fields,
+        fieldCount: downloadClientPayload.fields?.length || 0,
+      })
+
+      const result = await this.client.addDownloadClient(downloadClientPayload)
+
+      logger.debug('Tsarr addDownloadClient result', {
+        hasResult: !!result,
+        hasData: !!result?.data,
+        hasError: !!result?.error,
+        error: result?.error,
+        resultType: typeof result,
+      })
 
       if (!result) {
         throw new Error('No result from addDownloadClient call')
       }
 
       if (result.error) {
-        throw new Error(`Failed to add download client: ${result.error}`)
+        throw new Error(`Failed to add download client: ${JSON.stringify(result.error)}`)
       }
 
       logger.info('Download client added successfully', { name: client.name })
     } catch (error) {
-      logger.error('Failed to add download client', { name: client.name, error })
-      throw error
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error)
+      logger.error('Failed to add download client', {
+        name: client.name,
+        errorMessage,
+        errorType: typeof error,
+        errorString: String(error),
+      })
+      throw new Error(`Failed to add download client: ${errorMessage}`)
     }
   }
 
@@ -1346,13 +1466,7 @@ export class ServarrManager {
 
       for (const client of clients) {
         try {
-          const testResult = await this.client.testDownloadClient({
-            name: client.name,
-            implementation: client.implementation,
-            implementationName: client.implementationName,
-            configContract: client.configContract,
-            fields: client.fields,
-          } as unknown)
+          const testResult = await this.client.testDownloadClient(client)
 
           if (testResult?.data) {
             logger.info('Download client test successful', { name: client.name })
@@ -1406,7 +1520,10 @@ export class ServarrManager {
         return
       }
 
-      const client = result.data.find((c: ApiDownloadClient) => c.name === name)
+      const client = (result.data as unknown[]).find((c: unknown) => {
+        const cli = c as ApiDownloadClient
+        return cli.name === name
+      }) as ApiDownloadClient | undefined
 
       if (!client) {
         logger.debug('Download client not found for removal', { name })
@@ -1457,7 +1574,19 @@ export class ServarrManager {
         throw new Error(`Failed to get applications: ${result.error}`)
       }
 
-      return result?.data || []
+      // Convert tsarr ApplicationResource[] to our ApiApplication[]
+      return (result?.data || []).map((app: Record<string, unknown>) => ({
+        id: app.id as number | undefined,
+        name: (app.name as string | null) || '',
+        implementation: (app.implementation as string | null) || '',
+        implementationName: (app.implementationName as string | null) || '',
+        configContract: (app.configContract as string | null) || '',
+        fields: (app.fields as Array<{ name: string; value?: unknown }>) || [],
+        enable: (app.enable as boolean) ?? true,
+        priority: (app.priority as number) ?? 0,
+        syncLevel: (app.syncLevel as 'disabled' | 'addOnly' | 'fullSync') || 'addOnly',
+        tags: (app.tags as number[]) || [],
+      }))
     } catch (error) {
       logger.error('Failed to get applications', { error })
       throw error
@@ -1494,7 +1623,7 @@ export class ServarrManager {
         hasAddApplicationMethod: 'addApplication' in this.client,
       })
 
-      const result = await this.client.addApplication(application as unknown)
+      const result = await this.client.addApplication(this.convertApplicationForTsarr(application))
 
       logger.debug('Tsarr addApplication result', {
         hasResult: !!result,

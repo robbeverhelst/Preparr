@@ -1,4 +1,5 @@
 import { logger } from '@/utils/logger'
+import { serve } from 'bun'
 
 interface HealthStatus {
   status: 'healthy' | 'unhealthy'
@@ -13,7 +14,7 @@ interface HealthStatus {
 }
 
 export class HealthServer {
-  private server: ReturnType<typeof Bun.serve> | null = null
+  private server: ReturnType<typeof serve> | null = null
   private port: number
   private healthStatus: HealthStatus
 
@@ -64,7 +65,7 @@ export class HealthServer {
   }
 
   start(): void {
-    this.server = Bun.serve({
+    this.server = serve({
       port: this.port,
       fetch: (req) => {
         const url = new URL(req.url)
