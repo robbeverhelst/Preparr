@@ -58,3 +58,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bun run semantic-release
+      
+      - name: Trigger Docker build for new release
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the latest tag created by semantic-release
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LATEST_TAG" ] && [ "$LATEST_TAG" != "v0.1.2" ]; then
+            echo "Triggering Docker workflow for tag: $LATEST_TAG"
+            gh workflow run docker.yml --ref "$LATEST_TAG"
+          else
+            echo "No new tag found or same tag, skipping Docker trigger"
+          fi
