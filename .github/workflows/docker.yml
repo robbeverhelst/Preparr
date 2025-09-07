@@ -56,6 +56,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get current version context
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            # Get the latest tag when triggered by workflow_run
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            if [ -n "$LATEST_TAG" ]; then
+              echo "Using tag context: $LATEST_TAG"
+              echo "version=${LATEST_TAG#v}" >> $GITHUB_OUTPUT
+              echo "is_tag=true" >> $GITHUB_OUTPUT
+            else
+              echo "No tag found, using main context"
+              echo "version=main" >> $GITHUB_OUTPUT  
+              echo "is_tag=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Using default context"
+            echo "is_tag=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -64,9 +84,9 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.is_tag == 'true' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.is_tag == 'true' }}
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.is_tag == 'true' }}
             type=sha
 
       - name: Build and push Docker image
