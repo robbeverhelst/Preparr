@@ -27,6 +27,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout latest tag if triggered by workflow_run
+        if: github.event_name == 'workflow_run'
+        run: |
+          # Get the latest tag and checkout to it
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LATEST_TAG" ]; then
+            echo "Checking out latest tag: $LATEST_TAG"
+            git checkout "$LATEST_TAG"
+          else
+            echo "No tags found, staying on main"
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
