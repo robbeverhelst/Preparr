@@ -1,3 +1,10 @@
+## [0.1.5](https://github.com/robbeverhelst/Preparr/compare/v0.1.4...v0.1.5) (2025-09-07)
+
+
+### Bug Fixes
+
+* checkout latest tag in Docker workflow when triggered by CI ([519f0f5](https://github.com/robbeverhelst/Preparr/commit/519f0f532ace846f90c2ea4adbf1d9becde886c0))
+
 ## [0.1.4](https://github.com/robbeverhelst/Preparr/compare/v0.1.3...v0.1.4) (2025-09-07)
 
 
