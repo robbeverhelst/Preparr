@@ -1,3 +1,18 @@
+# [1.1.0](https://github.com/robbeverhelst/Preparr/compare/v1.0.0...v1.1.0) (2025-09-07)
+
+
+### Bug Fixes
+
+* update and implement tsarr in more places ([f90f50a](https://github.com/robbeverhelst/Preparr/commit/f90f50a55b23515450414fc58ef9b5267322256d))
+
+
+### Features
+
+* add Docker support with test configurations, enhance environment handling, and implement configuration reconciliation ([b57a0a8](https://github.com/robbeverhelst/Preparr/commit/b57a0a84cb6eed4bd6b36e8b8bd798a39a32602f))
+* add full Docker Compose configuration for multiple services including PostgreSQL, qBittorrent, Prowlarr, Radarr, and Sonarr with health checks and initialization scripts ([2767f0e](https://github.com/robbeverhelst/Preparr/commit/2767f0e03291ac9f6e71a524a8a43a75f01b3c1a))
+* add port mappings for health check services in Docker Compose and improve JSON formatting in configuration files ([e9f850d](https://github.com/robbeverhelst/Preparr/commit/e9f850d2291b92e9673e20da914b9bbafecfb1e2))
+* enhance Docker Compose configuration with new services, update environment variables, and improve configuration handling for qBittorrent and Prowlarr ([83e7937](https://github.com/robbeverhelst/Preparr/commit/83e7937cb451c7f06edff1d71a9548b02bdd2506))
+
 # 1.0.0 (2025-09-01)
 
 
