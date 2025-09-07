@@ -1,3 +1,10 @@
+## [0.1.6](https://github.com/robbeverhelst/Preparr/compare/v0.1.5...v0.1.6) (2025-09-07)
+
+
+### Bug Fixes
+
+* correct Docker semantic versioning for workflow_run triggers ([d2cf032](https://github.com/robbeverhelst/Preparr/commit/d2cf032afa250ff19cbc137feeafecce3c497d6f))
+
 ## [0.1.5](https://github.com/robbeverhelst/Preparr/compare/v0.1.4...v0.1.5) (2025-09-07)
 
 
