@@ -1,3 +1,10 @@
+## [0.1.4](https://github.com/robbeverhelst/Preparr/compare/v0.1.3...v0.1.4) (2025-09-07)
+
+
+### Bug Fixes
+
+* trigger Docker builds automatically when CI completes with new release ([7c58ba2](https://github.com/robbeverhelst/Preparr/commit/7c58ba2b38983267b4b3b04a8cc20c22f31e2ac4))
+
 ## [0.1.3](https://github.com/robbeverhelst/Preparr/compare/v0.1.2...v0.1.3) (2025-09-07)
 
 
