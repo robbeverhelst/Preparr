@@ -30,16 +30,32 @@ PrepArr "prepares" your Servarr instances from config files to fully working sys
 
 ## ✨ Features
 
+### Core Automation
 - 🚀 **Complete Automation** - From deployment to fully configured Servarr instance
-- 🔑 **API Key Management** - Automatically generates and configures API keys
-- 👤 **User Setup** - Creates initial admin users and authentication
-- 🔗 **Service Integration** - Links qBittorrent, Prowlarr, and other services automatically
+- 🔑 **API Key Management** - Reads API keys from configuration files
+- 👤 **User Setup** - Creates initial admin users and authentication  
 - 🗄️ **Database Setup** - PostgreSQL initialization with users, roles, and permissions
 - 🔧 **Full Configuration** - Quality profiles, root folders, indexers, download clients
-- 🔄 **Continuous Sync** - Watches and applies configuration changes in real-time
-- 📦 **Lightweight** - Docker image < 100MB
-- 🎮 **Multi-App Support** - Sonarr, Radarr, Lidarr, Readarr, Prowlarr
+
+### Service Integration  
+- 🔗 **qBittorrent** - Automatic connection and category configuration
+- 🕷️ **Prowlarr** - Indexer and application synchronization  
+- 📺 **Multi-App Support** - Sonarr, Radarr, Lidarr, Readarr, Prowlarr
+
+### Advanced Features ⭐ NEW
+- 🔄 **Continuous Reconciliation** - Automated drift detection and correction (60s interval)
+- 📊 **Configuration Drift Detection** - Real-time file monitoring with automatic recovery
+- 🩺 **Comprehensive Health Checks** - Kubernetes-ready liveness/readiness probes
+- 🔄 **Retry Logic** - Built-in error handling with exponential backoff
+- 📈 **Prometheus Metrics** - Health status, reconciliation counts, and uptime metrics
+- 🌐 **Health Endpoints** - Full observability with `/health`, `/metrics`, `/reconciliation/status`
+- ⚡ **Auto-Recovery** - Intelligent failure detection and automatic healing
+
+### Production Ready
+- 📦 **Lightweight** - Docker image < 100MB  
 - 🔒 **Secure** - Credentials via environment variables (Docker Secrets, K8s Secrets, etc.)
+- ⚡ **High Performance** - Built on Bun runtime for maximum speed
+- 🛡️ **Battle-Tested** - Comprehensive error handling and graceful degradation
 
 ## 🚀 Quick Start
 
@@ -101,16 +117,19 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+          ports:
+            - containerPort: 9000
+              name: health
           livenessProbe:
             httpGet:
-              path: /healthz
-              port: 8080
+              path: /health/live
+              port: 9000
             initialDelaySeconds: 10
             periodSeconds: 30
           readinessProbe:
             httpGet:
-              path: /ready
-              port: 8080
+              path: /health/ready
+              port: 9000  
             initialDelaySeconds: 5
             periodSeconds: 10
 
@@ -247,6 +266,62 @@ volumes:
 | `CONFIG_RECONCILE_INTERVAL` | Reconciliation interval (seconds) | 60 | ❌ |
 | `LOG_LEVEL` | Logging level | info | ❌ |
 | `LOG_FORMAT` | Log format (json/pretty) | json | ❌ |
+| `HEALTH_PORT` | Health server port | 9000 | ❌ |
+
+## 🩺 Health & Monitoring
+
+PrepArr provides comprehensive health and monitoring endpoints:
+
+### Health Endpoints
+
+| Endpoint | Purpose | K8s Usage |
+|----------|---------|-----------|
+| `/health/live` | Liveness probe | livenessProbe |
+| `/health/ready` | Readiness probe | readinessProbe |
+| `/health/status` | Detailed health info | Monitoring |
+
+### Reconciliation Management
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/reconciliation/status` | GET | View reconciliation state |
+| `/reconciliation/force` | POST | Trigger manual reconciliation |
+
+### Metrics
+
+- **Prometheus Metrics**: Available at `/metrics`
+- **Uptime Tracking**: Service uptime in seconds
+- **Health Status**: Binary healthy/unhealthy metric (1/0)
+- **Reconciliation Counters**: Total cycles and error counts
+
+### Example Health Response
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-09-07T13:55:43.161Z",  
+  "uptime": 1847,
+  "reconciliation": {
+    "lastReconciliation": "2025-09-07T13:55:35.956Z",
+    "lastConfigHash": "2440049400892806048", 
+    "reconciliationCount": 12,
+    "errors": 0,
+    "status": "active"
+  },
+  "checks": {
+    "server": {
+      "status": "pass",
+      "message": "Health server is running",
+      "lastChecked": "2025-09-07T13:55:43.162Z"
+    },
+    "reconciliation": {
+      "status": "pass", 
+      "message": "Reconciliation manager active",
+      "lastChecked": "2025-09-07T13:55:43.162Z"
+    }
+  }
+}
+```
 
 ## 🏗️ Architecture
 
@@ -272,11 +347,12 @@ PrepArr follows a simple architecture pattern:
 
 ### Components
 
-1. **Configuration Loader** - Reads and validates configuration from files or mounted volumes
-2. **PostgreSQL Manager** - Handles database initialization and management
-3. **Servarr Configurator** - Applies configuration via Servarr APIs using Tsarr
-4. **File Watcher** - Monitors configuration changes and triggers reconciliation
-5. **Health Server** - Provides health endpoints for container orchestration
+1. **Configuration Engine** - Reads, validates, and applies configurations with step-based execution
+2. **Reconciliation Manager** - Continuous monitoring with drift detection and auto-recovery  
+3. **PostgreSQL Manager** - Database initialization with users, roles, and schema management
+4. **Servarr Configurator** - Complete API configuration via Tsarr client library
+5. **Health Server** - Comprehensive health endpoints with Prometheus metrics
+6. **Error Handling** - Intelligent retry logic with exponential backoff and circuit breaking
 
 ## 🛠️ Development
 
@@ -396,20 +472,30 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Discussions](https://github.com/robbeverhelst/preparr/discussions)
 - [Changelog](CHANGELOG.md)
 
-## 📊 Status
+## 📊 Implementation Status
 
-- [ ] PostgreSQL initialization
-- [ ] Servarr API configuration
-- [ ] Configuration watching
-- [ ] Health endpoints
-- [ ] Helm chart
-- [ ] Multi-instance support
-- [ ] GitOps integration
-- [ ] Metrics export
+### ✅ Completed Features
+- [x] **PostgreSQL initialization** - Complete database, user, and schema setup
+- [x] **Servarr API configuration** - Full automation via Tsarr client  
+- [x] **Configuration watching** - Real-time file monitoring with drift detection
+- [x] **Health endpoints** - Comprehensive health checks and Prometheus metrics
+- [x] **Continuous reconciliation** - Automated drift correction every 60 seconds
+- [x] **Error handling** - Retry logic with exponential backoff and auto-recovery
+- [x] **Unit testing** - Core component test coverage
+- [x] **Production ready** - Linting, type checking, and build validation
 
-## 🚦 Roadmap
+### 🚧 In Progress  
+- [ ] **Integration tests** - End-to-end Docker container testing
+- [ ] **Documentation** - Complete API reference and examples
 
-See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for detailed roadmap and milestones.
+### 📋 Roadmap
+- [ ] **Helm chart** - Kubernetes deployment manifests
+- [ ] **CI/CD pipeline** - Automated testing and releases  
+- [ ] **Multi-instance support** - Manage multiple Servarr instances
+- [ ] **GitOps integration** - Git-based configuration management
+- [ ] **Web UI** - Configuration management interface
+
+> 💡 **Note**: See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for detailed implementation timeline and technical decisions.
 
 ---
 

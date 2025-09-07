@@ -2,6 +2,7 @@ import type { ServarrApplicationConfig } from '@/config/schema'
 import type { ConfigurationEngine } from '@/core/engine'
 import type { StepContext } from '@/core/step'
 import { logger } from '@/utils/logger'
+import { withRetry } from '@/utils/retry'
 
 export interface ReconciliationState {
   lastReconciliation: Date
@@ -120,16 +121,27 @@ export class ReconciliationManager {
         lastReconciliation: this.state.lastReconciliation.toISOString(),
       })
 
-      // Reload configuration
-      const config = await this.loadConfiguration()
-      if (config) {
-        // Update context with new configuration
-        this.context.servarrConfig = config
-        this.state.lastConfigHash = this.calculateConfigHash(config)
+      // Reload configuration with error tolerance
+      let config: ServarrApplicationConfig | undefined
+      try {
+        config = await this.loadConfiguration()
+        if (config) {
+          // Update context with new configuration
+          this.context.servarrConfig = config
+          this.state.lastConfigHash = this.calculateConfigHash(config)
+        }
+      } catch (error) {
+        logger.warn('Failed to reload configuration, continuing with existing config', { error })
+        // Continue with existing config rather than failing the entire reconciliation
+        config = this.context.servarrConfig
       }
 
-      // Run configuration engine
-      const result = await this.engine.execute('sidecar')
+      // Run configuration engine with retry for critical operations
+      const result = await withRetry(() => this.engine.execute('sidecar'), {
+        maxAttempts: 2,
+        delayMs: 2000,
+        operation: `reconciliation-cycle-${this.state.reconciliationCount + 1}`,
+      })
 
       this.state.lastReconciliation = new Date()
       this.state.reconciliationCount++
@@ -144,6 +156,14 @@ export class ReconciliationManager {
           changes: result.summary.totalChanges,
           warnings: result.warnings.length,
         })
+
+        // Auto-recovery: reset error count on successful reconciliation
+        if (this.state.errors > 0) {
+          logger.info('Reconciliation recovered, resetting error count', {
+            previousErrors: this.state.errors,
+          })
+          this.state.errors = 0
+        }
       } else {
         this.state.errors++
         logger.warn('Reconciliation cycle completed with errors', {

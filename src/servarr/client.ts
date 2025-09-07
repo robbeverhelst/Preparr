@@ -7,6 +7,7 @@ import type {
   ServarrConfig,
 } from '@/config/schema'
 import { logger } from '@/utils/logger'
+import { withRetry } from '@/utils/retry'
 import { SQL, file, write } from 'bun'
 import {
   LidarrClient,
@@ -409,8 +410,12 @@ export class ServarrManager {
     this.apiKey = existingApiKey
     logger.info('Using API key from config', { apiKey: `${this.apiKey.slice(0, 8)}...` })
 
-    // Wait for Servarr service to be ready
-    await this.waitForStartup()
+    // Wait for Servarr service to be ready with retry
+    await withRetry(() => this.waitForStartup(), {
+      maxAttempts: 3,
+      delayMs: 5000,
+      operation: 'servarr-service-startup',
+    })
 
     // Wait for database tables to be initialized by Servarr
     logger.info('Waiting for Servarr to initialize database tables...')

@@ -261,16 +261,26 @@ export class HealthServer {
   private determineOverallHealth(reconciliation?: ReconciliationState): HealthStatus['status'] {
     if (this.healthStatus === 'starting') return 'starting'
 
-    // Consider unhealthy if too many recent reconciliation errors
-    if (reconciliation && reconciliation.errors > 10) {
+    // Auto-recovery: mark healthy if reconciliation is working
+    if (reconciliation && reconciliation.reconciliationCount > 0) {
       const timeSinceLastReconciliation = Date.now() - reconciliation.lastReconciliation.getTime()
-      if (timeSinceLastReconciliation > 300000) {
-        // 5 minutes
+
+      // If reconciliation succeeded recently, we're healthy regardless of past errors
+      if (timeSinceLastReconciliation < 120000 && reconciliation.errors === 0) {
+        if (this.healthStatus === 'unhealthy') {
+          logger.info('Auto-recovery: marking service healthy after successful reconciliation')
+          this.healthStatus = 'healthy'
+        }
+        return 'healthy'
+      }
+
+      // Consider unhealthy only if many recent errors AND no recent success
+      if (reconciliation.errors > 5 && timeSinceLastReconciliation > 300000) {
         return 'unhealthy'
       }
     }
 
-    return 'healthy'
+    return this.healthStatus
   }
 
   private determineReconciliationStatus(
