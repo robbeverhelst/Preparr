@@ -83,7 +83,7 @@
     {
       "name": "Radarr",
       "implementation": "Radarr",
-      "implementationName": "Radarr", 
+      "implementationName": "Radarr",
       "configContract": "RadarrSettings",
       "appProfileId": 1,
       "fields": [

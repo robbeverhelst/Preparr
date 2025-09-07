@@ -155,6 +155,7 @@ export const ApplicationSchema = z.object({
 })
 
 export const ServarrApplicationConfigSchema = z.object({
+  apiKey: z.string().optional(),
   rootFolders: z.array(RootFolderSchema).default([]),
   qualityProfiles: z.array(QualityProfileSchema).default([]),
   indexers: z.array(IndexerSchema).default([]),

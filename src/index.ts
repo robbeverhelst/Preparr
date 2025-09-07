@@ -3,7 +3,8 @@ import { getEnvironmentInfo } from '@/config/loaders/env'
 import type { ServarrApplicationConfig } from '@/config/schema'
 import { ContextBuilder } from '@/core/context'
 import { ConfigurationEngine } from '@/core/engine'
-import { HealthServer } from '@/health/server'
+import { HealthServer } from '@/core/health'
+import { ReconciliationManager } from '@/core/reconciliation'
 import { PostgresClient } from '@/postgres/client'
 import { QBittorrentManager } from '@/qbittorrent/client'
 import { ServarrManager } from '@/servarr/client'
@@ -16,6 +17,7 @@ class PrepArrNew {
   private config: EnvironmentConfig
   private health: HealthServer
   private engine: ConfigurationEngine | null = null
+  private reconciliationManager: ReconciliationManager | null = null
 
   constructor(config: EnvironmentConfig) {
     this.config = config
@@ -116,45 +118,25 @@ class PrepArrNew {
         .setServarrConfig(servarrConfig || ({} as ServarrApplicationConfig))
         .build()
 
-      // Create and execute configuration engine
+      // Create configuration engine and reconciliation manager
       this.engine = new ConfigurationEngine(context)
-      const result = await this.engine.execute('sidecar')
+      this.reconciliationManager = new ReconciliationManager(
+        context,
+        this.engine,
+        this.loadConfiguration.bind(this),
+      )
 
-      if (result.success) {
-        logger.info('Sidecar initialization completed successfully', {
-          summary: result.summary,
-          duration: result.duration,
-        })
+      // Set up health server with reconciliation manager
+      this.health.setReconciliationManager(this.reconciliationManager)
 
-        // Update health checks
-        this.health.updateHealthCheck('postgres', true)
-        this.health.updateHealthCheck('servarr', true)
-        this.health.updateHealthCheck('config', true)
-        if (this.config.services?.qbittorrent) {
-          this.health.updateHealthCheck('qbittorrent', true)
-        }
-      } else {
-        logger.error('Sidecar initialization failed', {
-          errors: result.errors.map((e) => e.message),
-          summary: result.summary,
-          duration: result.duration,
-        })
+      // Start reconciliation manager (includes initial run)
+      await this.reconciliationManager.start()
 
-        // Update health checks based on results
-        this.health.updateHealthCheck(
-          'postgres',
-          !result.errors.some((e) => e.message.includes('postgres')),
-        )
-        this.health.updateHealthCheck(
-          'servarr',
-          !result.errors.some((e) => e.message.includes('servarr')),
-        )
-        this.health.updateHealthCheck('config', false)
-
-        throw new Error(
-          `Sidecar initialization failed: ${result.errors.map((e) => e.message).join(', ')}`,
-        )
-      }
+      logger.info('Sidecar initialization completed successfully with continuous reconciliation', {
+        configPath: this.config.configPath,
+        reconcileInterval: this.config.configReconcileInterval,
+        configWatch: this.config.configWatch,
+      })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       const errorStack = error instanceof Error ? error.stack : undefined
@@ -164,9 +146,7 @@ class PrepArrNew {
         stack: errorStack,
         name: errorName,
       })
-      this.health.updateHealthCheck('postgres', false)
-      this.health.updateHealthCheck('servarr', false)
-      this.health.updateHealthCheck('config', false)
+      this.health.markUnhealthy(`Initialization failed: ${errorMessage}`)
       throw error
     }
   }
@@ -230,7 +210,15 @@ class PrepArrNew {
 
   shutdown(): void {
     logger.info('PrepArr shutting down...')
+
+    // Stop reconciliation manager first
+    if (this.reconciliationManager) {
+      this.reconciliationManager.stop()
+    }
+
+    // Stop health server
     this.health.stop()
+
     logger.info('PrepArr shutdown completed')
   }
 }

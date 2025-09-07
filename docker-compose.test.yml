@@ -127,6 +127,8 @@ services:
       CONFIG_WATCH: "true"
       CONFIG_RECONCILE_INTERVAL: "60"
       HEALTH_PORT: 9001
+    ports:
+      - "9001:9001"
     volumes:
       - sonarr_config:/config
       - ./examples/sonarr-config.json:/config/sonarr-config.json:ro
@@ -202,6 +204,8 @@ services:
       CONFIG_WATCH: "true"
       CONFIG_RECONCILE_INTERVAL: "60"
       HEALTH_PORT: 9002
+    ports:
+      - "9002:9002"
     volumes:
       - radarr_config:/config
       - ./examples/radarr-config.json:/config/radarr-config.json:ro
@@ -269,6 +273,8 @@ services:
       CONFIG_WATCH: "true"
       CONFIG_RECONCILE_INTERVAL: "60"
       HEALTH_PORT: 9003
+    ports:
+      - "9003:9003"
     volumes:
       - prowlarr_config:/config
       - ./examples/prowlarr-config.json:/config/prowlarr-config.json:ro

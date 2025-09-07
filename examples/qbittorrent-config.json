@@ -85,7 +85,7 @@
           "savePath": "/downloads/movies"
         },
         "tv": {
-          "name": "tv", 
+          "name": "tv",
           "savePath": "/downloads/tv"
         },
         "music": {

@@ -105,11 +105,12 @@ export class ServarrManager {
 
   private handleTsarrResponse<T>(result: { data?: T; error?: unknown; response: Response }): T {
     if (result.error) {
-      const errorMessage = result.error instanceof Error 
-        ? result.error.message 
-        : typeof result.error === 'string' 
-        ? result.error 
-        : JSON.stringify(result.error)
+      const errorMessage =
+        result.error instanceof Error
+          ? result.error.message
+          : typeof result.error === 'string'
+            ? result.error
+            : JSON.stringify(result.error)
       throw new Error(`API error: ${errorMessage}`)
     }
 
@@ -129,14 +130,12 @@ export class ServarrManager {
       implementation: indexer.implementation,
       implementationName: indexer.implementationName,
       configContract: indexer.configContract,
-      appProfileId: indexer.appProfileId || 1,
       infoLink: indexer.infoLink ?? null,
       tags: indexer.tags,
       fields: indexer.fields?.map((field) => ({
         name: field.name,
         value: field.value as string | number | boolean | number[],
       })),
-      enable: indexer.enable,
       enableRss: indexer.enable,
       enableAutomaticSearch: indexer.enable,
       enableInteractiveSearch: indexer.enable,
@@ -165,7 +164,6 @@ export class ServarrManager {
       implementation: application.implementation,
       implementationName: application.implementationName,
       configContract: application.configContract,
-      appProfileId: application.appProfileId || 1, // Fallback to 1 if undefined
       fields: application.fields?.map((field) => ({
         name: field.name,
         value: field.value as string | number | boolean | number[],
@@ -174,14 +172,11 @@ export class ServarrManager {
       syncLevel: application.syncLevel,
       tags: application.tags,
     }
-    
+
     logger.info('Mapping application for Prowlarr', {
       name: application.name,
-      hasAppProfileId: !!application.appProfileId,
-      originalAppProfileId: application.appProfileId,
-      finalAppProfileId: mapped.appProfileId,
     })
-    
+
     return mapped
   }
 
@@ -344,13 +339,6 @@ export class ServarrManager {
       logger.debug('Could not read existing config.xml', { error })
     }
     return null
-  }
-
-  private generateApiKey(): string {
-    // Generate a 32-character hexadecimal API key
-    const bytes = new Uint8Array(16)
-    crypto.getRandomValues(bytes)
-    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
   }
 
   private createClient(apiKey: string): ServarrClientType {
@@ -518,7 +506,7 @@ export class ServarrManager {
 
   private async writeConfigXml(servarrConfigApiKey?: string): Promise<boolean> {
     // Priority for API key:
-    // 1. API key from loaded servarr configuration (JSON file)  
+    // 1. API key from loaded servarr configuration (JSON file)
     // 2. API key from servarr config (environment)
     let selectedApiKey: string
 
@@ -543,7 +531,7 @@ export class ServarrManager {
     // Check if existing config.xml has the same API key
     const existingApiKey = await this.readExistingApiKey()
     const isApiKeyChanged = !existingApiKey || existingApiKey !== this.apiKey
-    
+
     if (isApiKeyChanged) {
       logger.info('API key changed or missing in config.xml, will update', {
         hadExisting: !!existingApiKey,
@@ -795,7 +783,6 @@ export class ServarrManager {
       throw error
     }
   }
-
 
   async createInitialUserInInitMode(): Promise<void> {
     logger.info('Creating initial admin user in init mode...', {
@@ -1202,17 +1189,11 @@ export class ServarrManager {
       }
 
       const tsarrIndexer = this.mapToTsarrIndexer(indexer)
-      // Force appProfileId for Prowlarr indexers
-      if (!tsarrIndexer.appProfileId) {
-        tsarrIndexer.appProfileId = 1
-      }
-      
       logger.info('About to add indexer to Prowlarr', {
         name: indexer.name,
-        appProfileId: tsarrIndexer.appProfileId,
-        indexerData: JSON.stringify(tsarrIndexer, null, 2)
+        indexerData: JSON.stringify(tsarrIndexer, null, 2),
       })
-      
+
       const result = await this.client.addIndexer(tsarrIndexer)
       this.handleTsarrResponse(result) // This will throw if there's an error
 
@@ -1592,23 +1573,18 @@ export class ServarrManager {
       })
 
       const mappedApp = this.mapToTsarrApplication(application)
-      // Force appProfileId for Prowlarr applications
-      if (!mappedApp.appProfileId) {
-        mappedApp.appProfileId = 1
-      }
-      
+
       logger.info('Calling tsarr addApplication', {
         appName: mappedApp.name,
         implementation: mappedApp.implementation,
         configContract: mappedApp.configContract,
-        appProfileId: mappedApp.appProfileId,
         fieldsCount: Array.isArray(mappedApp.fields) ? mappedApp.fields.length : 0,
         enable: mappedApp.enable,
         syncLevel: mappedApp.syncLevel,
         tags: mappedApp.tags,
         fullMappedApp: mappedApp,
       })
-      
+
       const result = await this.client.addApplication(mappedApp)
 
       logger.info('Tsarr addApplication result', {
@@ -1617,7 +1593,8 @@ export class ServarrManager {
         hasError: !!result?.error,
         error: result?.error,
         errorType: typeof result?.error,
-        errorKeys: result?.error && typeof result?.error === 'object' ? Object.keys(result.error) : [],
+        errorKeys:
+          result?.error && typeof result?.error === 'object' ? Object.keys(result.error) : [],
         statusCode: result?.response?.status,
         statusText: result?.response?.statusText,
         responseBody: result?.data,
@@ -1629,11 +1606,12 @@ export class ServarrManager {
       }
 
       if (result.error) {
-        const errorMessage = result.error instanceof Error 
-          ? result.error.message 
-          : typeof result.error === 'string' 
-          ? result.error 
-          : JSON.stringify(result.error)
+        const errorMessage =
+          result.error instanceof Error
+            ? result.error.message
+            : typeof result.error === 'string'
+              ? result.error
+              : JSON.stringify(result.error)
         throw new Error(`Failed to add application: ${errorMessage}`)
       }
 
