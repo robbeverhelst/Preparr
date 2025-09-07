@@ -1,3 +1,10 @@
+## [0.1.1](https://github.com/robbeverhelst/Preparr/compare/v0.1.0...v0.1.1) (2025-09-07)
+
+
+### Bug Fixes
+
+* trigger v0.1.0 docker build ([77ccf71](https://github.com/robbeverhelst/Preparr/commit/77ccf71aeeabc0b3861c4ed037ef3671389bade1))
+
 # [0.1.0](https://github.com/robbeverhelst/Preparr/compare/v0.0.0...v0.1.0) (2025-09-07)
 
 
