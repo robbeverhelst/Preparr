@@ -142,6 +142,7 @@ export const ApplicationSchema = z.object({
   implementation: z.string(),
   implementationName: z.string(),
   configContract: z.string(),
+  appProfileId: z.number().optional(),
   fields: z.array(
     z.object({
       name: z.string(),

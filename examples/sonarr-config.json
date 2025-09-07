@@ -1,4 +1,5 @@
 {
+  "apiKey": "2bac5d00dca43258313c734821a15c4c",
   "rootFolders": [
     {
       "path": "/tv",
@@ -27,26 +28,7 @@
       ]
     }
   ],
-  "indexers": [
-    {
-      "name": "Test Indexer",
-      "implementation": "Torznab",
-      "implementationName": "Torznab",
-      "configContract": "TorznabSettings",
-      "fields": [
-        {
-          "name": "baseUrl",
-          "value": "https://test-indexer.example.com/api"
-        },
-        {
-          "name": "apiKey",
-          "value": "test-api-key-123"
-        }
-      ],
-      "enable": true,
-      "priority": 25
-    }
-  ],
+  "indexers": [],
   "downloadClients": [
     {
       "name": "qBittorrent",
@@ -56,8 +38,8 @@
       "fields": [
         { "name": "host", "value": "qbittorrent" },
         { "name": "port", "value": 8080 },
-        { "name": "username", "value": "newqbuser" },
-        { "name": "password", "value": "newqbpass789" },
+        { "name": "username", "value": "admin" },
+        { "name": "password", "value": "adminpass" },
         { "name": "category", "value": "tv" },
         { "name": "priority", "value": 0 },
         { "name": "removeCompletedDownloads", "value": false },
@@ -69,8 +51,8 @@
   ],
   "qbittorrent": {
     "webui": {
-      "username": "newqbuser",
-      "password": "newqbpass789"
+      "username": "admin",
+      "password": "adminpass"
     },
     "downloads": {
       "defaultPath": "/downloads",

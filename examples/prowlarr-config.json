@@ -1,61 +1,68 @@
 {
+  "apiKey": "c04914c6bfad445a3edc23e5edbca4d1",
   "rootFolders": [],
   "qualityProfiles": [],
   "indexers": [
     {
-      "name": "AnimeTosho",
-      "implementation": "Torznab",
-      "implementationName": "Torznab",
-      "configContract": "TorznabSettings",
+      "name": "The Pirate Bay",
+      "implementation": "Cardigann",
+      "implementationName": "Cardigann",
+      "configContract": "CardigannSettings",
+      "definitionName": "thepiratebay",
       "appProfileId": 1,
       "fields": [
         {
+          "name": "definitionFile",
+          "value": "thepiratebay"
+        },
+        {
           "name": "baseUrl",
-          "value": "https://feed.animetosho.org"
+          "value": "https://thepiratebay.org/"
         },
         {
-          "name": "apiKey",
-          "value": ""
-        },
-        {
-          "name": "categories",
-          "value": [5070]
+          "name": "torrentBaseSettings.appMinimumSeeders",
+          "value": 1
         }
       ],
       "enable": true,
       "priority": 25
-    },
+    }
+  ],
+  "downloadClients": [
     {
-      "name": "Nyaa",
-      "implementation": "Torznab",
-      "implementationName": "Torznab",
-      "configContract": "TorznabSettings",
-      "appProfileId": 1,
+      "name": "qBittorrent",
+      "implementation": "QBittorrent",
+      "implementationName": "qBittorrent",
+      "configContract": "QBittorrentSettings",
       "fields": [
         {
-          "name": "baseUrl",
-          "value": "https://nyaa.si"
+          "name": "host",
+          "value": "qbittorrent"
         },
         {
-          "name": "apiKey",
-          "value": ""
+          "name": "port",
+          "value": 8080
         },
         {
-          "name": "categories",
-          "value": [5000, 5070]
+          "name": "username",
+          "value": "admin"
+        },
+        {
+          "name": "password",
+          "value": "adminpass"
         }
       ],
       "enable": true,
-      "priority": 20
+      "priority": 1
     }
   ],
-  "downloadClients": [],
   "applications": [
     {
       "name": "Sonarr",
       "implementation": "Sonarr",
       "implementationName": "Sonarr",
       "configContract": "SonarrSettings",
+      "appProfileId": 1,
       "fields": [
         {
           "name": "prowlarrUrl",
@@ -67,7 +74,7 @@
         },
         {
           "name": "apiKey",
-          "value": "491991348fc9c54da959a7a2f1a164fe"
+          "value": "2bac5d00dca43258313c734821a15c4c"
         }
       ],
       "enable": true,
@@ -76,8 +83,9 @@
     {
       "name": "Radarr",
       "implementation": "Radarr",
-      "implementationName": "Radarr",
+      "implementationName": "Radarr", 
       "configContract": "RadarrSettings",
+      "appProfileId": 1,
       "fields": [
         {
           "name": "prowlarrUrl",
@@ -89,7 +97,7 @@
         },
         {
           "name": "apiKey",
-          "value": "be33294b2592e51e6d27ead2ef0b5263"
+          "value": "97d741a13af015bf750f857a7e097f20"
         }
       ],
       "enable": true,

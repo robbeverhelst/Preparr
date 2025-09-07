@@ -34,11 +34,14 @@ export class ApplicationsStep extends ConfigurationStep {
         implementationName: app.implementationName,
         configContract: app.configContract,
         fields: app.fields
-          .map((field) => ({
+          .map((field: { name: string; value: string | number | boolean | number[] }) => ({
             name: field.name,
             value: field.value as string | number | boolean | number[],
           }))
-          .filter((field) => field.value !== undefined),
+          .filter(
+            (field: { name: string; value: string | number | boolean | number[] }) =>
+              field.value !== undefined,
+          ),
         enable: app.enable,
         syncLevel: app.syncLevel,
         tags: app.tags,

@@ -1,4 +1,5 @@
 {
+  "apiKey": "97d741a13af015bf750f857a7e097f20",
   "rootFolders": [
     {
       "path": "/movies",
@@ -27,26 +28,7 @@
       ]
     }
   ],
-  "indexers": [
-    {
-      "name": "NZBgeek",
-      "implementation": "Newznab",
-      "implementationName": "Newznab",
-      "configContract": "NewznabSettings",
-      "fields": [
-        {
-          "name": "baseUrl",
-          "value": "https://api.nzbgeek.info"
-        },
-        {
-          "name": "apiKey",
-          "value": "test-nzbgeek-api-key-123"
-        }
-      ],
-      "enable": true,
-      "priority": 25
-    }
-  ],
+  "indexers": [],
   "downloadClients": [
     {
       "name": "qBittorrent",
@@ -64,11 +46,11 @@
         },
         {
           "name": "username",
-          "value": "newqbuser"
+          "value": "admin"
         },
         {
           "name": "password",
-          "value": "newqbpass789"
+          "value": "adminpass"
         },
         {
           "name": "category",
@@ -82,8 +64,8 @@
   "applications": [],
   "qbittorrent": {
     "webui": {
-      "username": "newqbuser",
-      "password": "newqbpass789"
+      "username": "admin",
+      "password": "adminpass"
     }
   }
 }

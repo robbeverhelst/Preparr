@@ -35,6 +35,6 @@
       "@utils/*": ["./src/utils/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/types/**/*"],
   "exclude": ["node_modules", "dist", "tests", "**/*.test.ts", "**/*.spec.ts"]
 }

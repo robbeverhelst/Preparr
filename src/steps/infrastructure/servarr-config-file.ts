@@ -9,12 +9,12 @@ import {
 export class ServarrConfigFileStep extends ConfigurationStep {
   readonly name = 'servarr-config-file'
   readonly description = 'Write Servarr configuration file (config.xml)'
-  readonly dependencies: string[] = ['postgres-users']
+  readonly dependencies: string[] = ['postgres-users', 'config-loading']
   readonly mode: 'init' | 'sidecar' | 'both' = 'init'
 
   validatePrerequisites(context: StepContext): boolean {
-    // Only run in init mode
-    return context.executionMode === 'init'
+    // Only run in init mode and only for Servarr applications (not qBittorrent)
+    return context.executionMode === 'init' && context.servarrType !== 'qbittorrent'
   }
 
   async readCurrentState(
@@ -22,10 +22,12 @@ export class ServarrConfigFileStep extends ConfigurationStep {
   ): Promise<{ configExists: boolean; hasApiKey: boolean }> {
     try {
       // Check if config.xml exists and has an API key
-      await context.servarrClient.writeConfigurationOnly()
+      // Get API key from loaded configuration if available
+      const apiKey = context.servarrConfig?.apiKey
+      await context.servarrClient.writeConfigurationOnly(apiKey)
       return {
         configExists: true,
-        hasApiKey: !!context.apiKey,
+        hasApiKey: !!apiKey || !!context.apiKey,
       }
     } catch (error) {
       context.logger.debug('Failed to check Servarr config file', { error })
@@ -83,8 +85,9 @@ export class ServarrConfigFileStep extends ConfigurationStep {
     for (const change of changes) {
       try {
         if (change.type === 'create' || change.type === 'update') {
-          // Write the configuration file
-          await context.servarrClient.writeConfigurationOnly()
+          // Write the configuration file with API key from loaded config
+          const apiKey = context.servarrConfig?.apiKey
+          await context.servarrClient.writeConfigurationOnly(apiKey)
 
           results.push({
             ...change,
@@ -93,7 +96,7 @@ export class ServarrConfigFileStep extends ConfigurationStep {
 
           context.logger.info('Servarr configuration file written successfully', {
             servarrType: context.servarrType,
-            hasApiKey: !!context.apiKey,
+            hasApiKey: !!apiKey || !!context.apiKey,
           })
         }
       } catch (error) {
@@ -118,7 +121,8 @@ export class ServarrConfigFileStep extends ConfigurationStep {
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
       // Try to read the config file to verify it exists and is valid
-      await context.servarrClient.writeConfigurationOnly()
+      const apiKey = context.servarrConfig?.apiKey
+      await context.servarrClient.writeConfigurationOnly(apiKey)
       // If writeConfigurationOnly doesn't throw and returns a boolean, the config is valid
       return true
     } catch (error) {

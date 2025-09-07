@@ -1,5 +1,6 @@
-import { loadEnvironmentConfig } from '@/config/env'
-import type { EnvironmentConfig, ServarrApplicationConfig } from '@/config/schema'
+import { type EnvironmentConfig, loadConfigurationSafe } from '@/config'
+import { getEnvironmentInfo } from '@/config/loaders/env'
+import type { ServarrApplicationConfig } from '@/config/schema'
 import { ContextBuilder } from '@/core/context'
 import { ConfigurationEngine } from '@/core/engine'
 import { HealthServer } from '@/health/server'
@@ -9,49 +10,15 @@ import { ServarrManager } from '@/servarr/client'
 import { logger } from '@/utils/logger'
 import { file } from 'bun'
 
-interface CliArgs {
-  init: boolean
-  help: boolean
-}
-
-function parseArgs(): CliArgs {
-  const args = process.argv.slice(2)
-
-  return {
-    init: args.includes('--init'),
-    help: args.includes('--help') || args.includes('-h'),
-  }
-}
-
-function showHelp(): void {
-  console.log(`
-PrepArr - Servarr Automation Tool (New Architecture)
-
-Usage: preparr [OPTIONS]
-
-Options:
-  --init     Run in init mode (setup databases, config, then exit)
-  --help, -h Show this help message
-
-Modes:
-  Default    Run in sidecar mode (full initialization + ongoing reconciliation)
-  --init     Run initialization tasks only (databases, config, users) then exit
-
-New Architecture Features:
-  - Step-based configuration execution
-  - Improved error handling and recovery
-  - Better observability and logging
-  - Consistent execution patterns
-`)
-}
+// CLI parsing is now handled by the configuration system
 
 class PrepArrNew {
   private config: EnvironmentConfig
   private health: HealthServer
   private engine: ConfigurationEngine | null = null
 
-  constructor() {
-    this.config = loadEnvironmentConfig()
+  constructor(config: EnvironmentConfig) {
+    this.config = config
     this.health = new HealthServer(this.config.health.port)
   }
 
@@ -128,7 +95,7 @@ class PrepArrNew {
 
       // Build execution context
       const servarrClient = new ServarrManager(this.config.servarr)
-      await servarrClient.initialize()
+      await servarrClient.initializeSidecarMode()
 
       const context = new ContextBuilder()
         .setConfig(this.config)
@@ -269,14 +236,14 @@ class PrepArrNew {
 }
 
 async function main() {
-  const args = parseArgs()
+  // Load configuration from all sources
+  const configResult = await loadConfigurationSafe()
+  const { config, metadata } = configResult
 
-  if (args.help) {
-    showHelp()
-    process.exit(0)
-  }
+  // Display configuration info
+  getEnvironmentInfo()
 
-  const preparr = new PrepArrNew()
+  const preparr = new PrepArrNew(config)
 
   process.on('SIGTERM', () => {
     logger.info('Received SIGTERM, shutting down gracefully...')
@@ -290,7 +257,7 @@ async function main() {
     process.exit(0)
   })
 
-  if (args.init) {
+  if (metadata.cliArgs.init) {
     logger.info('Running in init mode (new architecture)...')
     await preparr.initializeInfrastructure()
     logger.info('Init mode completed successfully, exiting...')
