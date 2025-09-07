@@ -7,13 +7,13 @@
       "@semantic-release/commit-analyzer",
       {
         "releaseRules": [
-          {"type": "feat", "release": "minor"},
-          {"type": "fix", "release": "patch"},
-          {"type": "docs", "scope": "README", "release": "patch"},
-          {"type": "refactor", "release": "patch"},
-          {"type": "style", "release": false},
-          {"type": "chore", "release": false},
-          {"type": "test", "release": false}
+          { "type": "feat", "release": "minor" },
+          { "type": "fix", "release": "patch" },
+          { "type": "docs", "scope": "README", "release": "patch" },
+          { "type": "refactor", "release": "patch" },
+          { "type": "style", "release": false },
+          { "type": "chore", "release": false },
+          { "type": "test", "release": false }
         ]
       }
     ],
