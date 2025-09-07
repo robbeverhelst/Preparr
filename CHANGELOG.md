@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/robbeverhelst/Preparr/compare/v1.1.0...v1.2.0) (2025-09-07)
+
+
+### Features
+
+* enhance health monitoring and reconciliation features with auto-recovery, retry logic, and comprehensive health checks in README and core components ([425295a](https://github.com/robbeverhelst/Preparr/commit/425295a72da22148bfe538c4c33a52f9fdeea34b))
+
 # [1.1.0](https://github.com/robbeverhelst/Preparr/compare/v1.0.0...v1.1.0) (2025-09-07)
 
 
