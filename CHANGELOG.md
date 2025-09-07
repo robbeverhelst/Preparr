@@ -1,3 +1,10 @@
+## [0.1.7](https://github.com/robbeverhelst/Preparr/compare/v0.1.6...v0.1.7) (2025-09-07)
+
+
+### Bug Fixes
+
+* test complete automated release and Docker workflow ([145efd7](https://github.com/robbeverhelst/Preparr/commit/145efd7b2f188be70b8a52a0810dc6a31e7ee68a))
+
 ## [0.1.6](https://github.com/robbeverhelst/Preparr/compare/v0.1.5...v0.1.6) (2025-09-07)
 
 
