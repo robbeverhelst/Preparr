@@ -1,3 +1,10 @@
+## [0.1.2](https://github.com/robbeverhelst/Preparr/compare/v0.1.1...v0.1.2) (2025-09-07)
+
+
+### Bug Fixes
+
+* test patch release and Docker synchronization ([44a4463](https://github.com/robbeverhelst/Preparr/commit/44a4463643e16eb31f0014fa4deead2e83190104))
+
 ## [0.1.1](https://github.com/robbeverhelst/Preparr/compare/v0.1.0...v0.1.1) (2025-09-07)
 
 
