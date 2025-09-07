@@ -1,502 +1,245 @@
 # PrepArr
 
-[![semantic-release](https://img.shields.io/badge/semantic--release-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+[![CI](https://github.com/robbeverhelst/Preparr/workflows/CI/badge.svg)](https://github.com/robbeverhelst/Preparr/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/robbeverhelst/Preparr)](https://github.com/robbeverhelst/Preparr/releases/latest)
 [![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> A lightweight Docker sidecar for complete Servarr initialization and automation
+> **Infrastructure as Code for Servarr** - Complete automation from fresh PostgreSQL to fully configured Servarr stacks
 
-## 🎯 Overview
+PrepArr eliminates manual Servarr setup by managing your entire media stack configuration as code. Deploy once, configure through JSON files, never touch a web UI again.
 
-PrepArr is a Docker sidecar container that solves the "manual setup problem" with Servarr applications. It fully automates Servarr instance initialization, eliminating the need for manual configuration steps. While designed with Kubernetes in mind, PrepArr works in any Docker environment.
+## 🎯 What PrepArr Does
 
-### The Problem PrepArr Solves
+**Before PrepArr:**
+- Manual database setup for each Servarr app
+- Clicking through setup wizards for API keys, users, settings
+- Configuring download clients, indexers, quality profiles by hand
+- No way to version control or replicate configurations
+- Config drift when containers restart
 
-Fresh Servarr instances require extensive manual setup:
-- 🔑 **Manual API key generation** - Extract API keys from config files after first startup
-- 👤 **Initial user creation** - Set up authentication through the web UI
-- 🔗 **Service linking** - Manually connect to qBittorrent, Prowlarr, NZBGet, etc.
-- ⚙️ **Profile configuration** - Create quality profiles, root folders, indexers
-- 🎛️ **Settings management** - Configure download clients, metadata providers
+**After PrepArr:**
+- Automated PostgreSQL database initialization
+- Generated config.xml with API keys and database connections
+- Complete configuration management through JSON files
+- GitOps-ready: version control your entire media stack
+- Continuous reconciliation keeps everything in sync
 
-### PrepArr's Solution
+**⚠️ Requirements:** PostgreSQL backend only (SQLite not supported)
 
-PrepArr "prepares" your Servarr instances from config files to fully working systems:
-- **Zero manual steps** - Complete automation from deployment to ready-to-use
-- **Stateless** - No persistent configuration files needed
-- **Reproducible** - Identical setups across environments
-- **GitOps-ready** - Configuration stored in version control
-- **Environment migration** - Easy dev → staging → prod deployments
+## 🏗️ Architecture
 
-## ✨ Features
+PrepArr uses a **three-container pattern** for each Servarr application:
 
-### Core Automation
-- 🚀 **Complete Automation** - From deployment to fully configured Servarr instance
-- 🔑 **API Key Management** - Reads API keys from configuration files
-- 👤 **User Setup** - Creates initial admin users and authentication  
-- 🗄️ **Database Setup** - PostgreSQL initialization with users, roles, and permissions
-- 🔧 **Full Configuration** - Quality profiles, root folders, indexers, download clients
+```mermaid
+graph LR
+    A[Init Container] -->|prepares| B[Shared Volume]
+    B -->|mounts| C[Servarr App]
+    B -->|watches| D[Sidecar Container]
+    E[Config Files] -->|loads| A
+    E -->|monitors| D
+```
 
-### Service Integration  
-- 🔗 **qBittorrent** - Automatic connection and category configuration
-- 🕷️ **Prowlarr** - Indexer and application synchronization  
-- 📺 **Multi-App Support** - Sonarr, Radarr, Lidarr, Readarr, Prowlarr
-
-### Advanced Features ⭐ NEW
-- 🔄 **Continuous Reconciliation** - Automated drift detection and correction (60s interval)
-- 📊 **Configuration Drift Detection** - Real-time file monitoring with automatic recovery
-- 🩺 **Comprehensive Health Checks** - Kubernetes-ready liveness/readiness probes
-- 🔄 **Retry Logic** - Built-in error handling with exponential backoff
-- 📈 **Prometheus Metrics** - Health status, reconciliation counts, and uptime metrics
-- 🌐 **Health Endpoints** - Full observability with `/health`, `/metrics`, `/reconciliation/status`
-- ⚡ **Auto-Recovery** - Intelligent failure detection and automatic healing
-
-### Production Ready
-- 📦 **Lightweight** - Docker image < 100MB  
-- 🔒 **Secure** - Credentials via environment variables (Docker Secrets, K8s Secrets, etc.)
-- ⚡ **High Performance** - Built on Bun runtime for maximum speed
-- 🛡️ **Battle-Tested** - Comprehensive error handling and graceful degradation
+1. **Init Container** - Runs once, sets up databases and config.xml, then exits
+2. **Servarr App** - Standard Linuxserver container using prepared config
+3. **Sidecar Container** - Continuously applies your JSON configuration
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- Docker or Kubernetes environment
-- PostgreSQL database (14+)
-- Servarr application (Radarr/Sonarr/etc.)
-
-### Kubernetes Deployment
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sonarr
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: sonarr
-  template:
-    metadata:
-      labels:
-        app: sonarr
-    spec:
-      containers:
-        # Main Sonarr container
-        - name: sonarr
-          image: linuxserver/sonarr:latest
-          ports:
-            - containerPort: 8989
-          env:
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
-
-        # PrepArr sidecar
-        - name: preparr
-          image: ghcr.io/robbeverhelst/preparr:latest
-          env:
-            - name: SERVARR_URL
-              value: "http://localhost:8989"
-            - name: SERVARR_TYPE
-              value: "sonarr"
-            - name: POSTGRES_HOST
-              value: postgres.default.svc.cluster.local
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secrets
-                  key: username
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secrets
-                  key: password
-          volumeMounts:
-            - name: config
-              mountPath: /config
-          ports:
-            - containerPort: 9000
-              name: health
-          livenessProbe:
-            httpGet:
-              path: /health/live
-              port: 9000
-            initialDelaySeconds: 10
-            periodSeconds: 30
-          readinessProbe:
-            httpGet:
-              path: /health/ready
-              port: 9000  
-            initialDelaySeconds: 5
-            periodSeconds: 10
-
-      volumes:
-        - name: config
-          configMap:
-            name: sonarr-config
-```
-
-### Configuration
-
-Create a ConfigMap with your desired Servarr configuration:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: sonarr-config
-data:
-  config.yaml: |
-    apiVersion: preparr.io/v1
-    kind: ServarrConfig
-    metadata:
-      name: sonarr-config
-    spec:
-      postgres:
-        databases:
-          - name: sonarr_main
-          - name: sonarr_log
-        users:
-          - name: sonarr
-            password: ${SONARR_DB_PASSWORD}
-            databases: [sonarr_main, sonarr_log]
-      
-      servarr:
-        profiles:
-          - name: "HD-1080p"
-            cutoff: HDTV-1080p
-            items:
-              - quality: HDTV-1080p
-                allowed: true
-              - quality: WEBDL-1080p
-                allowed: true
-        
-        rootFolders:
-          - path: /tv
-            
-        indexers:
-          - name: "NZBgeek"
-            type: newznab
-            url: https://api.nzbgeek.info
-            apiKey: ${NZBGEEK_API_KEY}
-        
-        downloadClients:
-          - name: "qBittorrent"
-            type: qbittorrent
-            host: qbittorrent.default.svc.cluster.local
-            port: 8080
-            username: ${QBITTORRENT_USER}
-            password: ${QBITTORRENT_PASSWORD}
-            
-        prowlarr:
-          url: http://prowlarr.default.svc.cluster.local:9696
-          apiKey: ${PROWLARR_API_KEY}
-```
-
-### Docker Compose Deployment
-
-PrepArr also works great with Docker Compose:
-
+### Complete Sonarr Stack
 ```yaml
 version: '3.8'
 services:
   postgres:
-    image: postgres:15
+    image: postgres:16-alpine
     environment:
-      POSTGRES_DB: servarr
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: servarr
 
-  sonarr:
-    image: linuxserver/sonarr:latest
-    environment:
-      PUID: 1000
-      PGID: 1000
-    volumes:
-      - sonarr_config:/config
-      - ${MEDIA_PATH}:/tv
-    ports:
-      - "8989:8989"
-
-  preparr:
+  # 1. Init Container - Setup databases and config.xml
+  sonarr-init:
     image: ghcr.io/robbeverhelst/preparr:latest
+    command: ["bun", "run", "dist/index.js", "--init"]
     environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: postgres123
       SERVARR_URL: http://sonarr:8989
       SERVARR_TYPE: sonarr
-      SERVARR_ADMIN_USER: admin
-      SERVARR_ADMIN_PASSWORD: ${SERVARR_ADMIN_PASSWORD}
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: servarr
-      QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: ${QBITTORRENT_USER}
-      QBITTORRENT_PASSWORD: ${QBITTORRENT_PASSWORD}
+      SERVARR_ADMIN_PASSWORD: adminpass
+      CONFIG_PATH: /config/sonarr-config.json
     volumes:
-      - ./config.yaml:/config/config.yaml:ro
+      - sonarr_config:/config
+      - ./sonarr-config.json:/config/sonarr-config.json:ro
+    depends_on: [postgres]
+
+  # 2. Servarr App - Standard container
+  sonarr:
+    image: linuxserver/sonarr:latest
+    ports: ["8989:8989"]
+    volumes:
+      - sonarr_config:/config
+      - ./tv:/tv
+      - ./downloads:/downloads
     depends_on:
-      - postgres
-      - sonarr
+      sonarr-init:
+        condition: service_completed_successfully
+
+  # 3. Sidecar - Continuous configuration management
+  sonarr-sidecar:
+    image: ghcr.io/robbeverhelst/preparr:latest
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: postgres123
+      SERVARR_URL: http://sonarr:8989
+      SERVARR_TYPE: sonarr
+      SERVARR_ADMIN_PASSWORD: adminpass
+      CONFIG_PATH: /config/sonarr-config.json
+      CONFIG_WATCH: "true"
+      HEALTH_PORT: 9001
+    ports: ["9001:9001"]
+    volumes:
+      - sonarr_config:/config
+      - ./sonarr-config.json:/config/sonarr-config.json:ro
+    depends_on: [sonarr]
 
 volumes:
-  postgres_data:
   sonarr_config:
 ```
 
-## 📋 Environment Variables
-
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `SERVARR_URL` | URL of Servarr application | - | ✅ |
-| `SERVARR_ADMIN_USER` | Initial admin username | admin | ❌ |
-| `SERVARR_ADMIN_PASSWORD` | Initial admin password | - | ✅ |
-| `SERVARR_TYPE` | Type of Servarr app | auto-detect | ❌ |
-| `POSTGRES_HOST` | PostgreSQL hostname | localhost | ❌ |
-| `POSTGRES_PORT` | PostgreSQL port | 5432 | ❌ |
-| `POSTGRES_USER` | PostgreSQL username | postgres | ❌ |
-| `POSTGRES_PASSWORD` | PostgreSQL password | - | ✅ |
-| `POSTGRES_DB` | PostgreSQL database | servarr | ❌ |
-| `CONFIG_PATH` | Path to config file | /config/config.yaml | ❌ |
-| `CONFIG_WATCH` | Enable config watching | true | ❌ |
-| `CONFIG_RECONCILE_INTERVAL` | Reconciliation interval (seconds) | 60 | ❌ |
-| `LOG_LEVEL` | Logging level | info | ❌ |
-| `LOG_FORMAT` | Log format (json/pretty) | json | ❌ |
-| `HEALTH_PORT` | Health server port | 9000 | ❌ |
-
-## 🩺 Health & Monitoring
-
-PrepArr provides comprehensive health and monitoring endpoints:
-
-### Health Endpoints
-
-| Endpoint | Purpose | K8s Usage |
-|----------|---------|-----------|
-| `/health/live` | Liveness probe | livenessProbe |
-| `/health/ready` | Readiness probe | readinessProbe |
-| `/health/status` | Detailed health info | Monitoring |
-
-### Reconciliation Management
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/reconciliation/status` | GET | View reconciliation state |
-| `/reconciliation/force` | POST | Trigger manual reconciliation |
-
-### Metrics
-
-- **Prometheus Metrics**: Available at `/metrics`
-- **Uptime Tracking**: Service uptime in seconds
-- **Health Status**: Binary healthy/unhealthy metric (1/0)
-- **Reconciliation Counters**: Total cycles and error counts
-
-### Example Health Response
+### Configuration File (`sonarr-config.json`)
+Define your entire Servarr setup as code:
 
 ```json
 {
-  "status": "healthy",
-  "timestamp": "2025-09-07T13:55:43.161Z",  
-  "uptime": 1847,
-  "reconciliation": {
-    "lastReconciliation": "2025-09-07T13:55:35.956Z",
-    "lastConfigHash": "2440049400892806048", 
-    "reconciliationCount": 12,
-    "errors": 0,
-    "status": "active"
-  },
-  "checks": {
-    "server": {
-      "status": "pass",
-      "message": "Health server is running",
-      "lastChecked": "2025-09-07T13:55:43.162Z"
-    },
-    "reconciliation": {
-      "status": "pass", 
-      "message": "Reconciliation manager active",
-      "lastChecked": "2025-09-07T13:55:43.162Z"
+  "apiKey": "2bac5d00dca43258313c734821a15c4c",
+  "rootFolders": [
+    {
+      "path": "/tv",
+      "accessible": true
     }
-  }
+  ],
+  "qualityProfiles": [
+    {
+      "name": "HD - 1080p",
+      "cutoff": 1080,
+      "items": [
+        {
+          "quality": { "id": 1, "name": "HDTV-1080p" },
+          "allowed": true
+        },
+        {
+          "quality": { "id": 2, "name": "WEBDL-1080p" },
+          "allowed": true
+        }
+      ]
+    }
+  ],
+  "downloadClients": [
+    {
+      "name": "qBittorrent",
+      "implementation": "QBittorrent",
+      "implementationName": "qBittorrent",
+      "configContract": "QBittorrentSettings",
+      "fields": [
+        { "name": "host", "value": "qbittorrent" },
+        { "name": "port", "value": 8080 },
+        { "name": "username", "value": "admin" },
+        { "name": "password", "value": "adminpass" },
+        { "name": "category", "value": "tv" }
+      ],
+      "enable": true,
+      "priority": 1
+    }
+  ],
+  "indexers": []
 }
 ```
 
-## 🏗️ Architecture
+## 🎯 Multi-Service Setup
 
-PrepArr follows a simple architecture pattern:
+For complete Prowlarr + Sonarr + Radarr stack, see our [docker-compose.test.yml](docker-compose.test.yml) which includes:
 
-```
-┌─────────────────────────────────────┐
-│      Docker Environment             │
-│   (Compose, K8s Pod, etc.)          │
-│                                     │
-│  ┌─────────────┐  ┌──────────────┐ │
-│  │   Servarr   │  │   PrepArr    │ │
-│  │  (Sonarr)   │◄─┤   Sidecar    │ │
-│  └─────────────┘  └──────┬───────┘ │
-│                          │         │
-└──────────────────────────┼─────────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │  PostgreSQL  │
-                    └──────────────┘
-```
+- **Prowlarr** managing indexers and syncing to Sonarr/Radarr
+- **Sonarr** for TV shows with automatic download client setup  
+- **Radarr** for movies with shared qBittorrent client
+- **qBittorrent** configured automatically by PrepArr
+- **Shared PostgreSQL** database for all services
 
-### Components
+Each service gets its own init + sidecar containers managing separate config files.
 
-1. **Configuration Engine** - Reads, validates, and applies configurations with step-based execution
-2. **Reconciliation Manager** - Continuous monitoring with drift detection and auto-recovery  
-3. **PostgreSQL Manager** - Database initialization with users, roles, and schema management
-4. **Servarr Configurator** - Complete API configuration via Tsarr client library
-5. **Health Server** - Comprehensive health endpoints with Prometheus metrics
-6. **Error Handling** - Intelligent retry logic with exponential backoff and circuit breaking
+## 🔧 How It Works
 
-## 🛠️ Development
+### Init Mode (`--init`)
+1. **Database Setup**: Creates PostgreSQL databases and users
+2. **Config Generation**: Creates config.xml with database credentials and API keys
+3. **API Key Management**: Generates or uses provided API keys
+4. **Initial Configuration**: Applies your JSON config for first boot
+5. **Exits**: Lets the main Servarr container start with prepared config
 
-### Prerequisites
+### Sidecar Mode (default)
+1. **Waits**: For Servarr application to be ready
+2. **Monitors**: JSON configuration files for changes
+3. **Reconciles**: Applies configuration via Servarr APIs
+4. **Health**: Exposes /health and /ready endpoints
+5. **Repeats**: Continuous monitoring and drift correction
 
-- [Bun](https://bun.sh) >= 1.0.0
-- Node.js >= 20.0.0 (for some tooling)
-- Docker (for building images)
+## 🌟 Key Benefits
 
-### Setup
+- **Zero Manual Setup** - Fresh deployments boot directly to configured state
+- **Configuration as Code** - Version control your entire media stack
+- **Truly Stateless** - Eliminates persistent config volumes, Servarr apps become ephemeral
+- **Drift Prevention** - Sidecar ensures config stays as specified
+- **GitOps Ready** - Update configs via git, automatic deployment
+- **Multi-Service** - Coordinate complex Prowlarr + Sonarr + Radarr setups
 
-```bash
-# Clone the repository
-git clone https://github.com/robbeverhelst/preparr.git
-cd preparr
+## 🎯 Supported Services
 
-# Install dependencies
-bun install
+| Service | Init Support | Sidecar Support | Notes |
+|---------|--------------|-----------------|--------|
+| **Sonarr** | ✅ | ✅ | TV shows, full automation |
+| **Radarr** | ✅ | ✅ | Movies, full automation |  
+| **Prowlarr** | ✅ | ✅ | Indexers + app sync |
+| **qBittorrent** | ✅ | ⚠️ | Config file management |
+| **Lidarr** | 🚧 | 🚧 | Coming soon |
+| **Readarr** | 🚧 | 🚧 | Coming soon |
 
-# Run in development mode
-bun run dev
+**Integration Features:**
+- Automatic qBittorrent web UI configuration
+- Prowlarr ↔ Sonarr/Radarr application syncing
+- PostgreSQL database and user management
+- Health monitoring for Kubernetes deployments
 
-# Run tests
-bun test
+## 📦 Deployment Options
 
-# Build for production
-bun run build
-```
+- **Docker Compose** - See examples above and in [examples/](examples/)
+- **Kubernetes** - Init containers + sidecars + ConfigMaps
 
-### Project Structure
+## 🛡️ Production Ready
 
-```
-preparr/
-├── src/
-│   ├── index.ts           # Entry point
-│   ├── config/            # Configuration management
-│   ├── postgres/          # Database initialization
-│   ├── servarr/           # Servarr API client
-│   ├── watcher/           # File watching
-│   └── utils/             # Utilities
-├── tests/                 # Test files
-├── docker/                # Docker files
-└── k8s/                   # Kubernetes examples
-```
+- **Health Checks** - `/health` and `/ready` endpoints for orchestrators
+- **Observability** - Structured JSON logging with correlation IDs  
+- **Configuration Validation** - Zod schema validation prevents bad configs
+- **Error Recovery** - Automatic retry with exponential backoff
+- **Signal Handling** - Graceful shutdown on SIGTERM/SIGINT
+- **Security** - Runs as non-root, secrets via environment variables
 
-## 🧪 Testing
+## 📖 Documentation
 
-```bash
-# Run all tests
-bun test
-
-# Run with coverage
-bun test --coverage
-
-# Watch mode
-bun test --watch
-```
-
-## 🐳 Docker
-
-### Building
-
-```bash
-# Build locally
-docker build -t preparr:local .
-
-# Multi-platform build
-docker buildx build --platform linux/amd64,linux/arm64 -t preparr:local .
-```
-
-### Image Details
-
-- Base: Alpine Linux / Distroless
-- Size: < 100MB
-- User: Non-root (uid 1000)
-- Health check: Built-in
-
-## 📦 Helm Chart
-
-Coming soon! Track progress in [#1](https://github.com/robbeverhelst/preparr/issues/1)
+- **[Complete Setup Guide](docs/setup.md)** - Detailed deployment instructions
+- **[Configuration Reference](docs/configuration.md)** - All configuration options
+- **[Kubernetes Deployment](docs/kubernetes.md)** - K8s manifests and Helm charts
+- **[Health & Monitoring](docs/monitoring.md)** - Health checks and Prometheus metrics
+- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'feat: add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Commit Convention
-
-We use [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` New features
-- `fix:` Bug fixes
-- `docs:` Documentation changes
-- `chore:` Maintenance tasks
-- `test:` Test additions/changes
-- `refactor:` Code refactoring
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for development setup and guidelines.
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Servarr Community](https://wiki.servarr.com/) for the amazing media management applications
-- [Tsarr](https://github.com/robbeverhelst/Tsarr) for the TypeScript Servarr API client
-- All contributors and users of this project
-
-## 🔗 Links
-
-- [Documentation](https://github.com/robbeverhelst/preparr/wiki)
-- [Issue Tracker](https://github.com/robbeverhelst/preparr/issues)
-- [Discussions](https://github.com/robbeverhelst/preparr/discussions)
-- [Changelog](CHANGELOG.md)
-
-## 📊 Implementation Status
-
-### ✅ Completed Features
-- [x] **PostgreSQL initialization** - Complete database, user, and schema setup
-- [x] **Servarr API configuration** - Full automation via Tsarr client  
-- [x] **Configuration watching** - Real-time file monitoring with drift detection
-- [x] **Health endpoints** - Comprehensive health checks and Prometheus metrics
-- [x] **Continuous reconciliation** - Automated drift correction every 60 seconds
-- [x] **Error handling** - Retry logic with exponential backoff and auto-recovery
-- [x] **Unit testing** - Core component test coverage
-- [x] **Production ready** - Linting, type checking, and build validation
-
-### 🚧 In Progress  
-- [ ] **Integration tests** - End-to-end Docker container testing
-- [ ] **Documentation** - Complete API reference and examples
-
-### 📋 Roadmap
-- [ ] **Helm chart** - Kubernetes deployment manifests
-- [ ] **CI/CD pipeline** - Automated testing and releases  
-- [ ] **Multi-instance support** - Manage multiple Servarr instances
-- [ ] **GitOps integration** - Git-based configuration management
-- [ ] **Web UI** - Configuration management interface
-
-> 💡 **Note**: See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for detailed implementation timeline and technical decisions.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-Made with ❤️ for the Servarr community
+**Infrastructure as Code for Servarr** • [Examples →](examples/) • [GitHub Packages →](https://github.com/robbeverhelst/preparr/pkgs/container/preparr)
