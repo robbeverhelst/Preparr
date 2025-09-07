@@ -1,3 +1,10 @@
+## [0.1.3](https://github.com/robbeverhelst/Preparr/compare/v0.1.2...v0.1.3) (2025-09-07)
+
+
+### Bug Fixes
+
+* automatically trigger Docker builds for semantic-release tags ([7d7d25a](https://github.com/robbeverhelst/Preparr/commit/7d7d25ac57e0c91047bd3298786aa71bcc8c339c))
+
 ## [0.1.2](https://github.com/robbeverhelst/Preparr/compare/v0.1.1...v0.1.2) (2025-09-07)
 
 
