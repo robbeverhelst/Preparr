@@ -2,6 +2,7 @@
   "branches": ["main", "master"],
   "tagFormat": "v${version}",
   "preset": "angular",
+  "repositoryUrl": "https://github.com/robbeverhelst/Preparr.git",
   "plugins": [
     [
       "@semantic-release/commit-analyzer",
@@ -9,6 +10,7 @@
         "releaseRules": [
           { "type": "feat", "release": "minor" },
           { "type": "fix", "release": "patch" },
+          { "breaking": true, "release": "minor" },
           { "type": "docs", "scope": "README", "release": "patch" },
           { "type": "refactor", "release": "patch" },
           { "type": "style", "release": false },
