@@ -47,7 +47,7 @@ export class ConfigLoadingStep extends ConfigurationStep {
           context.logger.info('Servarr configuration loaded successfully in readCurrentState', {
             configPath,
             rootFolders: config.rootFolders.length,
-            indexers: config.indexers.length,
+            indexers: config.indexers?.length || 0,
             downloadClients: config.downloadClients.length,
             qualityProfiles: config.qualityProfiles.length,
           })
@@ -113,7 +113,7 @@ export class ConfigLoadingStep extends ConfigurationStep {
             context.logger.info('Servarr configuration loaded successfully', {
               configPath,
               rootFolders: config.rootFolders.length,
-              indexers: config.indexers.length,
+              indexers: config.indexers?.length || 0,
               downloadClients: config.downloadClients.length,
               qualityProfiles: config.qualityProfiles.length,
             })

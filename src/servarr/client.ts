@@ -126,15 +126,13 @@ export class ServarrManager {
   }
 
   private mapToTsarrIndexer(indexer: Indexer): Partial<IndexerResource> {
-    return {
+    const tsarrIndexer: Partial<IndexerResource> = {
       name: indexer.name,
       implementation: indexer.implementation,
       implementationName: indexer.implementationName,
       configContract: indexer.configContract,
       infoLink: indexer.infoLink ?? null,
       tags: indexer.tags,
-      appProfileId: indexer.appProfileId || 1, // Default to 1 if not specified
-      enable: indexer.enable !== false, // Enable by default unless explicitly false
       fields: indexer.fields?.map((field) => ({
         name: field.name,
         value: field.value as string | number | boolean | number[],
@@ -144,6 +142,17 @@ export class ServarrManager {
       enableInteractiveSearch: indexer.enable,
       priority: indexer.priority,
     }
+
+    // Add properties that may not be part of IndexerResource type
+    if (indexer.appProfileId) {
+      // biome-ignore lint/suspicious/noExplicitAny: IndexerResource type may not include appProfileId
+      ;(tsarrIndexer as any).appProfileId = indexer.appProfileId
+    }
+    // Add enable property (may not be part of IndexerResource type)
+    // biome-ignore lint/suspicious/noExplicitAny: IndexerResource type may not include enable
+    ;(tsarrIndexer as any).enable = indexer.enable !== false // Enable by default unless explicitly false
+
+    return tsarrIndexer
   }
 
   private mapToTsarrDownloadClient(client: DownloadClient): Partial<DownloadClientResource> {
