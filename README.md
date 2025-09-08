@@ -113,6 +113,7 @@ Define your entire Servarr setup as code:
 ```json
 {
   "apiKey": "2bac5d00dca43258313c734821a15c4c",
+  "prowlarrSync": true,
   "rootFolders": [
     {
       "path": "/tv",
@@ -151,10 +152,16 @@ Define your entire Servarr setup as code:
       "enable": true,
       "priority": 1
     }
-  ],
-  "indexers": []
+  ]
 }
 ```
+
+#### Configuration Options
+
+**`prowlarrSync`** - Set to `true` to allow Prowlarr to manage indexers automatically via application sync. When enabled, the sidecar skips indexer management to prevent conflicts with Prowlarr's indexer synchronization.
+
+- `true` - Prowlarr manages indexers (recommended for multi-service setups)
+- `false` - Sidecar manages indexers directly via config file (default)
 
 ## 🎯 Multi-Service Setup
 
