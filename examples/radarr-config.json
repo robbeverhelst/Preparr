@@ -1,5 +1,6 @@
 {
   "apiKey": "97d741a13af015bf750f857a7e097f20",
+  "prowlarrSync": true,
   "rootFolders": [
     {
       "path": "/movies",
@@ -28,7 +29,6 @@
       ]
     }
   ],
-  "indexers": [],
   "downloadClients": [
     {
       "name": "qBittorrent",

@@ -1,5 +1,6 @@
 {
   "apiKey": "2bac5d00dca43258313c734821a15c4c",
+  "prowlarrSync": true,
   "rootFolders": [
     {
       "path": "/tv",
@@ -28,7 +29,6 @@
       ]
     }
   ],
-  "indexers": [],
   "downloadClients": [
     {
       "name": "qBittorrent",

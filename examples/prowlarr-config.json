@@ -26,6 +26,30 @@
       ],
       "enable": true,
       "priority": 25
+    },
+    {
+      "name": "AnimeTosho",
+      "implementation": "Cardigann",
+      "implementationName": "Cardigann",
+      "configContract": "CardigannSettings",
+      "definitionName": "animetosho",
+      "appProfileId": 1,
+      "fields": [
+        {
+          "name": "definitionFile",
+          "value": "animetosho"
+        },
+        {
+          "name": "baseUrl",
+          "value": "https://animetosho.org/"
+        },
+        {
+          "name": "torrentBaseSettings.appMinimumSeeders",
+          "value": 1
+        }
+      ],
+      "enable": true,
+      "priority": 25
     }
   ],
   "downloadClients": [

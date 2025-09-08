@@ -15,7 +15,26 @@ export class IndexersStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Check if Servarr is ready and API key is available
-    return context.servarrClient.isReady()
+    if (!context.servarrClient.isReady()) {
+      return false
+    }
+    
+    const config = context.servarrConfig
+    
+    // Skip indexer management if Prowlarr sync is enabled
+    if (config?.prowlarrSync === true) {
+      context.logger.info('Prowlarr sync enabled, skipping indexer management (allowing Prowlarr to manage indexers)')
+      return false
+    }
+    
+    // Skip indexer management if indexers field is not defined or empty in config
+    // This allows Prowlarr to manage indexers via sync instead (fallback for configs without prowlarrSync flag)
+    if (!config || config.indexers === undefined || (Array.isArray(config.indexers) && config.indexers.length === 0)) {
+      context.logger.info('Indexers not defined or empty in config, skipping indexer management (allowing Prowlarr sync)')
+      return false
+    }
+    
+    return true
   }
 
   async readCurrentState(context: StepContext): Promise<Indexer[]> {

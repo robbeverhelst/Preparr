@@ -156,9 +156,10 @@ export const ApplicationSchema = z.object({
 
 export const ServarrApplicationConfigSchema = z.object({
   apiKey: z.string().optional(),
+  prowlarrSync: z.boolean().default(false),
   rootFolders: z.array(RootFolderSchema).default([]),
   qualityProfiles: z.array(QualityProfileSchema).default([]),
-  indexers: z.array(IndexerSchema).default([]),
+  indexers: z.array(IndexerSchema).optional(),
   downloadClients: z.array(DownloadClientSchema).default([]),
   applications: z.array(ApplicationSchema).default([]),
   qbittorrent: QBittorrentConfigSchema,

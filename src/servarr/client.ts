@@ -133,6 +133,8 @@ export class ServarrManager {
       configContract: indexer.configContract,
       infoLink: indexer.infoLink ?? null,
       tags: indexer.tags,
+      appProfileId: indexer.appProfileId || 1, // Default to 1 if not specified
+      enable: indexer.enable !== false, // Enable by default unless explicitly false
       fields: indexer.fields?.map((field) => ({
         name: field.name,
         value: field.value as string | number | boolean | number[],

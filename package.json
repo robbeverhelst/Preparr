@@ -15,9 +15,11 @@
     "format": "biome format --write .",
     "typecheck": "tsc --noEmit",
     "semantic-release": "semantic-release",
-    "docker:reset": "docker compose -f docker-compose.test.yml down -v && docker compose -f docker-compose.full.yml down -v && docker system prune -f",
-    "docker:clean": "docker compose -f docker-compose.test.yml down -v && docker compose -f docker-compose.full.yml down -v",
-    "test:docker": "bun run docker:clean && docker compose -f docker-compose.test.yml up --build"
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:reset": "docker compose down -v && docker system prune -f",
+    "docker:logs": "docker compose logs -f",
+    "test:docker": "bun run docker:reset && docker compose up --build"
   },
   "keywords": [
     "servarr",

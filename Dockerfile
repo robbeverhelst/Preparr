@@ -4,7 +4,7 @@ FROM oven/bun:1-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package.json bun.lockb* ./
+COPY package.json bun.lock ./
 
 # Install dependencies
 RUN bun install --frozen-lockfile --production
@@ -16,27 +16,24 @@ COPY . .
 RUN bun run build
 
 # Runtime stage
-FROM alpine:3.20
+FROM oven/bun:1-alpine
 
 # Install runtime dependencies
 RUN apk add --no-cache \
-    nodejs \
     postgresql-client \
     curl \
     tini
 
-# Create non-root user
-RUN addgroup -g 1000 preparr && \
-    adduser -D -u 1000 -G preparr preparr
+# Use the existing bun user (uid 1000)
 
 WORKDIR /app
 
 # Copy built application and dependencies
-COPY --from=builder --chown=preparr:preparr /app/dist ./dist
-COPY --from=builder --chown=preparr:preparr /app/node_modules ./node_modules
+COPY --from=builder --chown=bun:bun /app/dist ./dist
+COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
 
 # Switch to non-root user
-USER preparr
+USER bun
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
@@ -46,4 +43,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # Start the application
-CMD ["node", "dist/index.js"]
+CMD ["bun", "run", "dist/index.js"]
