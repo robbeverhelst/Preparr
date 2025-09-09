@@ -1,3 +1,10 @@
+## [0.1.9](https://github.com/robbeverhelst/Preparr/compare/v0.1.8...v0.1.9) (2025-09-09)
+
+
+### Bug Fixes
+
+* enhance user management in Servarr by implementing password hashing and duplicate user checks ([8de5542](https://github.com/robbeverhelst/Preparr/commit/8de554287b9ad4ea1bc3d406565c4a0602d703d5))
+
 ## [0.1.8](https://github.com/robbeverhelst/Preparr/compare/v0.1.7...v0.1.8) (2025-09-08)
 
 
