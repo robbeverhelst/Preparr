@@ -9,6 +9,15 @@ import type {
 import { logger } from '@/utils/logger'
 import { withRetry } from '@/utils/retry'
 import { SQL, file, write } from 'bun'
+
+interface DatabaseUser {
+  Id: number
+  Identifier: string
+  Username: string
+  Password: string
+  Salt: string
+  Iterations: number
+}
 import {
   LidarrClient,
   ProwlarrClient,
@@ -745,59 +754,114 @@ export class ServarrManager {
     try {
       const db = this.createDatabaseConnection()
 
-      const existingUsers =
-        await db`SELECT * FROM "Users" WHERE LOWER("Username") = LOWER(${this.config.adminUser})`
+      try {
+        // Get all users from database to check for duplicates
+        const allUsers =
+          (await db`SELECT "Id", "Identifier", "Username", "Password", "Salt", "Iterations" FROM "Users"`) as DatabaseUser[]
 
-      if (existingUsers.length > 0) {
-        logger.info('Admin user already exists', { username: this.config.adminUser })
-        logger.debug('Closing database connection after user check')
-        try {
-          db.close()
-          logger.debug('Database connection closed successfully')
-        } catch (closeError) {
-          logger.warn('Error closing database connection', { closeError })
+        // Check if the desired admin user already exists
+        const existingUser = allUsers.find(
+          (user) => user.Username.toLowerCase() === this.config.adminUser.toLowerCase(),
+        )
+
+        if (!existingUser) {
+          // Create new user
+          const userId = crypto.randomUUID()
+          const salt = crypto.getRandomValues(new Uint8Array(16))
+          const saltBase64 = Buffer.from(salt).toString('base64')
+          const hashedPassword = await this.hashPassword(this.config.adminPassword, salt)
+
+          await db`
+            INSERT INTO "Users" ("Identifier", "Username", "Password", "Salt", "Iterations")
+            VALUES (${userId}, ${this.config.adminUser.toLowerCase()}, ${hashedPassword}, ${saltBase64}, 10000)
+          `
+
+          logger.info('Initial admin user created successfully', {
+            username: this.config.adminUser,
+            userId,
+          })
+        } else {
+          // User exists - check if password needs updating
+          if (
+            await this.checkPasswordChange(
+              this.config.adminPassword,
+              existingUser.Password,
+              existingUser.Salt,
+            )
+          ) {
+            await this.updateUserPassword(db, this.config.adminUser, this.config.adminPassword)
+            logger.info('Admin user password updated successfully', {
+              username: this.config.adminUser,
+            })
+          } else {
+            logger.info('Admin user already exists', { username: this.config.adminUser })
+          }
         }
-        logger.debug('Returning from createInitialUser')
-        return
+
+        // Fix for "Sequence contains more than one element" error:
+        // Ensure only one admin user exists to prevent Prowlarr authentication issues
+        if (allUsers.length > 1) {
+          for (const user of allUsers) {
+            if (user.Username.toLowerCase() !== this.config.adminUser.toLowerCase()) {
+              await db`DELETE FROM "Users" WHERE "Id" = ${user.Id}`
+              logger.info('Duplicate admin user removed', {
+                username: user.Username,
+                reason: 'Preventing multiple user conflicts',
+              })
+            }
+          }
+        }
+      } finally {
+        db.close()
       }
-
-      const userId = crypto.randomUUID()
-      const salt = crypto.getRandomValues(new Uint8Array(16))
-      const saltBase64 = Buffer.from(salt).toString('base64')
-
-      const encoder = new TextEncoder()
-      const passwordBytes = encoder.encode(this.config.adminPassword)
-      const key = await crypto.subtle.importKey('raw', passwordBytes, 'PBKDF2', false, [
-        'deriveBits',
-      ])
-      const hashBuffer = await crypto.subtle.deriveBits(
-        {
-          name: 'PBKDF2',
-          salt: salt,
-          iterations: 10000,
-          hash: 'SHA-512',
-        },
-        key,
-        256,
-      )
-
-      const hashedPassword = Buffer.from(hashBuffer).toString('base64')
-
-      await db`
-        INSERT INTO "Users" ("Identifier", "Username", "Password", "Salt", "Iterations")
-        VALUES (${userId}, ${this.config.adminUser.toLowerCase()}, ${hashedPassword}, ${saltBase64}, 10000)
-      `
-
-      db.close()
-
-      logger.info('Initial admin user created successfully', {
-        username: this.config.adminUser,
-        userId,
-      })
     } catch (error) {
       logger.error('Failed to create initial user', { error })
       throw error
     }
+  }
+
+  private async hashPassword(password: string, saltArray: Uint8Array): Promise<string> {
+    const encoder = new TextEncoder()
+    const passwordBytes = encoder.encode(password)
+    const key = await crypto.subtle.importKey('raw', passwordBytes, 'PBKDF2', false, ['deriveBits'])
+    const hashBuffer = await crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt: saltArray,
+        iterations: 10000,
+        hash: 'SHA-512',
+      },
+      key,
+      256,
+    )
+    return Buffer.from(hashBuffer).toString('base64')
+  }
+
+  private async checkPasswordChange(
+    newPassword: string,
+    currentHash: string,
+    currentSalt: string,
+  ): Promise<boolean> {
+    try {
+      const saltBuffer = Buffer.from(currentSalt, 'base64')
+      const newHash = await this.hashPassword(newPassword, saltBuffer)
+      return newHash !== currentHash
+    } catch (_error) {
+      // If comparison fails, assume password needs updating for safety
+      return true
+    }
+  }
+
+  private async updateUserPassword(db: SQL, username: string, password: string): Promise<void> {
+    const salt = crypto.getRandomValues(new Uint8Array(16))
+    const saltBase64 = Buffer.from(salt).toString('base64')
+    const hashedPassword = await this.hashPassword(password, salt)
+
+    await db`
+      UPDATE "Users" 
+      SET "Password" = ${hashedPassword}, "Salt" = ${saltBase64}, "Iterations" = 10000
+      WHERE LOWER("Username") = LOWER(${username})
+    `
   }
 
   async createInitialUserInInitMode(): Promise<void> {

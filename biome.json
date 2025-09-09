@@ -60,7 +60,7 @@
         "useHookAtTopLevel": "error"
       },
       "style": {
-        "noDefaultExport": "warn",
+        "noDefaultExport": "error",
         "noNamespace": "error",
         "noParameterAssign": "error",
         "noVar": "error",
@@ -86,7 +86,7 @@
         "noDuplicateObjectKeys": "error",
         "noDuplicateParameters": "error",
         "noEmptyBlockStatements": "error",
-        "noExplicitAny": "warn",
+        "noExplicitAny": "error",
         "noExtraNonNullAssertion": "error",
         "noFallthroughSwitchClause": "error",
         "noFunctionAssign": "error",
