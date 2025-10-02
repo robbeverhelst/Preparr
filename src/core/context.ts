@@ -1,4 +1,4 @@
-import type { EnvironmentConfig, ServarrApplicationConfig } from '@/config/schema'
+import type { Config } from '@/config/schema'
 import type { PostgresClient } from '@/postgres/client'
 import type { QBittorrentManager } from '@/qbittorrent/client'
 import type { ServarrManager } from '@/servarr/client'
@@ -9,7 +9,6 @@ export interface ExecutionContext extends StepContext {
   executionMode: 'init' | 'sidecar'
   startTime: Date
   stepResults: Map<string, import('./step').StepResult>
-  servarrConfig?: ServarrApplicationConfig
   configPath?: string
   configWatch?: boolean
 }
@@ -17,7 +16,7 @@ export interface ExecutionContext extends StepContext {
 export class ContextBuilder {
   private context: Partial<ExecutionContext> = {}
 
-  setConfig(config: EnvironmentConfig): this {
+  setConfig(config: Config): this {
     this.context.config = config
     return this
   }
@@ -52,10 +51,7 @@ export class ContextBuilder {
     return this
   }
 
-  setServarrConfig(config: ServarrApplicationConfig): this {
-    this.context.servarrConfig = config
-    return this
-  }
+  // Unified config includes app desired-state; no separate setter required
 
   setConfigPath(path: string): this {
     this.context.configPath = path

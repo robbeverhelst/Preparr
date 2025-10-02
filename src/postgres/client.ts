@@ -102,7 +102,6 @@ export class PostgresClient {
       throw new Error('Admin database connection not established')
     }
 
-    // Check if database already exists first
     const exists = await this.databaseExists(dbName)
     if (exists) {
       logger.debug('Database already exists', { database: dbName })
@@ -148,11 +147,9 @@ export class PostgresClient {
       throw new Error('Admin database connection not established')
     }
 
-    // Check if user already exists first
     const exists = await this.userExists(username)
     if (exists) {
       logger.debug('User already exists', { username })
-      // Update password if user exists
       try {
         await this.adminDb?.unsafe(`ALTER USER ${username} WITH ENCRYPTED PASSWORD '${password}'`)
         logger.info('User password updated', { username })
@@ -165,7 +162,6 @@ export class PostgresClient {
     try {
       await this.withRetry(
         async () => {
-          // Create user with encrypted password
           await this.adminDb?.unsafe(
             `CREATE USER ${username} WITH ENCRYPTED PASSWORD '${password}'`,
           )
@@ -208,16 +204,9 @@ export class PostgresClient {
     try {
       await this.withRetry(
         async () => {
-          // Grant all privileges on database
           await this.adminDb?.unsafe(`GRANT ALL PRIVILEGES ON DATABASE ${database} TO ${username}`)
-
-          // Connect to the specific database to grant schema permissions
           const dbConnection = new SQL(this.getConnectionString(database))
-
-          // Grant permissions on schema
           await dbConnection.unsafe(`GRANT ALL ON SCHEMA public TO ${username}`)
-
-          // Grant permissions on all tables, sequences, and functions
           await dbConnection.unsafe(
             `GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${username}`,
           )
@@ -227,8 +216,6 @@ export class PostgresClient {
           await dbConnection.unsafe(
             `GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO ${username}`,
           )
-
-          // Set default privileges for future objects
           await dbConnection.unsafe(
             `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${username}`,
           )

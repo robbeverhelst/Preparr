@@ -13,11 +13,7 @@ export class ServarrConnectivityStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    // Skip connectivity check in init mode - Servarr won't be running yet
-    if (context.executionMode === 'init') {
-      return false
-    }
-    // Only run in sidecar mode when Servarr service is expected to be running
+    if (context.executionMode === 'init') return false
     return context.executionMode === 'sidecar'
   }
 
@@ -102,7 +98,6 @@ export class ServarrConnectivityStep extends ConfigurationStep {
             errors.push(new Error('Failed to establish Servarr connection'))
           }
         } else if (change.type === 'update') {
-          // Type mismatch - this might be a configuration issue
           warnings.push(
             new Warning(
               `Servarr type mismatch: expected ${change.details?.to}, got ${change.details?.from}`,

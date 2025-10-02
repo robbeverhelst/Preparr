@@ -12,6 +12,8 @@
     "test:watch": "bun test --watch",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
+    "lint:tf": "tflint --init && tflint --recursive",
+    "lint:tf:check": "tflint --recursive",
     "format": "biome format --write .",
     "typecheck": "tsc --noEmit",
     "ci": "bun run lint && bun run typecheck && bun run build && bun run test",
@@ -20,7 +22,10 @@
     "docker:down": "docker compose down",
     "docker:reset": "docker compose down -v && docker system prune -f",
     "docker:logs": "docker compose logs -f",
-    "test:docker": "bun run docker:reset && docker compose up --build"
+    "test:docker": "bun run docker:reset && docker compose up --build",
+    "k8s:deploy": "chmod +x k8s/deploy.sh && k8s/deploy.sh",
+    "k8s:cleanup": "chmod +x k8s/cleanup.sh && k8s/cleanup.sh",
+    "k8s:test": "bun run k8s:cleanup && bun run k8s:deploy"
   },
   "keywords": [
     "servarr",

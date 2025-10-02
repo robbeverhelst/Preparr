@@ -1,11 +1,11 @@
 import { env } from 'bun'
 import { type EnvKey, envMapping } from '../defaults'
-import type { EnvironmentConfig } from '../schema'
+import type { Config } from '../schema'
 
 /**
  * Load configuration from environment variables
  */
-export function loadEnvironmentConfig(): Partial<EnvironmentConfig> {
+export function loadEnvironmentConfig(): Partial<Config> {
   const config: Record<string, unknown> = {}
 
   // Process each environment variable mapping
@@ -53,6 +53,16 @@ function convertEnvValue(value: string): unknown {
   // Handle empty strings
   if (value === '') {
     return undefined
+  }
+
+  // JSON objects/arrays
+  const first = value.trim()[0]
+  if (first === '{' || first === '[') {
+    try {
+      return JSON.parse(value)
+    } catch {
+      // fall through to other parsing
+    }
   }
 
   // Boolean values

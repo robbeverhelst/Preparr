@@ -5,7 +5,7 @@ import {
   mergeConfigs,
   validateRequiredFields,
 } from './merger'
-import type { EnvironmentConfig } from './schema'
+import type { Config } from './schema'
 
 describe('mergeConfigs', () => {
   test('merges empty configs', () => {
@@ -270,7 +270,7 @@ describe('cleanConfig', () => {
 
 describe('validateRequiredFields', () => {
   test('validates all required fields present', () => {
-    const config: Partial<EnvironmentConfig> = {
+    const config: Partial<Config> = {
       postgres: {
         password: 'secret',
       },
@@ -286,7 +286,7 @@ describe('validateRequiredFields', () => {
   })
 
   test('detects missing postgres password', () => {
-    const config: Partial<EnvironmentConfig> = {
+    const config: Partial<Config> = {
       servarr: {
         adminPassword: 'admin-secret',
         url: 'http://sonarr:8989',
@@ -298,7 +298,7 @@ describe('validateRequiredFields', () => {
   })
 
   test('detects missing servarr admin password', () => {
-    const config: Partial<EnvironmentConfig> = {
+    const config: Partial<Config> = {
       postgres: {
         password: 'secret',
       },
@@ -312,7 +312,7 @@ describe('validateRequiredFields', () => {
   })
 
   test('validates servarr URL required when type is not qbittorrent', () => {
-    const config: Partial<EnvironmentConfig> = {
+    const config: Partial<Config> = {
       postgres: {
         password: 'secret',
       },
@@ -328,7 +328,7 @@ describe('validateRequiredFields', () => {
   })
 
   test('allows missing servarr URL when type is qbittorrent', () => {
-    const config: Partial<EnvironmentConfig> = {
+    const config: Partial<Config> = {
       postgres: {
         password: 'secret',
       },
@@ -344,7 +344,7 @@ describe('validateRequiredFields', () => {
   })
 
   test('detects multiple missing fields', () => {
-    const config: Partial<EnvironmentConfig> = {
+    const config: Partial<Config> = {
       servarr: {
         type: 'sonarr',
         // missing adminPassword and url
@@ -360,7 +360,7 @@ describe('validateRequiredFields', () => {
   })
 
   test('handles missing nested objects', () => {
-    const config: Partial<EnvironmentConfig> = {}
+    const config: Partial<Config> = {}
 
     const errors = validateRequiredFields(config)
     expect(errors).toContain('postgres.password is required')

@@ -184,9 +184,20 @@ Connection\\UPnP=false
 Downloads\\SavePath=/downloads/
 Downloads\\TempPath=/downloads/incomplete/
 WebUI\\Address=*
-WebUI\\ServerDomains=*
+WebUI\\AuthSubnetWhitelist=127.0.0.1
+WebUI\\AuthSubnetWhitelistEnabled=false
+WebUI\\CSRFProtection=false
+WebUI\\ClickjackingProtection=false
+WebUI\\HostHeaderValidation=false
+WebUI\\LocalHostAuth=true
+WebUI\\Port=8080
+WebUI\\RootFolder=
+WebUI\\SecureCookie=false
+WebUI\\ServerDomains=
+WebUI\\SessionTimeout=3600
+WebUI\\UseUPnP=false
 WebUI\\Username=${username}
-WebUI\\Password_PBKDF2="${passwordHash}"
+WebUI\\Password_PBKDF2=${passwordHash}
 `
 
     // Ensure the qBittorrent directory exists

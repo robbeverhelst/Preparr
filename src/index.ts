@@ -1,6 +1,5 @@
-import { type EnvironmentConfig, loadConfigurationSafe } from '@/config'
+import { type Config, loadConfigurationSafe } from '@/config'
 import { getEnvironmentInfo } from '@/config/loaders/env'
-import type { ServarrApplicationConfig } from '@/config/schema'
 import { ContextBuilder } from '@/core/context'
 import { ConfigurationEngine } from '@/core/engine'
 import { HealthServer } from '@/core/health'
@@ -9,17 +8,14 @@ import { PostgresClient } from '@/postgres/client'
 import { QBittorrentManager } from '@/qbittorrent/client'
 import { ServarrManager } from '@/servarr/client'
 import { logger } from '@/utils/logger'
-import { file } from 'bun'
-
-// CLI parsing is now handled by the configuration system
 
 class PrepArrNew {
-  private config: EnvironmentConfig
+  private config: Config
   private health: HealthServer
   private engine: ConfigurationEngine | null = null
   private reconciliationManager: ReconciliationManager | null = null
 
-  constructor(config: EnvironmentConfig) {
+  constructor(config: Config) {
     this.config = config
     this.health = new HealthServer(this.config.health.port)
   }
@@ -31,9 +27,7 @@ class PrepArrNew {
     })
 
     try {
-      // Build execution context
       const servarrClient = new ServarrManager(this.config.servarr)
-      // Don't initialize ServarrManager in init mode - services aren't ready yet
 
       const context = new ContextBuilder()
         .setConfig(this.config)
@@ -53,7 +47,6 @@ class PrepArrNew {
         .setConfigWatch(this.config.configWatch)
         .build()
 
-      // Create and execute configuration engine
       this.engine = new ConfigurationEngine(context)
       const result = await this.engine.execute('init')
 
@@ -87,15 +80,6 @@ class PrepArrNew {
     this.health.start()
 
     try {
-      // Load configuration first
-      let servarrConfig: ServarrApplicationConfig | undefined
-      try {
-        servarrConfig = await this.loadConfiguration()
-      } catch (error) {
-        logger.warn('No configuration found or failed to load', { error })
-      }
-
-      // Build execution context
       const servarrClient = new ServarrManager(this.config.servarr)
       await servarrClient.initializeSidecarMode()
 
@@ -115,21 +99,16 @@ class PrepArrNew {
         .setExecutionMode('sidecar')
         .setConfigPath(this.config.configPath)
         .setConfigWatch(this.config.configWatch)
-        .setServarrConfig(servarrConfig || ({} as ServarrApplicationConfig))
         .build()
 
-      // Create configuration engine and reconciliation manager
       this.engine = new ConfigurationEngine(context)
-      this.reconciliationManager = new ReconciliationManager(
-        context,
-        this.engine,
-        this.loadConfiguration.bind(this),
-      )
+      this.reconciliationManager = new ReconciliationManager(context, this.engine, async () => {
+        const { config } = await loadConfigurationSafe()
+        return config as Config
+      })
 
-      // Set up health server with reconciliation manager
       this.health.setReconciliationManager(this.reconciliationManager)
 
-      // Start reconciliation manager (includes initial run)
       await this.reconciliationManager.start()
 
       logger.info('Sidecar initialization completed successfully with continuous reconciliation', {
@@ -151,72 +130,15 @@ class PrepArrNew {
     }
   }
 
-  private async loadConfiguration(): Promise<ServarrApplicationConfig | undefined> {
-    try {
-      const configPath = this.config.configPath
-      const configFile = file(configPath)
-
-      if (!(await configFile.exists())) {
-        logger.debug('Config file does not exist', { configPath })
-        return undefined
-      }
-
-      const content = await configFile.text()
-      if (!content.trim()) {
-        logger.debug('Config file is empty', { configPath })
-        return undefined
-      }
-
-      // Try to parse as JSON first, then YAML
-      let config: ServarrApplicationConfig
-      try {
-        config = JSON.parse(content)
-      } catch {
-        // If JSON parsing fails, try YAML (would need a YAML parser)
-        logger.warn('YAML parsing not implemented, only JSON configs supported', { configPath })
-        return undefined
-      }
-
-      // Basic validation
-      if (!config || typeof config !== 'object') {
-        throw new Error('Invalid configuration format')
-      }
-
-      // Ensure required arrays exist
-      config.rootFolders = config.rootFolders || []
-      config.indexers = config.indexers || []
-      config.downloadClients = config.downloadClients || []
-      config.qualityProfiles = config.qualityProfiles || []
-      config.applications = config.applications || []
-
-      logger.info('Configuration loaded successfully', {
-        configPath,
-        rootFolders: config.rootFolders.length,
-        indexers: config.indexers.length,
-        downloadClients: config.downloadClients.length,
-        qualityProfiles: config.qualityProfiles.length,
-        applications: config.applications.length,
-      })
-
-      return config
-    } catch (error) {
-      logger.error('Failed to load configuration file', {
-        configPath: this.config.configPath,
-        error: error instanceof Error ? error.message : String(error),
-      })
-      return undefined
-    }
-  }
+  // Unified configuration loader is centralized; no per-app file parsing here anymore
 
   shutdown(): void {
     logger.info('PrepArr shutting down...')
 
-    // Stop reconciliation manager first
     if (this.reconciliationManager) {
       this.reconciliationManager.stop()
     }
 
-    // Stop health server
     this.health.stop()
 
     logger.info('PrepArr shutdown completed')
@@ -224,11 +146,9 @@ class PrepArrNew {
 }
 
 async function main() {
-  // Load configuration from all sources
   const configResult = await loadConfigurationSafe()
   const { config, metadata } = configResult
 
-  // Display configuration info
   getEnvironmentInfo()
 
   const preparr = new PrepArrNew(config)

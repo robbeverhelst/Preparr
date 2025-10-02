@@ -19,7 +19,7 @@ export class IndexersStep extends ConfigurationStep {
       return false
     }
 
-    const config = context.servarrConfig
+    const config = context.config.app
 
     // Skip indexer management if Prowlarr sync is enabled
     if (config?.prowlarrSync === true) {
@@ -56,7 +56,7 @@ export class IndexersStep extends ConfigurationStep {
 
   protected getDesiredState(context: StepContext): Indexer[] {
     // Get indexers from the loaded configuration - using servarrConfig from config loading step
-    const config = context.servarrConfig
+    const config = context.config.app
     context.logger.debug('Getting desired indexer state', {
       hasConfig: !!config,
       hasIndexers: !!config?.indexers,

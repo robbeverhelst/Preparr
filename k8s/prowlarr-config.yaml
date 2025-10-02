@@ -1,0 +1,132 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prowlarr-config
+  namespace: preparr-test
+data:
+  prowlarr-config.json: |
+    {
+      "app": {
+        "apiKey": "c04914c6bfad445a3edc23e5edbca4d1",
+        "rootFolders": [],
+        "qualityProfiles": [],
+        "indexers": [
+        {
+          "name": "The Pirate Bay",
+          "implementation": "Cardigann",
+          "implementationName": "Cardigann",
+          "configContract": "CardigannSettings",
+          "definitionName": "thepiratebay",
+          "appProfileId": 1,
+          "fields": [
+            {
+              "name": "definitionFile",
+              "value": "thepiratebay"
+            },
+            {
+              "name": "baseUrl",
+              "value": "https://thepiratebay.org/"
+            },
+            {
+              "name": "torrentBaseSettings.appMinimumSeeders",
+              "value": 1
+            }
+          ],
+          "enable": true,
+          "priority": 25
+        }
+        ],
+        "downloadClients": [
+        {
+          "name": "qBittorrent",
+          "implementation": "QBittorrent",
+          "implementationName": "qBittorrent",
+          "configContract": "QBittorrentSettings",
+          "fields": [
+            {
+              "name": "host",
+              "value": "qbittorrent"
+            },
+            {
+              "name": "port",
+              "value": 8080
+            },
+            {
+              "name": "username",
+              "value": "admin"
+            },
+            {
+              "name": "password",
+              "value": "adminpass"
+            },
+            {
+              "name": "category",
+              "value": "prowlarr"
+            },
+            {
+              "name": "priority",
+              "value": 0
+            },
+            {
+              "name": "removeCompletedDownloads",
+              "value": false
+            },
+            {
+              "name": "removeFailedDownloads",
+              "value": false
+            }
+          ],
+          "enable": true,
+          "priority": 1
+        }
+        ],
+        "applications": [
+        {
+          "name": "Sonarr",
+          "implementation": "Sonarr",
+          "implementationName": "Sonarr",
+          "configContract": "SonarrSettings",
+          "appProfileId": 1,
+          "fields": [
+            {
+              "name": "prowlarrUrl",
+              "value": "http://prowlarr:9696"
+            },
+            {
+              "name": "baseUrl",
+              "value": "http://sonarr:8989"
+            },
+            {
+              "name": "apiKey",
+              "value": "2bac5d00dca43258313c734821a15c4c"
+            }
+          ],
+          "enable": true,
+          "syncLevel": "fullSync"
+        },
+        {
+          "name": "Radarr",
+          "implementation": "Radarr",
+          "implementationName": "Radarr",
+          "configContract": "RadarrSettings",
+          "appProfileId": 1,
+          "fields": [
+            {
+              "name": "prowlarrUrl",
+              "value": "http://prowlarr:9696"
+            },
+            {
+              "name": "baseUrl",
+              "value": "http://radarr:7878"
+            },
+            {
+              "name": "apiKey",
+              "value": "97d741a13af015bf750f857a7e097f20"
+            }
+          ],
+          "enable": true,
+          "syncLevel": "fullSync"
+        }
+        ]
+      }
+    }

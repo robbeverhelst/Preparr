@@ -27,13 +27,11 @@ import {
   SonarrClient,
 } from 'tsarr'
 
-// Import individual types for cleaner usage
 type IndexerResource = Sonarr.IndexerResource
 type DownloadClientResource = Sonarr.DownloadClientResource
 
 type ServarrClientType = SonarrClient | RadarrClient | LidarrClient | ReadarrClient | ProwlarrClient
 
-// Type guards for client capabilities using proper tsarr response types
 type ClientWithRootFolders = {
   getRootFolders(): Promise<{
     data?: Sonarr.RootFolderResource[]
@@ -81,7 +79,6 @@ type ClientWithApplications = {
   deleteApplication(id: number): Promise<{ data?: unknown; error?: unknown; response: Response }>
 }
 
-// Client capabilities based on Servarr type
 interface ClientCapabilities {
   hasRootFolders: boolean
   hasDownloadClients: boolean
@@ -107,7 +104,7 @@ export class ServarrManager {
     const type = this.config.type
     return {
       hasRootFolders: type !== 'prowlarr' && type !== 'qbittorrent',
-      hasDownloadClients: type !== 'prowlarr' && type !== 'qbittorrent',
+      hasDownloadClients: type !== 'qbittorrent',
       hasApplications: type === 'prowlarr',
       hasQualityProfiles: type !== 'prowlarr' && type !== 'qbittorrent',
     }
@@ -165,15 +162,33 @@ export class ServarrManager {
   }
 
   private mapToTsarrDownloadClient(client: DownloadClient): Partial<DownloadClientResource> {
+    // Normalize generic field names to Servarr-specific ones
+    const mapFieldName = (name: string): string => {
+      if (name === 'category') {
+        if (this.config.type === 'sonarr') return 'tvCategory'
+        if (this.config.type === 'radarr') return 'movieCategory'
+      }
+      return name
+    }
+
+    const ignoredFieldNames = new Set([
+      'priority',
+      'removeCompletedDownloads',
+      'removeFailedDownloads',
+      'protocol',
+    ])
+
     return {
       name: client.name,
       implementation: client.implementation,
       implementationName: client.implementationName,
       configContract: client.configContract,
-      fields: client.fields?.map((field) => ({
-        name: field.name,
-        value: field.value as string | number | boolean | number[],
-      })),
+      fields: client.fields
+        ?.filter((f) => !ignoredFieldNames.has(mapFieldName(f.name)))
+        .map((field) => ({
+          name: mapFieldName(field.name),
+          value: field.value as string | number | boolean | number[],
+        })),
       enable: client.enable,
       priority: client.priority,
     }

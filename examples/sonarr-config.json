@@ -1,65 +1,67 @@
 {
-  "apiKey": "2bac5d00dca43258313c734821a15c4c",
-  "prowlarrSync": true,
-  "rootFolders": [
-    {
-      "path": "/tv",
-      "accessible": true
-    }
-  ],
-  "qualityProfiles": [
-    {
-      "name": "HD - 1080p",
-      "cutoff": 1080,
-      "items": [
-        {
-          "quality": {
-            "id": 1,
-            "name": "HDTV-1080p"
+  "app": {
+    "apiKey": "2bac5d00dca43258313c734821a15c4c",
+    "prowlarrSync": true,
+    "rootFolders": [
+      {
+        "path": "/tv",
+        "accessible": true
+      }
+    ],
+    "qualityProfiles": [
+      {
+        "name": "HD - 1080p",
+        "cutoff": 1080,
+        "items": [
+          {
+            "quality": {
+              "id": 1,
+              "name": "HDTV-1080p"
+            },
+            "allowed": true
           },
-          "allowed": true
-        },
-        {
-          "quality": {
-            "id": 2,
-            "name": "WEBDL-1080p"
-          },
-          "allowed": true
-        }
-      ]
-    }
-  ],
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 },
-        { "name": "username", "value": "admin" },
-        { "name": "password", "value": "adminpass" },
-        { "name": "category", "value": "tv" },
-        { "name": "priority", "value": 0 },
-        { "name": "removeCompletedDownloads", "value": false },
-        { "name": "removeFailedDownloads", "value": false }
-      ],
-      "enable": true,
-      "priority": 1
-    }
-  ],
-  "qbittorrent": {
-    "webui": {
-      "username": "admin",
-      "password": "adminpass"
-    },
-    "downloads": {
-      "defaultPath": "/downloads",
-      "categories": ["tv", "movies"]
-    },
-    "connection": {
-      "port": 6881
+          {
+            "quality": {
+              "id": 2,
+              "name": "WEBDL-1080p"
+            },
+            "allowed": true
+          }
+        ]
+      }
+    ],
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass2" },
+          { "name": "category", "value": "tv" },
+          { "name": "priority", "value": 0 },
+          { "name": "removeCompletedDownloads", "value": false },
+          { "name": "removeFailedDownloads", "value": false }
+        ],
+        "enable": true,
+        "priority": 1
+      }
+    ],
+    "qbittorrent": {
+      "webui": {
+        "username": "admin",
+        "password": "adminpass"
+      },
+      "downloads": {
+        "defaultPath": "/downloads",
+        "categories": ["tv", "movies"]
+      },
+      "connection": {
+        "port": 6881
+      }
     }
   }
 }

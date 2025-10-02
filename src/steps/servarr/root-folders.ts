@@ -33,7 +33,7 @@ export class RootFoldersStep extends ConfigurationStep {
   }
 
   protected getDesiredState(context: StepContext): RootFolder[] {
-    const config = context.servarrConfig
+    const config = context.config.app
     if (!config || !config.rootFolders) {
       context.logger.warn('No configuration or root folders found in context for root folders step')
       return []

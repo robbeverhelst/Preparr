@@ -1,4 +1,4 @@
-import type { ServarrApplicationConfig } from '@/config/schema'
+import type { Config } from '@/config/schema'
 import type { ConfigurationEngine } from '@/core/engine'
 import type { StepContext } from '@/core/step'
 import { logger } from '@/utils/logger'
@@ -20,7 +20,7 @@ export class ReconciliationManager {
   constructor(
     private context: StepContext,
     private engine: ConfigurationEngine,
-    private loadConfiguration: () => Promise<ServarrApplicationConfig | undefined>,
+    private loadConfiguration: () => Promise<Config>,
   ) {
     this.state = {
       lastReconciliation: new Date(),
@@ -107,9 +107,10 @@ export class ReconciliationManager {
     }
   }
 
-  private calculateConfigHash(config?: ServarrApplicationConfig): string {
+  private calculateConfigHash(config?: Config): string {
     if (!config) return ''
-    return Bun.hash(JSON.stringify(config)).toString()
+    // Hash only desired-state section so infra changes don't flap reconciliation unnecessarily
+    return Bun.hash(JSON.stringify(config.app || {})).toString()
   }
 
   private async runReconciliation(): Promise<void> {
@@ -122,18 +123,16 @@ export class ReconciliationManager {
       })
 
       // Reload configuration with error tolerance
-      let config: ServarrApplicationConfig | undefined
+      let config: Config | undefined
       try {
         config = await this.loadConfiguration()
-        if (config) {
-          // Update context with new configuration
-          this.context.servarrConfig = config
-          this.state.lastConfigHash = this.calculateConfigHash(config)
-        }
+        // Update context with new unified configuration
+        this.context.config = config
+        this.state.lastConfigHash = this.calculateConfigHash(config)
       } catch (error) {
         logger.warn('Failed to reload configuration, continuing with existing config', { error })
         // Continue with existing config rather than failing the entire reconciliation
-        config = this.context.servarrConfig
+        config = this.context.config
       }
 
       // Run configuration engine with retry for critical operations

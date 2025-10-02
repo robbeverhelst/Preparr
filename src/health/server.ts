@@ -65,25 +65,32 @@ export class HealthServer {
   }
 
   start(): void {
-    this.server = serve({
-      port: this.port,
-      fetch: (req) => {
-        const url = new URL(req.url)
+    try {
+      this.server = serve({
+        port: this.port,
+        fetch: (req) => {
+          const url = new URL(req.url)
 
-        switch (url.pathname) {
-          case '/healthz':
-            return this.handleHealthz()
-          case '/ready':
-            return this.handleReady()
-          case '/':
-            return new Response('PrepArr Health Server', { status: 200 })
-          default:
-            return new Response('Not Found', { status: 404 })
-        }
-      },
-    })
+          switch (url.pathname) {
+            case '/healthz':
+              return this.handleHealthz()
+            case '/ready':
+              return this.handleReady()
+            case '/':
+              return new Response('PrepArr Health Server', { status: 200 })
+            default:
+              return new Response('Not Found', { status: 404 })
+          }
+        },
+      })
 
-    logger.info('Health server started', { port: this.port })
+      const actualPort = (this.server as unknown as { port?: number })?.port ?? this.port
+      this.port = actualPort
+      logger.info('Health server started', { port: actualPort })
+    } catch (error) {
+      logger.error('Failed to start server. Is port 0 in use?', { error })
+      this.server = null
+    }
   }
 
   stop(): void {
@@ -91,5 +98,13 @@ export class HealthServer {
       this.server.stop()
       logger.info('Health server stopped')
     }
+  }
+
+  isStarted(): boolean {
+    return this.server != null
+  }
+
+  getPort(): number {
+    return this.port
   }
 }

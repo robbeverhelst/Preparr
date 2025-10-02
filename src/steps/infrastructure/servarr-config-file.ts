@@ -23,7 +23,7 @@ export class ServarrConfigFileStep extends ConfigurationStep {
     try {
       // Check if config.xml exists and has an API key
       // Get API key from loaded configuration if available
-      const apiKey = context.servarrConfig?.apiKey
+      const apiKey = context.config.app?.apiKey
       await context.servarrClient.writeConfigurationOnly(apiKey)
       return {
         configExists: true,
@@ -86,7 +86,7 @@ export class ServarrConfigFileStep extends ConfigurationStep {
       try {
         if (change.type === 'create' || change.type === 'update') {
           // Write the configuration file with API key from loaded config
-          const apiKey = context.servarrConfig?.apiKey
+          const apiKey = context.config.app?.apiKey
           await context.servarrClient.writeConfigurationOnly(apiKey)
 
           results.push({
@@ -121,7 +121,7 @@ export class ServarrConfigFileStep extends ConfigurationStep {
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
       // Try to read the config file to verify it exists and is valid
-      const apiKey = context.servarrConfig?.apiKey
+      const apiKey = context.config.app?.apiKey
       await context.servarrClient.writeConfigurationOnly(apiKey)
       // If writeConfigurationOnly doesn't throw and returns a boolean, the config is valid
       return true

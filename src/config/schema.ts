@@ -154,7 +154,7 @@ export const ApplicationSchema = z.object({
   tags: z.array(z.number()).default([]),
 })
 
-export const ServarrApplicationConfigSchema = z.object({
+export const AppConfigSchema = z.object({
   apiKey: z.string().optional(),
   prowlarrSync: z.boolean().default(false),
   rootFolders: z.array(RootFolderSchema).default([]),
@@ -165,10 +165,18 @@ export const ServarrApplicationConfigSchema = z.object({
   qbittorrent: QBittorrentConfigSchema,
 })
 
-export const EnvironmentConfigSchema = z.object({
+export const ConfigSchema = z.object({
   postgres: PostgresConfigSchema,
   servarr: ServarrConfigSchema,
   services: ServiceIntegrationSchema.optional(),
+  // Unified application desired-state config
+  app: AppConfigSchema.default({
+    prowlarrSync: false,
+    rootFolders: [],
+    qualityProfiles: [],
+    downloadClients: [],
+    applications: [],
+  }),
   health: z
     .object({
       port: z.number().default(8080),
@@ -190,5 +198,5 @@ export type Indexer = z.infer<typeof IndexerSchema>
 export type DownloadClient = z.infer<typeof DownloadClientSchema>
 export type Application = z.infer<typeof ApplicationSchema>
 export type QBittorrentConfig = z.infer<typeof QBittorrentConfigSchema>
-export type ServarrApplicationConfig = z.infer<typeof ServarrApplicationConfigSchema>
-export type EnvironmentConfig = z.infer<typeof EnvironmentConfigSchema>
+export type AppConfig = z.infer<typeof AppConfigSchema>
+export type Config = z.infer<typeof ConfigSchema>

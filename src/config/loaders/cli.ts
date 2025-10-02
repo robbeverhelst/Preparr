@@ -1,5 +1,5 @@
 import { type CliKey, cliMapping } from '../defaults'
-import type { EnvironmentConfig } from '../schema'
+import type { Config } from '../schema'
 
 /**
  * CLI argument parsing result
@@ -12,7 +12,7 @@ export interface CliArgs {
   generateApiKey: boolean
 
   // Configuration overrides
-  config: Partial<EnvironmentConfig>
+  config: Partial<Config>
 
   // Raw arguments for debugging
   raw: string[]
@@ -148,6 +148,16 @@ function convertCliValue(value: string): unknown {
     (value.startsWith("'") && value.endsWith("'"))
   ) {
     return value.slice(1, -1)
+  }
+
+  // JSON objects/arrays
+  const first = value.trim()[0]
+  if (first === '{' || first === '[') {
+    try {
+      return JSON.parse(value)
+    } catch {
+      // fall through
+    }
   }
 
   // Boolean values

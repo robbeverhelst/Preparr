@@ -1,11 +1,11 @@
-import type { EnvironmentConfig, ServarrApplicationConfig } from '@/config/schema'
+import type { Config } from '@/config/schema'
 import type { PostgresClient } from '@/postgres/client'
 import type { QBittorrentManager } from '@/qbittorrent/client'
 import type { ServarrManager } from '@/servarr/client'
 import type { logger } from '@/utils/logger'
 
 export interface StepContext {
-  config: EnvironmentConfig
+  config: Config
   servarrType: string
   apiKey?: string | undefined
   postgresClient: PostgresClient
@@ -13,7 +13,6 @@ export interface StepContext {
   qbittorrentClient?: QBittorrentManager | undefined
   logger: typeof logger
   executionMode?: 'init' | 'sidecar'
-  servarrConfig?: ServarrApplicationConfig
 }
 
 export interface ChangeRecord {

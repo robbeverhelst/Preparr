@@ -1,7 +1,7 @@
 import { env } from 'bun'
-import { type EnvironmentConfig, EnvironmentConfigSchema } from './schema'
+import { type Config, ConfigSchema } from './schema'
 
-export function loadEnvironmentConfig(): EnvironmentConfig {
+export function loadEnvironmentConfig(): Config {
   const config = {
     postgres: {
       host: env.POSTGRES_HOST,
@@ -44,5 +44,5 @@ export function loadEnvironmentConfig(): EnvironmentConfig {
       : undefined,
   }
 
-  return EnvironmentConfigSchema.parse(config)
+  return ConfigSchema.parse(config)
 }

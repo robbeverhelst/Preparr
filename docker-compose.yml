@@ -75,14 +75,14 @@ services:
       SERVARR_ADMIN_USER: admin
       SERVARR_ADMIN_PASSWORD: adminpass
       QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: adminpass
+      QBITTORRENT_USER: testuser
+      QBITTORRENT_PASSWORD: testpass123
       CONFIG_PATH: /config/sonarr-config.json
     volumes:
       - sonarr_config:/config
       - ./examples/sonarr-config.json:/config/sonarr-config.json:ro
-    user: "1000:1000"
-    command: ["bun", "run", "dist/index.js", "--init"]
+    user: "0:0"
+    command: ["sh", "-c", "bun run dist/index.js --init && chown -R 1000:1000 /config || true"]
     restart: "no"
     depends_on:
       postgres:
@@ -103,6 +103,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      sonarr-init:
+        condition: service_completed_successfully
 
   sonarr-sidecar:
     build:
@@ -113,7 +115,7 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: servarr
+      POSTGRES_DB: sonarr_main
       SERVARR_URL: http://sonarr:8989
       SERVARR_TYPE: sonarr
       SERVARR_ADMIN_USER: admin
@@ -152,14 +154,14 @@ services:
       SERVARR_ADMIN_USER: admin
       SERVARR_ADMIN_PASSWORD: adminpass
       QBITTORRENT_URL: http://qbittorrent:8080
-      QBITTORRENT_USER: admin
-      QBITTORRENT_PASSWORD: adminpass
+      QBITTORRENT_USER: testuser
+      QBITTORRENT_PASSWORD: testpass123
       CONFIG_PATH: /config/radarr-config.json
     volumes:
       - radarr_config:/config
       - ./examples/radarr-config.json:/config/radarr-config.json:ro
-    user: "1000:1000"
-    command: ["bun", "run", "dist/index.js", "--init"]
+    user: "0:0"
+    command: ["sh", "-c", "bun run dist/index.js --init && chown -R 1000:1000 /config || true"]
     restart: "no"
     depends_on:
       postgres:
@@ -180,6 +182,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      radarr-init:
+        condition: service_completed_successfully
 
   radarr-sidecar:
     build:
@@ -190,7 +194,7 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: servarr
+      POSTGRES_DB: radarr_main
       SERVARR_URL: http://radarr:7878
       SERVARR_TYPE: radarr
       SERVARR_ADMIN_USER: admin
@@ -232,8 +236,8 @@ services:
     volumes:
       - prowlarr_config:/config
       - ./examples/prowlarr-config.json:/config/prowlarr-config.json:ro
-    user: "1000:1000"
-    command: ["bun", "run", "dist/index.js", "--init"]
+    user: "0:0"
+    command: ["sh", "-c", "bun run dist/index.js --init && chown -R 1000:1000 /config || true"]
     restart: "no"
     depends_on:
       postgres:
@@ -252,6 +256,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      prowlarr-init:
+        condition: service_completed_successfully
 
   prowlarr-sidecar:
     build:
@@ -262,7 +268,7 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: servarr
+      POSTGRES_DB: prowlarr_main
       SERVARR_URL: http://prowlarr:9696
       SERVARR_TYPE: prowlarr
       SERVARR_ADMIN_USER: admin

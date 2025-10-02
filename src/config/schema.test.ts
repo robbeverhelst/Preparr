@@ -1,9 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import {
-  EnvironmentConfigSchema,
-  ServarrApplicationConfigSchema,
-  ServarrConfigSchema,
-} from './schema'
+import { AppConfigSchema, ConfigSchema, ServarrConfigSchema } from './schema'
 
 describe('Configuration Schema Validation', () => {
   test('validates valid servarr application config', () => {
@@ -27,7 +23,7 @@ describe('Configuration Schema Validation', () => {
       applications: [],
     }
 
-    const result = ServarrApplicationConfigSchema.safeParse(validConfig)
+    const result = AppConfigSchema.safeParse(validConfig)
     expect(result.success).toBe(true)
   })
 
@@ -82,7 +78,7 @@ describe('Configuration Schema Validation', () => {
       configReconcileInterval: 60,
     }
 
-    const result = EnvironmentConfigSchema.safeParse(validEnvConfig)
+    const result = ConfigSchema.safeParse(validEnvConfig)
     expect(result.success).toBe(true)
 
     if (result.success) {
@@ -104,7 +100,7 @@ describe('Configuration Schema Validation', () => {
       },
     }
 
-    const result = EnvironmentConfigSchema.safeParse(minimalConfig)
+    const result = ConfigSchema.safeParse(minimalConfig)
     expect(result.success).toBe(true)
 
     if (result.success) {

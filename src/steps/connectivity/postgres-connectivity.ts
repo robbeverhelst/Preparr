@@ -13,7 +13,6 @@ export class PostgresConnectivityStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'both'
 
   validatePrerequisites(_context: StepContext): boolean {
-    // No prerequisites - this is a foundational step
     return true
   }
 
@@ -62,7 +61,6 @@ export class PostgresConnectivityStep extends ConfigurationStep {
     for (const change of changes) {
       try {
         if (change.type === 'create') {
-          // Test the connection
           const connected = await context.postgresClient.testConnection()
           if (connected) {
             results.push({

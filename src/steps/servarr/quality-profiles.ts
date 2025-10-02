@@ -32,8 +32,7 @@ export class QualityProfilesStep extends ConfigurationStep {
 
   protected getDesiredState(context: StepContext): QualityProfile[] {
     // Get from loaded configuration
-    const servarrConfig = context.servarrConfig
-    return (servarrConfig?.qualityProfiles as QualityProfile[]) || []
+    return (context.config.app?.qualityProfiles as QualityProfile[]) || []
   }
 
   compareAndPlan(

@@ -1,8 +1,3 @@
-/**
- * Simple retry utility for critical operations
- * Minimal implementation that covers most failure cases
- */
-
 import { logger } from './logger'
 
 export interface RetryOptions {

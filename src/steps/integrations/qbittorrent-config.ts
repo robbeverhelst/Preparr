@@ -14,13 +14,11 @@ export class QBittorrentConfigStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    // Only run if qBittorrent is configured and ready
     return !!context.qbittorrentClient && context.qbittorrentClient.isReady()
   }
 
   readCurrentState(context: StepContext): Promise<{ configured: boolean }> {
     try {
-      // Check if qBittorrent is configured
       return Promise.resolve({ configured: !!context.qbittorrentClient })
     } catch (error) {
       context.logger.debug('Failed to check qBittorrent configuration', { error })
@@ -29,9 +27,7 @@ export class QBittorrentConfigStep extends ConfigurationStep {
   }
 
   protected getDesiredState(context: StepContext): { configured: boolean } {
-    // Get from loaded configuration
-    const servarrConfig = context.servarrConfig
-    return { configured: !!servarrConfig?.qbittorrent }
+    return { configured: !!context.config.app?.qbittorrent }
   }
 
   compareAndPlan(
@@ -63,9 +59,7 @@ export class QBittorrentConfigStep extends ConfigurationStep {
     for (const change of changes) {
       try {
         if (change.type === 'update' && change.details?.action === 'apply-configuration') {
-          // Get qBittorrent configuration from loaded config
-          const servarrConfig = context.servarrConfig
-          const qbittorrentConfig = servarrConfig?.qbittorrent as QBittorrentConfig
+          const qbittorrentConfig = context.config.app?.qbittorrent as QBittorrentConfig
 
           if (qbittorrentConfig && context.qbittorrentClient) {
             await context.qbittorrentClient.applyConfiguration(qbittorrentConfig)
@@ -103,7 +97,6 @@ export class QBittorrentConfigStep extends ConfigurationStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      // Test qBittorrent connection to verify configuration
       return (await context.qbittorrentClient?.testConnection()) || false
     } catch (error) {
       context.logger.debug('qBittorrent configuration verification failed', { error })

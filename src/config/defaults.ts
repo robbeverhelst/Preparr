@@ -1,10 +1,5 @@
-import type { EnvironmentConfig } from './schema'
-
-/**
- * Default configuration values
- * These serve as the base layer for configuration merging
- */
-export const defaultConfig: Partial<EnvironmentConfig> = {
+import type { Config } from './schema'
+export const defaultConfig: Partial<Config> = {
   postgres: {
     host: 'localhost',
     port: 5432,
@@ -33,12 +28,7 @@ export const defaultConfig: Partial<EnvironmentConfig> = {
   configReconcileInterval: 60,
 }
 
-/**
- * Environment variable mapping
- * Maps flat env var names to nested config paths
- */
 export const envMapping = {
-  // Postgres
   POSTGRES_HOST: 'postgres.host',
   POSTGRES_PORT: 'postgres.port',
   POSTGRES_USER: 'postgres.username',
@@ -47,24 +37,29 @@ export const envMapping = {
   POSTGRES_DB: 'postgres.database',
   POSTGRES_DATABASE: 'postgres.database', // Alternative name
 
-  // Servarr
   SERVARR_URL: 'servarr.url',
   SERVARR_TYPE: 'servarr.type',
   SERVARR_API_KEY: 'servarr.apiKey',
   SERVARR_ADMIN_USER: 'servarr.adminUser',
   SERVARR_ADMIN_PASSWORD: 'servarr.adminPassword',
 
-  // Services - qBittorrent
   QBITTORRENT_URL: 'services.qbittorrent.url',
   QBITTORRENT_USER: 'services.qbittorrent.username',
   QBITTORRENT_USERNAME: 'services.qbittorrent.username', // Alternative name
   QBITTORRENT_PASSWORD: 'services.qbittorrent.password',
 
-  // Services - Prowlarr
   PROWLARR_URL: 'services.prowlarr.url',
   PROWLARR_API_KEY: 'services.prowlarr.apiKey',
 
-  // Application
+  APP_API_KEY: 'app.apiKey',
+  APP_PROWLARR_SYNC: 'app.prowlarrSync',
+  APP_ROOT_FOLDERS: 'app.rootFolders',
+  APP_INDEXERS: 'app.indexers',
+  APP_DOWNLOAD_CLIENTS: 'app.downloadClients',
+  APP_QUALITY_PROFILES: 'app.qualityProfiles',
+  APP_APPLICATIONS: 'app.applications',
+  APP_QBITTORRENT: 'app.qbittorrent',
+
   HEALTH_PORT: 'health.port',
   LOG_LEVEL: 'logLevel',
   LOG_FORMAT: 'logFormat',
@@ -73,12 +68,7 @@ export const envMapping = {
   CONFIG_RECONCILE_INTERVAL: 'configReconcileInterval',
 } as const
 
-/**
- * CLI argument mapping
- * Maps CLI flags to nested config paths
- */
 export const cliMapping = {
-  // Postgres
   'postgres-host': 'postgres.host',
   'postgres-port': 'postgres.port',
   'postgres-user': 'postgres.username',
@@ -87,24 +77,29 @@ export const cliMapping = {
   'postgres-db': 'postgres.database',
   'postgres-database': 'postgres.database',
 
-  // Servarr
   'servarr-url': 'servarr.url',
   'servarr-type': 'servarr.type',
   'servarr-api-key': 'servarr.apiKey',
   'servarr-admin-user': 'servarr.adminUser',
   'servarr-admin-password': 'servarr.adminPassword',
 
-  // Services - qBittorrent
   'qbittorrent-url': 'services.qbittorrent.url',
   'qbittorrent-user': 'services.qbittorrent.username',
   'qbittorrent-username': 'services.qbittorrent.username',
   'qbittorrent-password': 'services.qbittorrent.password',
 
-  // Services - Prowlarr
   'prowlarr-url': 'services.prowlarr.url',
   'prowlarr-api-key': 'services.prowlarr.apiKey',
 
-  // Application
+  'app-api-key': 'app.apiKey',
+  'app-prowlarr-sync': 'app.prowlarrSync',
+  'app-root-folders': 'app.rootFolders',
+  'app-indexers': 'app.indexers',
+  'app-download-clients': 'app.downloadClients',
+  'app-quality-profiles': 'app.qualityProfiles',
+  'app-applications': 'app.applications',
+  'app-qbittorrent': 'app.qbittorrent',
+
   'health-port': 'health.port',
   'log-level': 'logLevel',
   'log-format': 'logFormat',

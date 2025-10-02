@@ -1,12 +1,12 @@
-import type { EnvironmentConfig } from './schema'
+import type { Config } from './schema'
 
 /**
- * Deep merge multiple configuration objects
- * Later objects override earlier ones
+ * Deep merge multiple configuration objects with special handling for sensitive fields
+ * Later objects override earlier ones, but environment variables can override file config for sensitive fields
  */
 export function mergeConfigs(
-  ...configs: Array<Partial<EnvironmentConfig> | null | undefined>
-): Partial<EnvironmentConfig> {
+  ...configs: Array<Partial<Config> | null | undefined>
+): Partial<Config> {
   const result = {}
 
   for (const config of configs) {
@@ -74,7 +74,7 @@ function isPlainObject(value: unknown): boolean {
  * Remove undefined values from configuration
  * This helps with proper merging and validation
  */
-export function cleanConfig(config: Partial<EnvironmentConfig>): Partial<EnvironmentConfig> {
+export function cleanConfig(config: Partial<Config>): Partial<Config> {
   return JSON.parse(
     JSON.stringify(config, (_, value) => {
       return value === undefined ? null : value
@@ -86,7 +86,7 @@ export function cleanConfig(config: Partial<EnvironmentConfig>): Partial<Environ
  * Validate that required fields will be available after merging
  * This gives better error messages than waiting for Zod validation
  */
-export function validateRequiredFields(config: Partial<EnvironmentConfig>): string[] {
+export function validateRequiredFields(config: Partial<Config>): string[] {
   const errors: string[] = []
 
   // Check required fields
@@ -109,21 +109,21 @@ export function validateRequiredFields(config: Partial<EnvironmentConfig>): stri
  * Get configuration source information for debugging
  */
 export interface ConfigurationSource {
-  defaults: Partial<EnvironmentConfig>
-  file: Partial<EnvironmentConfig> | null
-  environment: Partial<EnvironmentConfig>
-  cli: Partial<EnvironmentConfig>
-  merged: Partial<EnvironmentConfig>
+  defaults: Partial<Config>
+  file: Partial<Config> | null
+  environment: Partial<Config>
+  cli: Partial<Config>
+  merged: Partial<Config>
 }
 
 /**
  * Create a configuration source object for debugging/logging
  */
 export function createConfigurationSource(
-  defaults: Partial<EnvironmentConfig>,
-  fileConfig: Partial<EnvironmentConfig> | null,
-  envConfig: Partial<EnvironmentConfig>,
-  cliConfig: Partial<EnvironmentConfig>,
+  defaults: Partial<Config>,
+  fileConfig: Partial<Config> | null,
+  envConfig: Partial<Config>,
+  cliConfig: Partial<Config>,
 ): ConfigurationSource {
   const merged = mergeConfigs(defaults, fileConfig, envConfig, cliConfig)
 
@@ -134,4 +134,142 @@ export function createConfigurationSource(
     cli: cliConfig,
     merged,
   }
+}
+
+/**
+ * Merge configurations with environment variable override for sensitive fields
+ * This ensures environment variables can override file configuration for credentials
+ */
+export function mergeConfigsWithEnvOverride(
+  defaults: Partial<Config>,
+  fileConfig: Partial<Config> | null,
+  envConfig: Partial<Config>,
+  cliConfig: Partial<Config>,
+): Partial<Config> {
+  // First merge defaults, file, and CLI configs
+  const baseConfig = mergeConfigs(defaults, fileConfig, cliConfig)
+
+  // Then apply environment variable overrides for sensitive fields
+  const result: Partial<Config> = { ...baseConfig }
+
+  // Override sensitive postgres fields if provided in environment
+  if (envConfig.postgres?.password !== undefined) {
+    result.postgres = {
+      ...(result.postgres || {}),
+      password: envConfig.postgres.password,
+    } as unknown as Config['postgres']
+  }
+  if (envConfig.postgres?.username !== undefined) {
+    result.postgres = {
+      ...(result.postgres || {}),
+      username: envConfig.postgres.username,
+    } as unknown as Config['postgres']
+  }
+  if (envConfig.postgres?.host !== undefined) {
+    result.postgres = {
+      ...(result.postgres || {}),
+      host: envConfig.postgres.host,
+    } as unknown as Config['postgres']
+  }
+  if (envConfig.postgres?.port !== undefined) {
+    result.postgres = {
+      ...(result.postgres || {}),
+      port: envConfig.postgres.port,
+    } as unknown as Config['postgres']
+  }
+  if (envConfig.postgres?.database !== undefined) {
+    result.postgres = {
+      ...(result.postgres || {}),
+      database: envConfig.postgres.database,
+    } as unknown as Config['postgres']
+  }
+
+  // Override sensitive servarr fields if provided in environment
+  if (envConfig.servarr?.apiKey !== undefined) {
+    result.servarr = {
+      ...(result.servarr || {}),
+      apiKey: envConfig.servarr.apiKey,
+    } as unknown as Config['servarr']
+  }
+  if (envConfig.servarr?.adminPassword !== undefined) {
+    result.servarr = {
+      ...(result.servarr || {}),
+      adminPassword: envConfig.servarr.adminPassword,
+    } as unknown as Config['servarr']
+  }
+  if (envConfig.servarr?.adminUser !== undefined) {
+    result.servarr = {
+      ...(result.servarr || {}),
+      adminUser: envConfig.servarr.adminUser,
+    } as unknown as Config['servarr']
+  }
+  if (envConfig.servarr?.url !== undefined) {
+    result.servarr = {
+      ...(result.servarr || {}),
+      url: envConfig.servarr.url,
+    } as unknown as Config['servarr']
+  }
+  if (envConfig.servarr?.type !== undefined) {
+    result.servarr = {
+      ...(result.servarr || {}),
+      type: envConfig.servarr.type,
+    } as unknown as Config['servarr']
+  }
+
+  // Override sensitive service fields if provided in environment
+  const serviceOverrides =
+    envConfig.services?.qbittorrent?.username !== undefined ||
+    envConfig.services?.qbittorrent?.password !== undefined ||
+    envConfig.services?.qbittorrent?.url !== undefined ||
+    envConfig.services?.prowlarr?.apiKey !== undefined ||
+    envConfig.services?.prowlarr?.url !== undefined
+
+  if (serviceOverrides) {
+    result.services = { ...(result.services || {}) } as unknown as Config['services']
+  }
+
+  if (envConfig.services?.qbittorrent?.username !== undefined) {
+    ;(result.services as NonNullable<Config['services']>).qbittorrent = {
+      ...(result.services?.qbittorrent || {}),
+      username: envConfig.services.qbittorrent.username,
+    } as unknown as NonNullable<Config['services']>['qbittorrent']
+  }
+  if (envConfig.services?.qbittorrent?.password !== undefined) {
+    ;(result.services as NonNullable<Config['services']>).qbittorrent = {
+      ...(result.services?.qbittorrent || {}),
+      password: envConfig.services.qbittorrent.password,
+    } as unknown as NonNullable<Config['services']>['qbittorrent']
+  }
+  if (envConfig.services?.qbittorrent?.url !== undefined) {
+    ;(result.services as NonNullable<Config['services']>).qbittorrent = {
+      ...(result.services?.qbittorrent || {}),
+      url: envConfig.services.qbittorrent.url,
+    } as unknown as NonNullable<Config['services']>['qbittorrent']
+  }
+  if (envConfig.services?.prowlarr?.apiKey !== undefined) {
+    ;(result.services as NonNullable<Config['services']>).prowlarr = {
+      ...(result.services?.prowlarr || {}),
+      apiKey: envConfig.services.prowlarr.apiKey,
+    } as unknown as NonNullable<Config['services']>['prowlarr']
+  }
+  if (envConfig.services?.prowlarr?.url !== undefined) {
+    ;(result.services as NonNullable<Config['services']>).prowlarr = {
+      ...(result.services?.prowlarr || {}),
+      url: envConfig.services.prowlarr.url,
+    } as unknown as NonNullable<Config['services']>['prowlarr']
+  }
+
+  // Apply other environment overrides
+  if (envConfig.logLevel !== undefined) result.logLevel = envConfig.logLevel
+  if (envConfig.logFormat !== undefined) result.logFormat = envConfig.logFormat
+  if (envConfig.configPath !== undefined) result.configPath = envConfig.configPath
+  if (envConfig.configWatch !== undefined) result.configWatch = envConfig.configWatch
+  if (envConfig.configReconcileInterval !== undefined) {
+    result.configReconcileInterval = envConfig.configReconcileInterval
+  }
+  if (envConfig.health?.port !== undefined) {
+    result.health = { ...(result.health || {}), port: envConfig.health.port }
+  }
+
+  return result
 }

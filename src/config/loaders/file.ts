@@ -1,15 +1,9 @@
 // @ts-ignore - YAML exists in Bun runtime but not yet in type definitions
 import { TOML, YAML, file } from 'bun'
-import type { EnvironmentConfig } from '../schema'
+import type { Config } from '../schema'
 
-/**
- * Supported configuration file formats
- */
 export type ConfigFileFormat = 'yaml' | 'json' | 'toml'
 
-/**
- * Detect file format from extension
- */
 export function detectFileFormat(filePath: string): ConfigFileFormat {
   const ext = filePath.toLowerCase().split('.').pop()
 
@@ -27,7 +21,7 @@ export function detectFileFormat(filePath: string): ConfigFileFormat {
 /**
  * Load and parse configuration file
  */
-export async function loadConfigFile(filePath: string): Promise<Partial<EnvironmentConfig> | null> {
+export async function loadConfigFile(filePath: string): Promise<Partial<Config> | null> {
   try {
     const configFile = file(filePath)
 
@@ -42,14 +36,19 @@ export async function loadConfigFile(filePath: string): Promise<Partial<Environm
 
     const format = detectFileFormat(filePath)
 
+    let parsed: Partial<Config> | null
     switch (format) {
       case 'yaml':
-        return parseYAML(content)
+        parsed = parseYAML(content)
+        break
       case 'toml':
-        return parseTOML(content)
+        parsed = parseTOML(content)
+        break
       default:
-        return parseJSON(content)
+        parsed = parseJSON(content)
     }
+
+    return parsed
   } catch (error) {
     throw new Error(
       `Failed to load config file '${filePath}': ${error instanceof Error ? error.message : String(error)}`,
@@ -58,9 +57,9 @@ export async function loadConfigFile(filePath: string): Promise<Partial<Environm
 }
 
 /**
- * Parse JSON configuration
+ * Parse JSON configuration with environment variable substitution
  */
-function parseJSON(content: string): Partial<EnvironmentConfig> {
+function parseJSON(content: string): Partial<Config> {
   try {
     return JSON.parse(content)
   } catch (error) {
@@ -69,9 +68,9 @@ function parseJSON(content: string): Partial<EnvironmentConfig> {
 }
 
 /**
- * Parse YAML configuration using Bun's native YAML support
+ * Parse YAML configuration using Bun's native YAML support with environment variable substitution
  */
-function parseYAML(content: string): Partial<EnvironmentConfig> {
+function parseYAML(content: string): Partial<Config> {
   try {
     return YAML.parse(content)
   } catch (error) {
@@ -80,9 +79,9 @@ function parseYAML(content: string): Partial<EnvironmentConfig> {
 }
 
 /**
- * Parse TOML configuration
+ * Parse TOML configuration with environment variable substitution
  */
-function parseTOML(content: string): Partial<EnvironmentConfig> {
+function parseTOML(content: string): Partial<Config> {
   try {
     return TOML.parse(content)
   } catch (error) {
@@ -119,3 +118,5 @@ export async function findConfigFile(customPath?: string): Promise<string | null
 
   return null
 }
+
+// No file-level environment interpolation; precedence is handled by loader/merger

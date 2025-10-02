@@ -54,8 +54,7 @@ export class ApplicationsStep extends ConfigurationStep {
 
   protected getDesiredState(context: StepContext): Application[] {
     // Get from loaded configuration
-    const servarrConfig = context.servarrConfig
-    return (servarrConfig?.applications as Application[]) || []
+    return (context.config.app?.applications as Application[]) || []
   }
 
   compareAndPlan(

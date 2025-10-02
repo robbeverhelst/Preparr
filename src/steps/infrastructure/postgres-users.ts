@@ -13,7 +13,6 @@ export class PostgresUsersStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'init'
 
   validatePrerequisites(context: StepContext): boolean {
-    // Only run in init mode
     return context.executionMode === 'init'
   }
 
@@ -54,7 +53,6 @@ export class PostgresUsersStep extends ConfigurationStep {
       }
     }
 
-    // Always plan to grant permissions (in case they were revoked)
     for (const username of desired.users) {
       changes.push({
         type: 'update',
