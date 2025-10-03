@@ -50,7 +50,8 @@ export class DownloadClientsStep extends ConfigurationStep {
       try {
         if (!url) return {}
         const u = new URL(url)
-        return { host: u.hostname, port: u.port ? Number(u.port) : undefined }
+        const port = u.port ? Number(u.port) : undefined
+        return { host: u.hostname, ...(port !== undefined && { port }) }
       } catch {
         return {}
       }

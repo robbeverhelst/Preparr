@@ -19,16 +19,18 @@ export class ConfigLoadingStep extends ConfigurationStep {
   readCurrentState(context: StepContext): Promise<{ configLoaded: boolean; configPath?: string }> {
     const configPath = context.config.configPath
     const hasDesired = !!context.config.app
-    
+
     // Debug logging
     context.logger.info('DEBUG: Configuration analysis', {
       configPath,
       hasApp: !!context.config.app,
       appType: typeof context.config.app,
       appKeys: context.config.app ? Object.keys(context.config.app) : [],
-      appStringified: context.config.app ? JSON.stringify(context.config.app, null, 2) : 'undefined',
+      appStringified: context.config.app
+        ? JSON.stringify(context.config.app, null, 2)
+        : 'undefined',
     })
-    
+
     if (hasDesired) {
       context.logger.info('Desired-state present in unified configuration', {
         rootFolders: context.config.app.rootFolders?.length || 0,

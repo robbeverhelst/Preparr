@@ -44,9 +44,9 @@ export async function loadConfiguration(args?: string[]): Promise<ConfigurationR
 
   // Load environment config early to use for config path resolution
   const envConfig = loadEnvironmentConfig()
-  
+
   const configPath = cliArgs.config.configPath || envConfig.configPath || defaultConfig.configPath
-  
+
   // Debug the config path resolution
   logger.info('DEBUG: Config path resolution', {
     cliArgsConfigPath: cliArgs.config.configPath,
@@ -55,16 +55,16 @@ export async function loadConfiguration(args?: string[]): Promise<ConfigurationR
     resolvedConfigPath: configPath,
     rawEnvConfigPath: Bun.env.CONFIG_PATH,
   })
-  
+
   const configFilePath = await findConfigFile(configPath)
-  
+
   // Debug config file finding
   logger.info('DEBUG: Config file resolution', {
     searchPath: configPath,
     foundPath: configFilePath,
     fileExists: configFilePath ? await file(configFilePath).exists() : false,
   })
-  
+
   let fileConfig: Partial<Config> | null = null
   let configFileFormat: string | null = null
 
@@ -72,7 +72,7 @@ export async function loadConfiguration(args?: string[]): Promise<ConfigurationR
     try {
       fileConfig = await loadConfigFile(configFilePath)
       configFileFormat = configFilePath.split('.').pop() || null
-      
+
       // Debug loaded file config
       logger.info('DEBUG: File config loaded', {
         configFilePath,
@@ -107,7 +107,9 @@ export async function loadConfiguration(args?: string[]): Promise<ConfigurationR
   // Debug the merged config before validation
   logger.info('DEBUG: Merged configuration before validation', {
     mergedConfigApp: mergedConfig.app ? Object.keys(mergedConfig.app) : undefined,
-    mergedConfigAppStringified: mergedConfig.app ? JSON.stringify(mergedConfig.app, null, 2) : undefined,
+    mergedConfigAppStringified: mergedConfig.app
+      ? JSON.stringify(mergedConfig.app, null, 2)
+      : undefined,
   })
 
   const requiredFieldErrors = validateRequiredFields(mergedConfig)
@@ -122,17 +124,21 @@ export async function loadConfiguration(args?: string[]): Promise<ConfigurationR
 
   try {
     validatedConfig = ConfigSchema.parse(mergedConfig)
-    
+
     // Debug the validated config after schema validation
     logger.info('DEBUG: Configuration after schema validation', {
       validatedConfigApp: validatedConfig.app ? Object.keys(validatedConfig.app) : undefined,
-      validatedConfigAppStringified: validatedConfig.app ? JSON.stringify(validatedConfig.app, null, 2) : undefined,
+      validatedConfigAppStringified: validatedConfig.app
+        ? JSON.stringify(validatedConfig.app, null, 2)
+        : undefined,
     })
   } catch (error) {
     if (error instanceof Error) {
       validationErrors.push(error.message)
     }
-    logger.error('DEBUG: Schema validation failed', { error: error instanceof Error ? error.message : String(error) })
+    logger.error('DEBUG: Schema validation failed', {
+      error: error instanceof Error ? error.message : String(error),
+    })
     throw new Error(`Configuration schema validation failed: ${error}`)
   }
 
