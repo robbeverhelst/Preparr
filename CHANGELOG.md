@@ -1,3 +1,11 @@
+## [0.1.10](https://github.com/robbeverhelst/Preparr/compare/v0.1.9...v0.1.10) (2025-10-03)
+
+
+### Bug Fixes
+
+* clean up JSON configuration formatting and improve logging in configuration loading ([304aca8](https://github.com/robbeverhelst/Preparr/commit/304aca8838891b45f4ad6800c2fb1aef7d6ef39a))
+* unify configuration structure and enhance Kubernetes deployment ([aaae5cd](https://github.com/robbeverhelst/Preparr/commit/aaae5cdfbc3c4e05a09d735b50cd78dac6552a22))
+
 ## [0.1.9](https://github.com/robbeverhelst/Preparr/compare/v0.1.8...v0.1.9) (2025-09-09)
 
 
