@@ -32,7 +32,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
         with:
-          version: v3.14.0
+          version: v3.16.0
 
       - name: Lint Helm chart
         run: helm lint ./helm/preparr
@@ -63,7 +63,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
         with:
-          version: v3.14.0
+          version: v3.16.0
 
       - name: Get latest version
         id: version
@@ -91,8 +91,27 @@ jobs:
 
       - name: Push to GitHub Container Registry
         run: |
+          # Push chart to GHCR
           helm push ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
           echo "✓ Helm chart pushed to GHCR"
+
+          # Verify the push
+          echo "Verifying OCI artifact..."
+          helm show chart oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }} --version ${{ steps.version.outputs.version }} || echo "⚠️ Chart verification failed - package may be private"
+
+      - name: Make package public
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Try to make the package public
+          echo "Attempting to make package public..."
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /user/packages/container/${{ env.CHART_NAME }}/versions \
+            -f visibility='public' 2>&1 || echo "⚠️ Could not set package visibility - may require manual action"
 
       - name: Update release notes and attach chart
         uses: softprops/action-gh-release@v2
