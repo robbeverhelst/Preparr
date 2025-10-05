@@ -1,0 +1,316 @@
+# Production Servarr Stack Example
+# Full production deployment with persistence, resource limits, and ClusterIP services
+
+global:
+  namespace: media-production
+
+preparr:
+  image:
+    repository: ghcr.io/robbeverhelst/preparr
+    pullPolicy: IfNotPresent
+    tag: "0.1.10"  # Pin to specific version
+  health:
+    port: 9001
+  logLevel: info  # Use 'warn' or 'error' in production
+
+# PostgreSQL with persistence
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+  auth:
+    username: postgres
+    password: "production-db-secure-password-123"
+    database: servarr
+  service:
+    type: ClusterIP
+    port: 5432
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: "fast-ssd"  # Use your storage class
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# qBittorrent with increased resources
+qbittorrent:
+  enabled: true
+  auth:
+    username: admin
+    password: "qbit-production-password-456"
+  service:
+    type: ClusterIP  # Use Ingress for external access
+    webui:
+      port: 8080
+    bittorrent:
+      port: 6881
+  env:
+    TZ: America/New_York  # Set your timezone
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+  config:
+    qbittorrent:
+      webui:
+        username: admin
+        password: "qbit-production-password-456"
+      downloads:
+        defaultPath: "/downloads"
+      connection:
+        port: 6881
+
+# Prowlarr configuration
+prowlarr:
+  enabled: true
+  apiKey: "prod-prowlarr-api-key-unique-123"
+  adminPassword: "prowlarr-production-password-789"
+  service:
+    type: ClusterIP
+    webui:
+      port: 9696
+    health:
+      port: 9001
+  env:
+    TZ: America/New_York
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  reconciliation:
+    enabled: true
+    interval: 60  # Check every minute
+    watch: true
+  config:
+    app:
+      apiKey: "prod-prowlarr-api-key-unique-123"
+      indexers:
+        - name: "The Pirate Bay"
+          implementation: "Cardigann"
+          implementationName: "Cardigann"
+          configContract: "CardigannSettings"
+          definitionName: "thepiratebay"
+          appProfileId: 1
+          fields:
+            - name: "definitionFile"
+              value: "thepiratebay"
+            - name: "baseUrl"
+              value: "https://thepiratebay.org/"
+            - name: "torrentBaseSettings.appMinimumSeeders"
+              value: 5  # Higher seeders for production
+          enable: true
+          priority: 25
+      downloadClients:
+        - name: "qBittorrent"
+          implementation: "QBittorrent"
+          implementationName: "qBittorrent"
+          configContract: "QBittorrentSettings"
+          fields:
+            - name: "host"
+              value: "qbittorrent"
+            - name: "port"
+              value: 8080
+            - name: "username"
+              value: "admin"
+            - name: "password"
+              value: "qbit-production-password-456"
+            - name: "category"
+              value: "prowlarr"
+          enable: true
+          priority: 1
+      applications:
+        - name: "Sonarr"
+          implementation: "Sonarr"
+          implementationName: "Sonarr"
+          configContract: "SonarrSettings"
+          appProfileId: 1
+          fields:
+            - name: "prowlarrUrl"
+              value: "http://prowlarr:9696"
+            - name: "baseUrl"
+              value: "http://sonarr:8989"
+            - name: "apiKey"
+              value: "prod-sonarr-api-key-unique-456"
+          enable: true
+          syncLevel: "fullSync"
+        - name: "Radarr"
+          implementation: "Radarr"
+          implementationName: "Radarr"
+          configContract: "RadarrSettings"
+          appProfileId: 1
+          fields:
+            - name: "prowlarrUrl"
+              value: "http://prowlarr:9696"
+            - name: "baseUrl"
+              value: "http://radarr:7878"
+            - name: "apiKey"
+              value: "prod-radarr-api-key-unique-789"
+          enable: true
+          syncLevel: "fullSync"
+
+# Sonarr with persistent storage
+sonarr:
+  enabled: true
+  apiKey: "prod-sonarr-api-key-unique-456"
+  adminPassword: "sonarr-production-password-abc"
+  service:
+    type: ClusterIP
+    webui:
+      port: 8989
+    health:
+      port: 9001
+  env:
+    TZ: America/New_York
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  reconciliation:
+    enabled: true
+    interval: 60
+    watch: true
+  storage:
+    tv:
+      enabled: true
+      size: 500Gi
+      storageClass: "bulk-storage"  # Use your storage class
+  config:
+    app:
+      apiKey: "prod-sonarr-api-key-unique-456"
+      prowlarrSync: true
+      rootFolders:
+        - path: "/tv"
+          accessible: true
+      qualityProfiles:
+        - name: "HD - 1080p"
+          cutoff: 1080
+          items:
+            - quality:
+                id: 1
+                name: "HDTV-1080p"
+              allowed: true
+            - quality:
+                id: 2
+                name: "WEBDL-1080p"
+              allowed: true
+      downloadClients:
+        - name: "qBittorrent"
+          implementation: "QBittorrent"
+          implementationName: "qBittorrent"
+          configContract: "QBittorrentSettings"
+          fields:
+            - name: "host"
+              value: "qbittorrent"
+            - name: "port"
+              value: 8080
+            - name: "username"
+              value: "admin"
+            - name: "password"
+              value: "qbit-production-password-456"
+            - name: "category"
+              value: "tv"
+          enable: true
+          priority: 1
+    services:
+      qbittorrent:
+        url: "http://qbittorrent:8080"
+        username: "admin"
+        password: "qbit-production-password-456"
+
+# Radarr with persistent storage
+radarr:
+  enabled: true
+  apiKey: "prod-radarr-api-key-unique-789"
+  adminPassword: "radarr-production-password-def"
+  service:
+    type: ClusterIP
+    webui:
+      port: 7878
+    health:
+      port: 9001
+  env:
+    TZ: America/New_York
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  reconciliation:
+    enabled: true
+    interval: 60
+    watch: true
+  storage:
+    movies:
+      enabled: true
+      size: 1Ti
+      storageClass: "bulk-storage"  # Use your storage class
+  config:
+    app:
+      apiKey: "prod-radarr-api-key-unique-789"
+      prowlarrSync: true
+      rootFolders:
+        - path: "/movies"
+          accessible: true
+      qualityProfiles:
+        - name: "1080p"
+          cutoff: 1080
+          items:
+            - quality:
+                id: 1
+                name: "Bluray-1080p"
+              allowed: true
+            - quality:
+                id: 2
+                name: "WEBDL-1080p"
+              allowed: true
+      downloadClients:
+        - name: "qBittorrent"
+          implementation: "QBittorrent"
+          implementationName: "qBittorrent"
+          configContract: "QBittorrentSettings"
+          fields:
+            - name: "host"
+              value: "qbittorrent"
+            - name: "port"
+              value: 8080
+            - name: "username"
+              value: "admin"
+            - name: "password"
+              value: "qbit-production-password-456"
+            - name: "category"
+              value: "movies"
+          enable: true
+          priority: 1
+      applications: []
+      qbittorrent:
+        webui:
+          username: "admin"
+          password: "qbit-production-password-456"
+
+lidarr:
+  enabled: false

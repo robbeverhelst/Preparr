@@ -1,0 +1,131 @@
+{{- if .Values.qbittorrent.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qbittorrent-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: qbittorrent
+data:
+  qbittorrent-config.json: |
+    {{- .Values.qbittorrent.config | toJson | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: qbittorrent
+spec:
+  type: {{ .Values.qbittorrent.service.type }}
+  selector:
+    app: qbittorrent
+  ports:
+    - name: webui
+      port: {{ .Values.qbittorrent.service.webui.port }}
+      targetPort: 8080
+      {{- if and (eq .Values.qbittorrent.service.type "NodePort") .Values.qbittorrent.service.webui.nodePort }}
+      nodePort: {{ .Values.qbittorrent.service.webui.nodePort }}
+      {{- end }}
+    - name: bittorrent
+      port: {{ .Values.qbittorrent.service.bittorrent.port }}
+      targetPort: 6881
+      {{- if and (eq .Values.qbittorrent.service.type "NodePort") .Values.qbittorrent.service.bittorrent.nodePort }}
+      nodePort: {{ .Values.qbittorrent.service.bittorrent.nodePort }}
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: qbittorrent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbittorrent
+  template:
+    metadata:
+      labels:
+        app: qbittorrent
+    spec:
+      initContainers:
+      - name: preparr-init
+        image: {{ include "preparr.image" . }}
+        imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        env:
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgresql.auth.password | quote }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.auth.database | quote }}
+        - name: SERVARR_TYPE
+          value: "qbittorrent"
+        - name: QBITTORRENT_USER
+          value: {{ .Values.qbittorrent.auth.username | quote }}
+        - name: QBITTORRENT_PASSWORD
+          value: {{ .Values.qbittorrent.auth.password | quote }}
+        - name: SERVARR_ADMIN_USER
+          value: {{ .Values.qbittorrent.auth.username | quote }}
+        - name: SERVARR_ADMIN_PASSWORD
+          value: {{ .Values.qbittorrent.auth.password | quote }}
+        - name: QBITTORRENT_URL
+          value: "http://qbittorrent:{{ .Values.qbittorrent.service.webui.port }}"
+        - name: CONFIG_PATH
+          value: "/config/qbittorrent-config.json"
+        command: ["bun", "run", "dist/index.js", "--init"]
+        volumeMounts:
+        - name: qbittorrent-config-volume
+          mountPath: /config
+        - name: qbittorrent-config-file
+          mountPath: /config/qbittorrent-config.json
+          subPath: qbittorrent-config.json
+      containers:
+      - name: qbittorrent
+        image: "{{ .Values.qbittorrent.image.repository }}:{{ .Values.qbittorrent.image.tag }}"
+        env:
+        - name: PUID
+          value: {{ .Values.qbittorrent.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.qbittorrent.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.qbittorrent.env.TZ | quote }}
+        - name: WEBUI_PORT
+          value: {{ .Values.qbittorrent.service.webui.port | quote }}
+        ports:
+        - containerPort: 8080
+        - containerPort: 6881
+        {{- if .Values.qbittorrent.resources }}
+        resources:
+          {{- toYaml .Values.qbittorrent.resources | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: qbittorrent-config-volume
+          mountPath: /config
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: qbittorrent-config-volume
+        emptyDir: {}
+      - name: qbittorrent-config-file
+        configMap:
+          name: qbittorrent-config
+{{- end }}

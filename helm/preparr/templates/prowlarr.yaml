@@ -1,0 +1,189 @@
+{{- if .Values.prowlarr.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prowlarr-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: prowlarr
+data:
+  prowlarr-config.json: |
+    {{- .Values.prowlarr.config | toJson | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowlarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: prowlarr
+spec:
+  type: {{ .Values.prowlarr.service.type }}
+  selector:
+    app: prowlarr
+  ports:
+    - name: webui
+      port: {{ .Values.prowlarr.service.webui.port }}
+      targetPort: 9696
+      {{- if and (eq .Values.prowlarr.service.type "NodePort") .Values.prowlarr.service.webui.nodePort }}
+      nodePort: {{ .Values.prowlarr.service.webui.nodePort }}
+      {{- end }}
+    - name: health
+      port: {{ .Values.prowlarr.service.health.port }}
+      targetPort: 9001
+      {{- if and (eq .Values.prowlarr.service.type "NodePort") .Values.prowlarr.service.health.nodePort }}
+      nodePort: {{ .Values.prowlarr.service.health.nodePort }}
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: prowlarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prowlarr
+  template:
+    metadata:
+      labels:
+        app: prowlarr
+    spec:
+      initContainers:
+      - name: preparr-init
+        image: {{ include "preparr.image" . }}
+        imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
+        env:
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgresql.auth.password | quote }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.auth.database | quote }}
+        - name: SERVARR_URL
+          value: "http://prowlarr:{{ .Values.prowlarr.service.webui.port }}"
+        - name: SERVARR_TYPE
+          value: "prowlarr"
+        - name: SERVARR_ADMIN_USER
+          value: "admin"
+        - name: SERVARR_ADMIN_PASSWORD
+          value: {{ .Values.prowlarr.adminPassword | quote }}
+        - name: SERVARR_API_KEY
+          value: {{ .Values.prowlarr.apiKey | quote }}
+        - name: CONFIG_PATH
+          value: "/config/prowlarr-config.json"
+        command: ["bun", "run", "dist/index.js", "--init"]
+        volumeMounts:
+        - name: prowlarr-config-volume
+          mountPath: /config
+        - name: prowlarr-config-file
+          mountPath: /config/prowlarr-config.json
+          subPath: prowlarr-config.json
+      containers:
+      - name: prowlarr
+        image: "{{ .Values.prowlarr.image.repository }}:{{ .Values.prowlarr.image.tag }}"
+        env:
+        - name: PUID
+          value: {{ .Values.prowlarr.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.prowlarr.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.prowlarr.env.TZ | quote }}
+        ports:
+        - containerPort: 9696
+        {{- if .Values.prowlarr.resources }}
+        resources:
+          {{- toYaml .Values.prowlarr.resources | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: prowlarr-config-volume
+          mountPath: /config
+        readinessProbe:
+          httpGet:
+            path: /api/v1/system/status
+            port: 9696
+            httpHeaders:
+            - name: X-Api-Key
+              value: {{ .Values.prowlarr.apiKey | quote }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+      - name: preparr-sidecar
+        image: {{ include "preparr.image" . }}
+        imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
+        env:
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgresql.auth.password | quote }}
+        - name: POSTGRES_DB
+          value: "prowlarr_main"
+        - name: SERVARR_URL
+          value: "http://localhost:9696"
+        - name: SERVARR_TYPE
+          value: "prowlarr"
+        - name: SERVARR_ADMIN_USER
+          value: "admin"
+        - name: SERVARR_ADMIN_PASSWORD
+          value: {{ .Values.prowlarr.adminPassword | quote }}
+        - name: SERVARR_API_KEY
+          value: {{ .Values.prowlarr.apiKey | quote }}
+        - name: CONFIG_PATH
+          value: "/config/prowlarr-config.json"
+        - name: CONFIG_WATCH
+          value: {{ .Values.prowlarr.reconciliation.watch | quote }}
+        - name: CONFIG_RECONCILE_INTERVAL
+          value: {{ .Values.prowlarr.reconciliation.interval | quote }}
+        - name: HEALTH_PORT
+          value: {{ .Values.preparr.health.port | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.preparr.logLevel | quote }}
+        {{- if .Values.qbittorrent.enabled }}
+        - name: QBITTORRENT_URL
+          value: "http://qbittorrent:{{ .Values.qbittorrent.service.webui.port }}"
+        - name: QBITTORRENT_USER
+          value: {{ .Values.qbittorrent.auth.username | quote }}
+        - name: QBITTORRENT_PASSWORD
+          value: {{ .Values.qbittorrent.auth.password | quote }}
+        {{- end }}
+        command: ["bun", "run", "dist/index.js"]
+        ports:
+        - containerPort: {{ .Values.preparr.health.port }}
+        volumeMounts:
+        - name: prowlarr-config-volume
+          mountPath: /config
+        - name: prowlarr-config-file
+          mountPath: /config/prowlarr-config.json
+          subPath: prowlarr-config.json
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.preparr.health.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.preparr.health.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 30
+      volumes:
+      - name: prowlarr-config-volume
+        emptyDir: {}
+      - name: prowlarr-config-file
+        configMap:
+          name: prowlarr-config
+{{- end }}

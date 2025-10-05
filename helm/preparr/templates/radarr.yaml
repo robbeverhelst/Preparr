@@ -1,0 +1,210 @@
+{{- if .Values.radarr.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: radarr-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: radarr
+data:
+  radarr-config.json: |
+    {{- .Values.radarr.config | toJson | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: radarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: radarr
+spec:
+  type: {{ .Values.radarr.service.type }}
+  selector:
+    app: radarr
+  ports:
+    - name: webui
+      port: {{ .Values.radarr.service.webui.port }}
+      targetPort: 7878
+      {{- if and (eq .Values.radarr.service.type "NodePort") .Values.radarr.service.webui.nodePort }}
+      nodePort: {{ .Values.radarr.service.webui.nodePort }}
+      {{- end }}
+    - name: health
+      port: {{ .Values.radarr.service.health.port }}
+      targetPort: 9001
+      {{- if and (eq .Values.radarr.service.type "NodePort") .Values.radarr.service.health.nodePort }}
+      nodePort: {{ .Values.radarr.service.health.nodePort }}
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: radarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: radarr
+  template:
+    metadata:
+      labels:
+        app: radarr
+    spec:
+      initContainers:
+      - name: preparr-init
+        image: {{ include "preparr.image" . }}
+        imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
+        env:
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgresql.auth.password | quote }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.auth.database | quote }}
+        - name: SERVARR_URL
+          value: "http://radarr:{{ .Values.radarr.service.webui.port }}"
+        - name: SERVARR_TYPE
+          value: "radarr"
+        - name: SERVARR_ADMIN_USER
+          value: "admin"
+        - name: SERVARR_ADMIN_PASSWORD
+          value: {{ .Values.radarr.adminPassword | quote }}
+        - name: SERVARR_API_KEY
+          value: {{ .Values.radarr.apiKey | quote }}
+        - name: CONFIG_PATH
+          value: "/config/radarr-config.json"
+        command: ["bun", "run", "dist/index.js", "--init"]
+        volumeMounts:
+        - name: radarr-config-volume
+          mountPath: /config
+        - name: radarr-config-file
+          mountPath: /config/radarr-config.json
+          subPath: radarr-config.json
+      containers:
+      - name: radarr
+        image: "{{ .Values.radarr.image.repository }}:{{ .Values.radarr.image.tag }}"
+        env:
+        - name: PUID
+          value: {{ .Values.radarr.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.radarr.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.radarr.env.TZ | quote }}
+        ports:
+        - containerPort: 7878
+        {{- if .Values.radarr.resources }}
+        resources:
+          {{- toYaml .Values.radarr.resources | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: radarr-config-volume
+          mountPath: /config
+        {{- if .Values.radarr.storage.movies.enabled }}
+        - name: movies-storage
+          mountPath: /movies
+        {{- end }}
+        readinessProbe:
+          httpGet:
+            path: /api/v3/system/status
+            port: 7878
+            httpHeaders:
+            - name: X-Api-Key
+              value: {{ .Values.radarr.apiKey | quote }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+      - name: preparr-sidecar
+        image: {{ include "preparr.image" . }}
+        imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
+        env:
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgresql.auth.password | quote }}
+        - name: POSTGRES_DB
+          value: "radarr_main"
+        - name: SERVARR_URL
+          value: "http://localhost:7878"
+        - name: SERVARR_TYPE
+          value: "radarr"
+        - name: SERVARR_ADMIN_USER
+          value: "admin"
+        - name: SERVARR_ADMIN_PASSWORD
+          value: {{ .Values.radarr.adminPassword | quote }}
+        - name: SERVARR_API_KEY
+          value: {{ .Values.radarr.apiKey | quote }}
+        - name: CONFIG_PATH
+          value: "/config/radarr-config.json"
+        - name: CONFIG_WATCH
+          value: {{ .Values.radarr.reconciliation.watch | quote }}
+        - name: CONFIG_RECONCILE_INTERVAL
+          value: {{ .Values.radarr.reconciliation.interval | quote }}
+        - name: HEALTH_PORT
+          value: {{ .Values.preparr.health.port | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.preparr.logLevel | quote }}
+        command: ["bun", "run", "dist/index.js"]
+        ports:
+        - containerPort: {{ .Values.preparr.health.port }}
+        volumeMounts:
+        - name: radarr-config-volume
+          mountPath: /config
+        - name: radarr-config-file
+          mountPath: /config/radarr-config.json
+          subPath: radarr-config.json
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.preparr.health.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.preparr.health.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 30
+      volumes:
+      - name: radarr-config-volume
+        emptyDir: {}
+      - name: radarr-config-file
+        configMap:
+          name: radarr-config
+      {{- if .Values.radarr.storage.movies.enabled }}
+      - name: movies-storage
+        persistentVolumeClaim:
+          claimName: radarr-movies-pvc
+      {{- end }}
+{{- if .Values.radarr.storage.movies.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: radarr-movies-pvc
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: radarr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.radarr.storage.movies.storageClass }}
+  storageClassName: {{ .Values.radarr.storage.movies.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.radarr.storage.movies.size }}
+{{- end }}
+{{- end }}

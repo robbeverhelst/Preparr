@@ -1,0 +1,374 @@
+{{- if .Values.sonarr.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarr-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: sonarr
+    {{- include "preparr.serviceLabels" (dict "local" .Values.sonarr "Values" .Values) | nindent 4 }}
+data:
+  sonarr-config.json: |
+    {{- .Values.sonarr.config | toJson | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: sonarr
+    {{- include "preparr.serviceLabels" (dict "local" .Values.sonarr "Values" .Values) | nindent 4 }}
+  {{- $annotations := include "preparr.serviceAnnotations" (dict "local" .Values.sonarr "Values" .Values) }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.sonarr.service.type }}
+  {{- if and (eq .Values.sonarr.service.type "LoadBalancer") .Values.sonarr.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.sonarr.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and (eq .Values.sonarr.service.type "LoadBalancer") .Values.sonarr.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+    {{- toYaml .Values.sonarr.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- if .Values.sonarr.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ .Values.sonarr.service.externalTrafficPolicy }}
+  {{- end }}
+  selector:
+    app: sonarr
+  ports:
+    - name: webui
+      port: {{ .Values.sonarr.service.webui.port }}
+      targetPort: 8989
+      protocol: TCP
+      {{- if and (eq .Values.sonarr.service.type "NodePort") .Values.sonarr.service.webui.nodePort }}
+      nodePort: {{ .Values.sonarr.service.webui.nodePort }}
+      {{- end }}
+    - name: health
+      port: {{ .Values.sonarr.service.health.port }}
+      targetPort: 9001
+      protocol: TCP
+      {{- if and (eq .Values.sonarr.service.type "NodePort") .Values.sonarr.service.health.nodePort }}
+      nodePort: {{ .Values.sonarr.service.health.nodePort }}
+      {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: sonarr
+spec:
+  replicas: {{ .Values.sonarr.replicaCount | default 1 }}
+  {{- with .Values.sonarr.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: sonarr
+  template:
+    metadata:
+      labels:
+        app: sonarr
+        {{- include "preparr.podLabels" (dict "local" .Values.sonarr "Values" .Values) | nindent 8 }}
+      {{- $podAnnotations := include "preparr.podAnnotations" (dict "local" .Values.sonarr "Values" .Values) }}
+      {{- if $podAnnotations }}
+      annotations:
+        {{- $podAnnotations | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- include "preparr.imagePullSecrets" (dict "local" .Values.sonarr "Values" .Values) | nindent 6 }}
+      {{- with .Values.sonarr.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sonarr.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sonarr.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sonarr.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.sonarr.priorityClassName }}
+      priorityClassName: {{ .Values.sonarr.priorityClassName }}
+      {{- end }}
+      initContainers:
+      {{- with .Values.sonarr.initContainers }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      - name: preparr-init
+        image: {{ include "preparr.image" . }}
+        imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
+        {{- with .Values.sonarr.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          {{- if .Values.postgresql.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.postgresql.secretName" . }}
+              key: {{ .Values.postgresql.auth.secretKeys.adminPasswordKey | default "password" }}
+          {{- else }}
+          value: {{ .Values.postgresql.auth.password | quote }}
+          {{- end }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.auth.database | quote }}
+        - name: SERVARR_URL
+          value: "http://sonarr:{{ .Values.sonarr.service.webui.port }}"
+        - name: SERVARR_TYPE
+          value: "sonarr"
+        - name: SERVARR_ADMIN_USER
+          value: "admin"
+        - name: SERVARR_ADMIN_PASSWORD
+          {{- if .Values.sonarr.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.componentSecretName" (dict "root" . "componentName" "sonarr" "local" .Values.sonarr) }}
+              key: {{ .Values.sonarr.auth.secretKeys.adminPasswordKey | default "admin-password" }}
+          {{- else }}
+          value: {{ .Values.sonarr.adminPassword | quote }}
+          {{- end }}
+        - name: SERVARR_API_KEY
+          {{- if .Values.sonarr.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.componentSecretName" (dict "root" . "componentName" "sonarr" "local" .Values.sonarr) }}
+              key: {{ .Values.sonarr.auth.secretKeys.apiKeyKey | default "api-key" }}
+          {{- else }}
+          value: {{ .Values.sonarr.apiKey | quote }}
+          {{- end }}
+        - name: CONFIG_PATH
+          value: "/config/sonarr-config.json"
+        {{- with .Values.sonarr.env }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.sonarr.envFrom }}
+        envFrom:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        command: ["bun", "run", "dist/index.js", "--init"]
+        volumeMounts:
+        - name: sonarr-config-volume
+          mountPath: /config
+        - name: sonarr-config-file
+          mountPath: /config/sonarr-config.json
+          subPath: sonarr-config.json
+        {{- with .Values.sonarr.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      containers:
+      - name: sonarr
+        image: "{{ .Values.sonarr.image.repository }}:{{ .Values.sonarr.image.tag }}"
+        imagePullPolicy: {{ .Values.sonarr.image.pullPolicy | default "IfNotPresent" }}
+        {{- with .Values.sonarr.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+        - name: PUID
+          value: {{ .Values.sonarr.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.sonarr.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.sonarr.env.TZ | quote }}
+        {{- with .Values.sonarr.env }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.sonarr.envFrom }}
+        envFrom:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        ports:
+        - name: webui
+          containerPort: 8989
+          protocol: TCP
+        {{- if .Values.sonarr.resources }}
+        resources:
+          {{- toYaml .Values.sonarr.resources | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: sonarr-config-volume
+          mountPath: /config
+        {{- if .Values.sonarr.storage.tv.enabled }}
+        - name: tv-storage
+          mountPath: /tv
+        {{- end }}
+        {{- with .Values.sonarr.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.sonarr.livenessProbe }}
+        livenessProbe:
+          {{- toYaml .Values.sonarr.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.sonarr.readinessProbe }}
+        readinessProbe:
+          {{- toYaml .Values.sonarr.readinessProbe | nindent 10 }}
+        {{- else }}
+        readinessProbe:
+          httpGet:
+            path: /api/v3/system/status
+            port: 8989
+            httpHeaders:
+            - name: X-Api-Key
+              value: {{ .Values.sonarr.apiKey | quote }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        {{- end }}
+        {{- if .Values.sonarr.startupProbe }}
+        startupProbe:
+          {{- toYaml .Values.sonarr.startupProbe | nindent 10 }}
+        {{- end }}
+        {{- with .Values.sonarr.lifecycle }}
+        lifecycle:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      - name: preparr-sidecar
+        image: {{ include "preparr.image" . }}
+        imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
+        {{- with .Values.sonarr.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          {{- if .Values.postgresql.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.postgresql.secretName" . }}
+              key: {{ .Values.postgresql.auth.secretKeys.adminPasswordKey | default "password" }}
+          {{- else }}
+          value: {{ .Values.postgresql.auth.password | quote }}
+          {{- end }}
+        - name: POSTGRES_DB
+          value: "sonarr_main"
+        - name: SERVARR_URL
+          value: "http://localhost:8989"
+        - name: SERVARR_TYPE
+          value: "sonarr"
+        - name: SERVARR_ADMIN_USER
+          value: "admin"
+        - name: SERVARR_ADMIN_PASSWORD
+          {{- if .Values.sonarr.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.componentSecretName" (dict "root" . "componentName" "sonarr" "local" .Values.sonarr) }}
+              key: {{ .Values.sonarr.auth.secretKeys.adminPasswordKey | default "admin-password" }}
+          {{- else }}
+          value: {{ .Values.sonarr.adminPassword | quote }}
+          {{- end }}
+        - name: SERVARR_API_KEY
+          {{- if .Values.sonarr.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.componentSecretName" (dict "root" . "componentName" "sonarr" "local" .Values.sonarr) }}
+              key: {{ .Values.sonarr.auth.secretKeys.apiKeyKey | default "api-key" }}
+          {{- else }}
+          value: {{ .Values.sonarr.apiKey | quote }}
+          {{- end }}
+        - name: CONFIG_PATH
+          value: "/config/sonarr-config.json"
+        - name: CONFIG_WATCH
+          value: {{ .Values.sonarr.reconciliation.watch | quote }}
+        - name: CONFIG_RECONCILE_INTERVAL
+          value: {{ .Values.sonarr.reconciliation.interval | quote }}
+        - name: HEALTH_PORT
+          value: {{ .Values.preparr.health.port | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.preparr.logLevel | quote }}
+        {{- with .Values.sonarr.env }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.sonarr.envFrom }}
+        envFrom:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        command: ["bun", "run", "dist/index.js"]
+        ports:
+        - name: health
+          containerPort: {{ .Values.preparr.health.port }}
+          protocol: TCP
+        volumeMounts:
+        - name: sonarr-config-volume
+          mountPath: /config
+        - name: sonarr-config-file
+          mountPath: /config/sonarr-config.json
+          subPath: sonarr-config.json
+        {{- with .Values.sonarr.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.preparr.health.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.preparr.health.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 30
+      {{- with .Values.sonarr.extraContainers }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      volumes:
+      - name: sonarr-config-volume
+        emptyDir: {}
+      - name: sonarr-config-file
+        configMap:
+          name: sonarr-config
+      {{- if .Values.sonarr.storage.tv.enabled }}
+      - name: tv-storage
+        persistentVolumeClaim:
+          claimName: sonarr-tv-pvc
+      {{- end }}
+      {{- with .Values.sonarr.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- if .Values.sonarr.storage.tv.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarr-tv-pvc
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: sonarr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if or .Values.sonarr.storage.tv.storageClass .Values.global.storageClass }}
+  storageClassName: {{ .Values.sonarr.storage.tv.storageClass | default .Values.global.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.sonarr.storage.tv.size }}
+{{- end }}
+{{- end }}

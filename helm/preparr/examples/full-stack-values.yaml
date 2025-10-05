@@ -1,0 +1,366 @@
+# Complete Servarr Media Stack Example
+# This deploys PostgreSQL + qBittorrent + Prowlarr + Sonarr + Radarr
+# with full automation and configuration as code
+
+global:
+  namespace: media-stack
+
+# PrepArr Configuration
+preparr:
+  image:
+    repository: ghcr.io/robbeverhelst/preparr
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  health:
+    port: 9001
+  logLevel: info
+
+# PostgreSQL Database
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+  auth:
+    username: postgres
+    password: "change-this-password"
+    database: servarr
+  service:
+    type: ClusterIP
+    port: 5432
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  persistence:
+    enabled: false  # Set to true for production
+    size: 8Gi
+    storageClass: ""
+
+# qBittorrent Download Client
+qbittorrent:
+  enabled: true
+  image:
+    repository: linuxserver/qbittorrent
+    tag: latest
+  auth:
+    username: admin
+    password: "qbit-secure-password"
+  service:
+    type: NodePort
+    webui:
+      port: 8080
+      nodePort: 30080
+    bittorrent:
+      port: 6881
+      nodePort: 30881
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  # PrepArr will configure this automatically
+  config:
+    qbittorrent:
+      webui:
+        username: admin
+        password: "qbit-secure-password"
+      downloads:
+        defaultPath: "/downloads"
+      connection:
+        port: 6881
+
+# Prowlarr Indexer Manager
+prowlarr:
+  enabled: true
+  image:
+    repository: linuxserver/prowlarr
+    tag: latest
+  apiKey: "c04914c6bfad445a3edc23e5edbca4d1"
+  adminPassword: "prowlarr-secure-password"
+  service:
+    type: NodePort
+    webui:
+      port: 9696
+      nodePort: 30696
+    health:
+      port: 9001
+      nodePort: 31003
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  reconciliation:
+    enabled: true
+    interval: 30
+    watch: true
+  # Full Prowlarr configuration
+  config:
+    app:
+      apiKey: "c04914c6bfad445a3edc23e5edbca4d1"
+      rootFolders: []
+      qualityProfiles: []
+      # Indexers to configure
+      indexers:
+        - name: "The Pirate Bay"
+          implementation: "Cardigann"
+          implementationName: "Cardigann"
+          configContract: "CardigannSettings"
+          definitionName: "thepiratebay"
+          appProfileId: 1
+          fields:
+            - name: "definitionFile"
+              value: "thepiratebay"
+            - name: "baseUrl"
+              value: "https://thepiratebay.org/"
+            - name: "torrentBaseSettings.appMinimumSeeders"
+              value: 1
+          enable: true
+          priority: 25
+      # Download clients
+      downloadClients:
+        - name: "qBittorrent"
+          implementation: "QBittorrent"
+          implementationName: "qBittorrent"
+          configContract: "QBittorrentSettings"
+          fields:
+            - name: "host"
+              value: "qbittorrent"
+            - name: "port"
+              value: 8080
+            - name: "username"
+              value: "admin"
+            - name: "password"
+              value: "qbit-secure-password"
+            - name: "category"
+              value: "prowlarr"
+            - name: "priority"
+              value: 0
+            - name: "removeCompletedDownloads"
+              value: false
+            - name: "removeFailedDownloads"
+              value: false
+          enable: true
+          priority: 1
+      # Applications to sync indexers to
+      applications:
+        - name: "Sonarr"
+          implementation: "Sonarr"
+          implementationName: "Sonarr"
+          configContract: "SonarrSettings"
+          appProfileId: 1
+          fields:
+            - name: "prowlarrUrl"
+              value: "http://prowlarr:9696"
+            - name: "baseUrl"
+              value: "http://sonarr:8989"
+            - name: "apiKey"
+              value: "2bac5d00dca43258313c734821a15c4c"
+          enable: true
+          syncLevel: "fullSync"
+        - name: "Radarr"
+          implementation: "Radarr"
+          implementationName: "Radarr"
+          configContract: "RadarrSettings"
+          appProfileId: 1
+          fields:
+            - name: "prowlarrUrl"
+              value: "http://prowlarr:9696"
+            - name: "baseUrl"
+              value: "http://radarr:7878"
+            - name: "apiKey"
+              value: "4fac7d10eca54269424d835a2edc15d2"
+          enable: true
+          syncLevel: "fullSync"
+
+# Sonarr TV Management
+sonarr:
+  enabled: true
+  image:
+    repository: linuxserver/sonarr
+    tag: latest
+  apiKey: "2bac5d00dca43258313c734821a15c4c"
+  adminPassword: "sonarr-secure-password"
+  service:
+    type: NodePort
+    webui:
+      port: 8989
+      nodePort: 30989
+    health:
+      port: 9001
+      nodePort: 31001
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  reconciliation:
+    enabled: true
+    interval: 30
+    watch: true
+  storage:
+    tv:
+      enabled: false  # Set to true for production
+      size: 50Gi
+      storageClass: ""
+  # Full Sonarr configuration
+  config:
+    app:
+      apiKey: "2bac5d00dca43258313c734821a15c4c"
+      prowlarrSync: true  # Let Prowlarr manage indexers
+      rootFolders:
+        - path: "/tv"
+          accessible: true
+      # Quality profiles
+      qualityProfiles:
+        - name: "HD - 1080p"
+          cutoff: 1080
+          items:
+            - quality:
+                id: 1
+                name: "HDTV-1080p"
+              allowed: true
+            - quality:
+                id: 2
+                name: "WEBDL-1080p"
+              allowed: true
+      # Download clients
+      downloadClients:
+        - name: "qBittorrent"
+          implementation: "QBittorrent"
+          implementationName: "qBittorrent"
+          configContract: "QBittorrentSettings"
+          fields:
+            - name: "host"
+              value: "qbittorrent"
+            - name: "port"
+              value: 8080
+            - name: "username"
+              value: "admin"
+            - name: "password"
+              value: "qbit-secure-password"
+            - name: "category"
+              value: "tv"
+            - name: "priority"
+              value: 0
+            - name: "removeCompletedDownloads"
+              value: false
+            - name: "removeFailedDownloads"
+              value: false
+          enable: true
+          priority: 1
+    # Services configuration
+    services:
+      qbittorrent:
+        url: "http://qbittorrent:8080"
+        username: "admin"
+        password: "qbit-secure-password"
+
+# Radarr Movie Management
+radarr:
+  enabled: true
+  image:
+    repository: linuxserver/radarr
+    tag: latest
+  apiKey: "4fac7d10eca54269424d835a2edc15d2"
+  adminPassword: "radarr-secure-password"
+  service:
+    type: NodePort
+    webui:
+      port: 7878
+      nodePort: 30878
+    health:
+      port: 9001
+      nodePort: 31002
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  reconciliation:
+    enabled: true
+    interval: 30
+    watch: true
+  storage:
+    movies:
+      enabled: false  # Set to true for production
+      size: 100Gi
+      storageClass: ""
+  # Full Radarr configuration
+  config:
+    app:
+      apiKey: "4fac7d10eca54269424d835a2edc15d2"
+      prowlarrSync: true  # Let Prowlarr manage indexers
+      rootFolders:
+        - path: "/movies"
+          accessible: true
+      # Quality profiles
+      qualityProfiles:
+        - name: "1080p"
+          cutoff: 1080
+          items:
+            - quality:
+                id: 1
+                name: "Bluray-1080p"
+              allowed: true
+            - quality:
+                id: 2
+                name: "WEBDL-1080p"
+              allowed: true
+      # Download clients
+      downloadClients:
+        - name: "qBittorrent"
+          implementation: "QBittorrent"
+          implementationName: "qBittorrent"
+          configContract: "QBittorrentSettings"
+          fields:
+            - name: "host"
+              value: "qbittorrent"
+            - name: "port"
+              value: 8080
+            - name: "username"
+              value: "admin"
+            - name: "password"
+              value: "qbit-secure-password"
+            - name: "category"
+              value: "movies"
+          enable: true
+          priority: 1
+      applications: []
+      # qBittorrent configuration
+      qbittorrent:
+        webui:
+          username: "admin"
+          password: "qbit-secure-password"
+
+# Lidarr Music Management (Optional)
+lidarr:
+  enabled: false

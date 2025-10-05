@@ -1,0 +1,645 @@
+# Production-grade values for PrepArr Helm Chart
+# This file demonstrates all available configuration options
+
+# Global settings applied to all resources
+global:
+  # Namespace to deploy into
+  namespace: preparr
+
+  # Global image pull secrets (merged with service-specific secrets)
+  imagePullSecrets: []
+  # - name: my-registry-secret
+
+  # Global labels applied to all resources
+  labels: {}
+  #   environment: production
+  #   team: platform
+
+  # Global annotations applied to all resources
+  annotations: {}
+  #   owner: platform-team
+
+  # Default storage class for all PVCs (can be overridden per-service)
+  storageClass: ""
+
+# PrepArr sidecar configuration
+preparr:
+  image:
+    repository: ghcr.io/robbeverhelst/preparr
+    pullPolicy: IfNotPresent
+    tag: "latest"
+    # Service-specific image pull secrets
+    pullSecrets: []
+
+  # Health check configuration
+  health:
+    port: 9001
+
+  # Logging configuration
+  logLevel: info  # debug|info|warn|error
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+
+  # PostgreSQL credentials
+  auth:
+    username: postgres
+    password: postgres123
+    database: servarr
+
+    # Use existing secret instead of creating one
+    existingSecret: ""
+    # existingSecret: "my-postgres-secret"
+
+    # Secret keys when using existingSecret
+    secretKeys:
+      adminPasswordKey: "password"
+      userPasswordKey: "password"
+
+  service:
+    type: ClusterIP
+    port: 5432
+    annotations: {}
+    labels: {}
+
+  # Resource limits
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  # Pod/container security contexts
+  podSecurityContext: {}
+  #   runAsUser: 999
+  #   runAsGroup: 999
+  #   fsGroup: 999
+
+  securityContext: {}
+  #   allowPrivilegeEscalation: false
+  #   capabilities:
+  #     drop:
+  #       - ALL
+
+  # Persistence configuration
+  persistence:
+    enabled: false
+    size: 8Gi
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+
+  # Node selection
+  nodeSelector: {}
+  #   disktype: ssd
+
+  tolerations: []
+  #   - key: "key1"
+  #     operator: "Equal"
+  #     value: "value1"
+  #     effect: "NoSchedule"
+
+  affinity: {}
+  #   nodeAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #       nodeSelectorTerms:
+  #         - matchExpressions:
+  #             - key: node-role
+  #               operator: In
+  #               values:
+  #                 - database
+
+# qBittorrent configuration
+qbittorrent:
+  enabled: true
+
+  image:
+    repository: linuxserver/qbittorrent
+    tag: latest
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+
+  # Replica count
+  replicaCount: 1
+
+  # Deployment strategy
+  strategy: {}
+  #   type: RollingUpdate
+  #   rollingUpdate:
+  #     maxSurge: 1
+  #     maxUnavailable: 0
+
+  auth:
+    username: admin
+    password: adminpass
+
+    # Use existing secret
+    existingSecret: ""
+    secretKeys:
+      usernameKey: "username"
+      passwordKey: "password"
+
+  service:
+    type: NodePort
+    webui:
+      port: 8080
+      nodePort: 30080
+    bittorrent:
+      port: 6881
+      nodePort: 30881
+
+    annotations: {}
+    #   service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+
+    labels: {}
+
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    externalTrafficPolicy: ""
+
+  # Ingress configuration
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    #   cert-manager.io/cluster-issuer: letsencrypt-prod
+    #   nginx.ingress.kubernetes.io/auth-type: basic
+    hosts:
+      - host: qbittorrent.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+    #   - secretName: qbittorrent-tls
+    #     hosts:
+    #       - qbittorrent.example.com
+
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+    WEBUI_PORT: "8080"
+
+  # Additional environment variables
+  extraEnv: []
+  #   - name: CUSTOM_VAR
+  #     value: "custom_value"
+
+  # Load env from ConfigMap/Secret
+  envFrom: []
+  #   - configMapRef:
+  #       name: qbittorrent-config
+  #   - secretRef:
+  #       name: qbittorrent-secrets
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  # Security contexts
+  podSecurityContext: {}
+  securityContext: {}
+
+  # Pod annotations
+  podAnnotations: {}
+  #   prometheus.io/scrape: "true"
+  #   prometheus.io/port: "8080"
+
+  # Pod labels
+  podLabels: {}
+  #   app.kubernetes.io/component: download-client
+
+  # Additional init containers
+  initContainers: []
+  #   - name: wait-for-postgres
+  #     image: busybox:1.35
+  #     command: ['sh', '-c', 'until nc -z postgres 5432; do sleep 1; done']
+
+  # Additional sidecar containers
+  extraContainers: []
+  #   - name: metrics-exporter
+  #     image: ghcr.io/esanchezm/qbittorrent-exporter:latest
+  #     ports:
+  #       - containerPort: 9022
+
+  # Additional volumes
+  extraVolumes: []
+  #   - name: downloads
+  #     nfs:
+  #       server: nfs.example.com
+  #       path: /downloads
+
+  # Additional volume mounts
+  extraVolumeMounts: []
+  #   - name: downloads
+  #     mountPath: /downloads
+
+  # Custom probes
+  livenessProbe: {}
+  readinessProbe: {}
+  startupProbe: {}
+
+  # Lifecycle hooks
+  lifecycle: {}
+  #   preStop:
+  #     exec:
+  #       command: ["/bin/sh", "-c", "sleep 15"]
+
+  # Node selection
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # Priority class
+  priorityClassName: ""
+
+  # Configuration as code
+  config: {}
+
+# Sonarr configuration (all options shown)
+sonarr:
+  enabled: true
+
+  image:
+    repository: linuxserver/sonarr
+    tag: latest
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+
+  replicaCount: 1
+
+  strategy: {}
+  #   type: Recreate  # Use Recreate if using RWO volumes
+
+  apiKey: "2bac5d00dca43258313c734821a15c4c"
+  adminPassword: adminpass
+
+  auth:
+    existingSecret: ""
+    secretKeys:
+      adminPasswordKey: "admin-password"
+      apiKeyKey: "api-key"
+
+  service:
+    type: NodePort
+    webui:
+      port: 8989
+      nodePort: 30989
+    health:
+      port: 9001
+      nodePort: 31001
+
+    annotations: {}
+    labels: {}
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    externalTrafficPolicy: ""
+
+  ingress:
+    enabled: false
+    className: "nginx"
+    annotations: {}
+    #   cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: sonarr.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+    #   - secretName: sonarr-tls
+    #     hosts:
+    #       - sonarr.example.com
+
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+
+  extraEnv: []
+  envFrom: []
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  podSecurityContext: {}
+  #   runAsUser: 1000
+  #   runAsGroup: 1000
+  #   fsGroup: 1000
+
+  securityContext: {}
+  #   allowPrivilegeEscalation: false
+  #   capabilities:
+  #     drop:
+  #       - ALL
+
+  podAnnotations: {}
+  podLabels: {}
+
+  initContainers: []
+  extraContainers: []
+  extraVolumes: []
+  extraVolumeMounts: []
+
+  # Custom probes
+  livenessProbe: {}
+  readinessProbe: {}
+  startupProbe: {}
+
+  lifecycle: {}
+
+  # Reconciliation settings
+  reconciliation:
+    enabled: true
+    interval: 30
+    watch: true
+
+  # Storage configuration
+  storage:
+    tv:
+      enabled: false
+      size: 50Gi
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  #   podAntiAffinity:
+  #     preferredDuringSchedulingIgnoredDuringExecution:
+  #       - weight: 100
+  #         podAffinityTerm:
+  #           labelSelector:
+  #             matchExpressions:
+  #               - key: app
+  #                 operator: In
+  #                 values:
+  #                   - sonarr
+  #           topologyKey: kubernetes.io/hostname
+
+  priorityClassName: ""
+
+  # Configuration as code
+  config:
+    apiKey: "2bac5d00dca43258313c734821a15c4c"
+    prowlarrSync: true
+    rootFolders:
+      - path: "/tv"
+        accessible: true
+    qualityProfiles:
+      - name: "HD - 1080p"
+        cutoff: 1080
+        items:
+          - quality:
+              id: 1
+              name: "HDTV-1080p"
+            allowed: true
+    downloadClients:
+      - name: "qBittorrent"
+        implementation: "QBittorrent"
+        implementationName: "qBittorrent"
+        configContract: "QBittorrentSettings"
+        fields:
+          - name: "host"
+            value: "qbittorrent"
+          - name: "port"
+            value: 8080
+          - name: "username"
+            value: "admin"
+          - name: "password"
+            value: "adminpass"
+          - name: "category"
+            value: "tv"
+        enable: true
+        priority: 1
+
+# Radarr configuration (similar structure to Sonarr)
+radarr:
+  enabled: true
+  image:
+    repository: linuxserver/radarr
+    tag: latest
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+
+  replicaCount: 1
+  strategy: {}
+
+  apiKey: "4fac7d10eca54269424d835a2edc15d2"
+  adminPassword: adminpass
+
+  auth:
+    existingSecret: ""
+    secretKeys:
+      adminPasswordKey: "admin-password"
+      apiKeyKey: "api-key"
+
+  service:
+    type: NodePort
+    webui:
+      port: 7878
+      nodePort: 30878
+    health:
+      port: 9001
+      nodePort: 31002
+    annotations: {}
+    labels: {}
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: radarr.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+
+  extraEnv: []
+  envFrom: []
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  podSecurityContext: {}
+  securityContext: {}
+  podAnnotations: {}
+  podLabels: {}
+
+  initContainers: []
+  extraContainers: []
+  extraVolumes: []
+  extraVolumeMounts: []
+
+  livenessProbe: {}
+  readinessProbe: {}
+  startupProbe: {}
+  lifecycle: {}
+
+  reconciliation:
+    enabled: true
+    interval: 30
+    watch: true
+
+  storage:
+    movies:
+      enabled: false
+      size: 100Gi
+      storageClass: ""
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  priorityClassName: ""
+
+  config:
+    apiKey: "4fac7d10eca54269424d835a2edc15d2"
+    prowlarrSync: true
+    rootFolders:
+      - path: "/movies"
+        accessible: true
+    qualityProfiles:
+      - name: "1080p"
+        cutoff: 1080
+        items:
+          - quality:
+              id: 1
+              name: "Bluray-1080p"
+            allowed: true
+    downloadClients:
+      - name: "qBittorrent"
+        implementation: "QBittorrent"
+        implementationName: "qBittorrent"
+        configContract: "QBittorrentSettings"
+        fields:
+          - name: "host"
+            value: "qbittorrent"
+          - name: "port"
+            value: 8080
+          - name: "username"
+            value: "admin"
+          - name: "password"
+            value: "adminpass"
+          - name: "category"
+            value: "movies"
+        enable: true
+        priority: 1
+
+# Prowlarr configuration
+prowlarr:
+  enabled: true
+  image:
+    repository: linuxserver/prowlarr
+    tag: latest
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+
+  replicaCount: 1
+  strategy: {}
+
+  apiKey: "c04914c6bfad445a3edc23e5edbca4d1"
+  adminPassword: adminpass
+
+  auth:
+    existingSecret: ""
+    secretKeys:
+      adminPasswordKey: "admin-password"
+      apiKeyKey: "api-key"
+
+  service:
+    type: NodePort
+    webui:
+      port: 9696
+      nodePort: 30696
+    health:
+      port: 9001
+      nodePort: 31003
+    annotations: {}
+    labels: {}
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: prowlarr.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+
+  extraEnv: []
+  envFrom: []
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  podSecurityContext: {}
+  securityContext: {}
+  podAnnotations: {}
+  podLabels: {}
+
+  initContainers: []
+  extraContainers: []
+  extraVolumes: []
+  extraVolumeMounts: []
+
+  livenessProbe: {}
+  readinessProbe: {}
+  startupProbe: {}
+  lifecycle: {}
+
+  reconciliation:
+    enabled: true
+    interval: 30
+    watch: true
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  priorityClassName: ""
+
+  config: {}
+
+# Lidarr configuration (disabled by default)
+lidarr:
+  enabled: false
+  # Same structure as Sonarr/Radarr

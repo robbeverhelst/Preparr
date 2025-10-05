@@ -1,0 +1,321 @@
+# Production deployment with advanced features
+# Demonstrates: Ingress, Secrets, Security Contexts, Extra Containers, Custom Volumes
+
+global:
+  namespace: media-production
+  imagePullSecrets:
+    - ghcr-registry-secret
+  labels:
+    environment: production
+    managed-by: platform-team
+  storageClass: "fast-ssd"
+
+preparr:
+  image:
+    tag: "0.1.10"
+  logLevel: warn
+
+# PostgreSQL with existing secret
+postgresql:
+  enabled: true
+  auth:
+    username: postgres
+    database: servarr
+    # Use pre-created secret instead of values
+    existingSecret: "postgres-credentials"
+    secretKeys:
+      adminPasswordKey: "postgres-password"
+
+  persistence:
+    enabled: true
+    size: 20Gi
+
+  podSecurityContext:
+    runAsUser: 999
+    runAsGroup: 999
+    fsGroup: 999
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+  nodeSelector:
+    disktype: ssd
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# qBittorrent with Ingress and metrics exporter
+qbittorrent:
+  enabled: true
+
+  service:
+    type: ClusterIP  # Using Ingress instead of NodePort
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/auth-type: basic
+      nginx.ingress.kubernetes.io/auth-secret: qbittorrent-basic-auth
+      nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+    hosts:
+      - host: qbittorrent.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: qbittorrent-tls
+        hosts:
+          - qbittorrent.example.com
+
+  # Add Prometheus exporter sidecar
+  extraContainers:
+    - name: metrics-exporter
+      image: ghcr.io/esanchezm/qbittorrent-exporter:latest
+      ports:
+        - name: metrics
+          containerPort: 9022
+          protocol: TCP
+      env:
+        - name: QBITTORRENT_HOST
+          value: "localhost"
+        - name: QBITTORRENT_PORT
+          value: "8080"
+        - name: QBITTORRENT_USER
+          value: "admin"
+        - name: QBITTORRENT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: qbittorrent-secret
+              key: password
+
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9022"
+    prometheus.io/path: "/metrics"
+
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    capabilities:
+      drop:
+        - ALL
+
+# Sonarr with NFS storage and custom init container
+sonarr:
+  enabled: true
+
+  auth:
+    existingSecret: "sonarr-credentials"
+
+  service:
+    type: ClusterIP
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    hosts:
+      - host: sonarr.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: sonarr-tls
+        hosts:
+          - sonarr.example.com
+
+  # Wait for PostgreSQL before starting
+  initContainers:
+    - name: wait-for-db
+      image: busybox:1.35
+      command:
+        - 'sh'
+        - '-c'
+        - 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done'
+
+  # Use NFS for TV storage
+  storage:
+    tv:
+      enabled: false  # Using extraVolumes instead
+
+  extraVolumes:
+    - name: tv-storage
+      nfs:
+        server: nfs.example.com
+        path: /media/tv
+    - name: downloads
+      nfs:
+        server: nfs.example.com
+        path: /downloads
+
+  extraVolumeMounts:
+    - name: tv-storage
+      mountPath: /tv
+    - name: downloads
+      mountPath: /downloads
+
+  # Environment from ConfigMap
+  envFrom:
+    - configMapRef:
+        name: sonarr-env-config
+
+  # Anti-affinity to spread across nodes
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - sonarr
+            topologyKey: kubernetes.io/hostname
+
+  # Graceful shutdown
+  lifecycle:
+    preStop:
+      exec:
+        command: ["/bin/sh", "-c", "sleep 15"]
+
+  # Custom readiness probe for slow starts
+  startupProbe:
+    httpGet:
+      path: /api/v3/system/status
+      port: 8989
+      httpHeaders:
+        - name: X-Api-Key
+          valueFrom:
+            secretKeyRef:
+              name: sonarr-credentials
+              key: api-key
+    failureThreshold: 30
+    periodSeconds: 10
+
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  priorityClassName: "high-priority"
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Radarr configuration (similar to Sonarr)
+radarr:
+  enabled: true
+
+  auth:
+    existingSecret: "radarr-credentials"
+
+  service:
+    type: ClusterIP
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: radarr.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: radarr-tls
+        hosts:
+          - radarr.example.com
+
+  extraVolumes:
+    - name: movies-storage
+      nfs:
+        server: nfs.example.com
+        path: /media/movies
+    - name: downloads
+      nfs:
+        server: nfs.example.com
+        path: /downloads
+
+  extraVolumeMounts:
+    - name: movies-storage
+      mountPath: /movies
+    - name: downloads
+      mountPath: /downloads
+
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Prowlarr with Ingress
+prowlarr:
+  enabled: true
+
+  auth:
+    existingSecret: "prowlarr-credentials"
+
+  service:
+    type: ClusterIP
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: prowlarr.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: prowlarr-tls
+        hosts:
+          - prowlarr.example.com
+
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+lidarr:
+  enabled: false

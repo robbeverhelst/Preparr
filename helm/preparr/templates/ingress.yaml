@@ -1,0 +1,151 @@
+{{- if .Values.sonarr.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sonarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: sonarr
+  {{- with .Values.sonarr.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.sonarr.ingress.className }}
+  ingressClassName: {{ .Values.sonarr.ingress.className }}
+  {{- end }}
+  {{- if .Values.sonarr.ingress.tls }}
+  tls:
+    {{- toYaml .Values.sonarr.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.sonarr.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: sonarr
+                port:
+                  number: {{ $.Values.sonarr.service.webui.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}
+---
+{{- if .Values.radarr.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: radarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: radarr
+  {{- with .Values.radarr.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.radarr.ingress.className }}
+  ingressClassName: {{ .Values.radarr.ingress.className }}
+  {{- end }}
+  {{- if .Values.radarr.ingress.tls }}
+  tls:
+    {{- toYaml .Values.radarr.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.radarr.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: radarr
+                port:
+                  number: {{ $.Values.radarr.service.webui.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}
+---
+{{- if .Values.prowlarr.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prowlarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: prowlarr
+  {{- with .Values.prowlarr.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.prowlarr.ingress.className }}
+  ingressClassName: {{ .Values.prowlarr.ingress.className }}
+  {{- end }}
+  {{- if .Values.prowlarr.ingress.tls }}
+  tls:
+    {{- toYaml .Values.prowlarr.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.prowlarr.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: prowlarr
+                port:
+                  number: {{ $.Values.prowlarr.service.webui.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}
+---
+{{- if .Values.qbittorrent.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qbittorrent
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: qbittorrent
+  {{- with .Values.qbittorrent.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.qbittorrent.ingress.className }}
+  ingressClassName: {{ .Values.qbittorrent.ingress.className }}
+  {{- end }}
+  {{- if .Values.qbittorrent.ingress.tls }}
+  tls:
+    {{- toYaml .Values.qbittorrent.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.qbittorrent.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: qbittorrent
+                port:
+                  number: {{ $.Values.qbittorrent.service.webui.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

@@ -1,0 +1,94 @@
+# Sonarr-Only Deployment Example
+# Deploy just Sonarr with PostgreSQL and qBittorrent
+
+global:
+  namespace: tv-shows
+
+preparr:
+  logLevel: info
+
+# PostgreSQL required
+postgresql:
+  enabled: true
+  auth:
+    password: "sonarr-db-password"
+  persistence:
+    enabled: true
+    size: 5Gi
+
+# qBittorrent for downloads
+qbittorrent:
+  enabled: true
+  auth:
+    password: "qbit-password"
+  service:
+    type: NodePort
+
+# Disable Prowlarr - manage indexers manually or in Sonarr UI
+prowlarr:
+  enabled: false
+
+# Sonarr configuration
+sonarr:
+  enabled: true
+  apiKey: "sonarr-only-api-key-12345"
+  adminPassword: "sonarr-admin-password"
+  service:
+    type: NodePort
+  storage:
+    tv:
+      enabled: true
+      size: 200Gi
+  config:
+    app:
+      apiKey: "sonarr-only-api-key-12345"
+      prowlarrSync: false  # Manual indexer management
+      rootFolders:
+        - path: "/tv"
+          accessible: true
+      qualityProfiles:
+        - name: "HD - 1080p"
+          cutoff: 1080
+          items:
+            - quality:
+                id: 1
+                name: "HDTV-1080p"
+              allowed: true
+            - quality:
+                id: 2
+                name: "WEBDL-1080p"
+              allowed: true
+            - quality:
+                id: 3
+                name: "Bluray-1080p"
+              allowed: true
+      downloadClients:
+        - name: "qBittorrent"
+          implementation: "QBittorrent"
+          implementationName: "qBittorrent"
+          configContract: "QBittorrentSettings"
+          fields:
+            - name: "host"
+              value: "qbittorrent"
+            - name: "port"
+              value: 8080
+            - name: "username"
+              value: "admin"
+            - name: "password"
+              value: "qbit-password"
+            - name: "category"
+              value: "tv-sonarr"
+          enable: true
+          priority: 1
+    services:
+      qbittorrent:
+        url: "http://qbittorrent:8080"
+        username: "admin"
+        password: "qbit-password"
+
+# Disable Radarr and Lidarr
+radarr:
+  enabled: false
+
+lidarr:
+  enabled: false

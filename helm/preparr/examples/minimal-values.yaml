@@ -1,0 +1,40 @@
+# Minimal Servarr Stack Example
+# Quick start with just the essentials - change passwords before deploying!
+
+global:
+  namespace: media
+
+# Use default PrepArr settings
+preparr:
+  logLevel: info
+
+# PostgreSQL with secure password
+postgresql:
+  enabled: true
+  auth:
+    password: "CHANGE-THIS-PASSWORD"
+
+# qBittorrent download client
+qbittorrent:
+  enabled: true
+  auth:
+    password: "CHANGE-QBIT-PASSWORD"
+
+# Prowlarr indexer manager
+prowlarr:
+  enabled: true
+  adminPassword: "CHANGE-PROWLARR-PASSWORD"
+
+# Sonarr for TV shows
+sonarr:
+  enabled: true
+  adminPassword: "CHANGE-SONARR-PASSWORD"
+
+# Radarr for movies
+radarr:
+  enabled: true
+  adminPassword: "CHANGE-RADARR-PASSWORD"
+
+# Disable Lidarr
+lidarr:
+  enabled: false

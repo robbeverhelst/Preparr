@@ -23,9 +23,9 @@
     "docker:reset": "docker compose down -v && docker system prune -f",
     "docker:logs": "docker compose logs -f",
     "test:docker": "bun run docker:reset && docker compose up --build",
-    "k8s:deploy": "chmod +x k8s/deploy.sh && k8s/deploy.sh",
-    "k8s:cleanup": "chmod +x k8s/cleanup.sh && k8s/cleanup.sh",
-    "k8s:test": "bun run k8s:cleanup && bun run k8s:deploy"
+    "k8s:deploy": "helm install preparr-test ./helm/preparr -f helm/preparr/examples/full-stack-values.yaml --namespace preparr-test --create-namespace",
+    "k8s:cleanup": "helm uninstall preparr-test --namespace preparr-test && kubectl delete namespace preparr-test",
+    "k8s:test": "bun run k8s:cleanup; bun run k8s:deploy"
   },
   "keywords": [
     "servarr",

@@ -1,0 +1,105 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about this chart, run:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PrepArr - Infrastructure as Code for Servarr
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your media stack is being deployed with the following components:
+
+{{- if .Values.postgresql.enabled }}
+✓ PostgreSQL - Shared database backend
+{{- end }}
+{{- if .Values.qbittorrent.enabled }}
+✓ qBittorrent - Download client
+{{- end }}
+{{- if .Values.prowlarr.enabled }}
+✓ Prowlarr - Indexer manager
+{{- end }}
+{{- if .Values.sonarr.enabled }}
+✓ Sonarr - TV show management
+{{- end }}
+{{- if .Values.radarr.enabled }}
+✓ Radarr - Movie management
+{{- end }}
+{{- if .Values.lidarr.enabled }}
+✓ Lidarr - Music management
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 Getting Started
+
+1. Wait for all pods to be ready:
+
+   kubectl get pods -n {{ .Values.global.namespace }} -w
+
+2. Access your services:
+
+{{- if .Values.sonarr.enabled }}
+{{- if eq .Values.sonarr.service.type "NodePort" }}
+   Sonarr:     http://<node-ip>:{{ .Values.sonarr.service.webui.nodePort }}
+{{- else }}
+   Sonarr:     kubectl port-forward -n {{ .Values.global.namespace }} svc/sonarr {{ .Values.sonarr.service.webui.port }}:{{ .Values.sonarr.service.webui.port }}
+{{- end }}
+{{- end }}
+{{- if .Values.radarr.enabled }}
+{{- if eq .Values.radarr.service.type "NodePort" }}
+   Radarr:     http://<node-ip>:{{ .Values.radarr.service.webui.nodePort }}
+{{- else }}
+   Radarr:     kubectl port-forward -n {{ .Values.global.namespace }} svc/radarr {{ .Values.radarr.service.webui.port }}:{{ .Values.radarr.service.webui.port }}
+{{- end }}
+{{- end }}
+{{- if .Values.prowlarr.enabled }}
+{{- if eq .Values.prowlarr.service.type "NodePort" }}
+   Prowlarr:   http://<node-ip>:{{ .Values.prowlarr.service.webui.nodePort }}
+{{- else }}
+   Prowlarr:   kubectl port-forward -n {{ .Values.global.namespace }} svc/prowlarr {{ .Values.prowlarr.service.webui.port }}:{{ .Values.prowlarr.service.webui.port }}
+{{- end }}
+{{- end }}
+{{- if .Values.qbittorrent.enabled }}
+{{- if eq .Values.qbittorrent.service.type "NodePort" }}
+   qBittorrent: http://<node-ip>:{{ .Values.qbittorrent.service.webui.nodePort }}
+{{- else }}
+   qBittorrent: kubectl port-forward -n {{ .Values.global.namespace }} svc/qbittorrent {{ .Values.qbittorrent.service.webui.port }}:{{ .Values.qbittorrent.service.webui.port }}
+{{- end }}
+{{- end }}
+
+3. Default credentials:
+
+   Username: admin
+{{- if .Values.sonarr.enabled }}
+   Sonarr Password:     {{ .Values.sonarr.adminPassword }}
+{{- end }}
+{{- if .Values.radarr.enabled }}
+   Radarr Password:     {{ .Values.radarr.adminPassword }}
+{{- end }}
+{{- if .Values.prowlarr.enabled }}
+   Prowlarr Password:   {{ .Values.prowlarr.adminPassword }}
+{{- end }}
+{{- if .Values.qbittorrent.enabled }}
+   qBittorrent Password: {{ .Values.qbittorrent.auth.password }}
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 Documentation
+
+For complete documentation, visit:
+https://github.com/robbeverhelst/Preparr
+
+To view configuration:
+  helm get values {{ .Release.Name }}
+
+To upgrade this release:
+  helm upgrade {{ .Release.Name }} preparr/preparr -f values.yaml
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

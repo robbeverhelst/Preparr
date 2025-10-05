@@ -1,0 +1,22 @@
+apiVersion: v2
+name: preparr
+description: A Helm chart for deploying Servarr applications with complete IaC automation via PrepArr
+type: application
+version: 0.1.0
+appVersion: "0.1.10"
+keywords:
+  - servarr
+  - radarr
+  - sonarr
+  - prowlarr
+  - lidarr
+  - automation
+  - iac
+  - media
+home: https://github.com/robbeverhelst/Preparr
+sources:
+  - https://github.com/robbeverhelst/Preparr
+maintainers:
+  - name: Robbe Verhelst
+    url: https://github.com/robbeverhelst
+icon: https://raw.githubusercontent.com/robbeverhelst/Preparr/main/docs/images/preparr-logo.png

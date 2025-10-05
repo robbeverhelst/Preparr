@@ -1,0 +1,218 @@
+name: Helm Chart
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Lint Helm chart
+        run: helm lint ./helm/preparr
+
+      - name: Template Helm chart
+        run: |
+          helm template test-release ./helm/preparr > /dev/null
+          echo "✓ Helm template rendering successful"
+
+      - name: Validate with example values
+        run: |
+          for values_file in helm/preparr/examples/*.yaml; do
+            echo "Testing with $(basename $values_file)..."
+            helm template test-release ./helm/preparr -f "$values_file" > /dev/null
+          done
+          echo "✓ All example values files validated"
+
+  release:
+    needs: lint-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Get latest version
+        id: version
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          VERSION=${LATEST_TAG#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Latest version: $VERSION"
+
+      - name: Update Chart version
+        run: |
+          sed -i "s/^version:.*/version: ${{ steps.version.outputs.version }}/" helm/preparr/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${{ steps.version.outputs.version }}\"/" helm/preparr/Chart.yaml
+          echo "Updated Chart.yaml to version ${{ steps.version.outputs.version }}"
+
+      - name: Package Helm chart
+        run: |
+          mkdir -p .helm-releases
+          helm package helm/preparr -d .helm-releases
+          echo "✓ Helm chart packaged"
+
+      - name: Generate Helm repo index
+        run: |
+          helm repo index .helm-releases --url https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}
+          echo "✓ Helm repository index generated"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            .helm-releases/*.tgz
+            .helm-releases/index.yaml
+          body: |
+            ## Helm Chart Release v${{ steps.version.outputs.version }}
+
+            ### Installation
+
+            ```bash
+            # Add repository
+            helm repo add preparr https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}
+            helm repo update
+
+            # Install chart
+            helm install my-media-stack preparr/preparr
+            ```
+
+            ### Direct Installation
+
+            ```bash
+            helm install my-media-stack https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/preparr-${{ steps.version.outputs.version }}.tgz
+            ```
+
+            See the [Chart README](https://github.com/${{ github.repository }}/blob/main/helm/preparr/README.md) for configuration options.
+
+  publish-pages:
+    needs: release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Download all releases
+        run: |
+          mkdir -p .helm-repository
+
+          # Get all release tags
+          TAGS=$(git tag -l 'v*' | sort -V)
+
+          for TAG in $TAGS; do
+            VERSION=${TAG#v}
+            echo "Processing $TAG..."
+
+            # Checkout the tag
+            git checkout $TAG 2>/dev/null || continue
+
+            # Package the chart at this version
+            if [ -f "helm/preparr/Chart.yaml" ]; then
+              helm package helm/preparr -d .helm-repository || echo "Failed to package $TAG"
+            fi
+          done
+
+          # Return to main
+          git checkout main
+
+      - name: Generate Helm repository index
+        run: |
+          helm repo index .helm-repository --url https://${{ github.repository_owner }}.github.io/Preparr
+          echo "✓ Complete Helm repository index generated"
+
+      - name: Create index.html
+        run: |
+          cat > .helm-repository/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>PrepArr Helm Repository</title>
+            <style>
+              body { font-family: system-ui; max-width: 800px; margin: 50px auto; padding: 20px; }
+              pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+              code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+            </style>
+          </head>
+          <body>
+            <h1>PrepArr Helm Chart Repository</h1>
+            <p>Infrastructure as Code for Servarr applications</p>
+
+            <h2>Quick Start</h2>
+            <pre><code># Add repository
+          helm repo add preparr https://${{ github.repository_owner }}.github.io/Preparr
+          helm repo update
+
+          # Install chart
+          helm install my-media-stack preparr/preparr
+
+          # Install with custom values
+          helm install my-media-stack preparr/preparr -f custom-values.yaml</code></pre>
+
+            <h2>Resources</h2>
+            <ul>
+              <li><a href="https://github.com/${{ github.repository }}">GitHub Repository</a></li>
+              <li><a href="https://github.com/${{ github.repository }}/blob/main/helm/preparr/README.md">Chart Documentation</a></li>
+              <li><a href="https://github.com/${{ github.repository }}/releases">Releases</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .helm-repository
+          cname: preparr.dev
+          enable_jekyll: false
