@@ -1,3 +1,10 @@
+## [0.2.3](https://github.com/robbeverhelst/Preparr/compare/v0.2.2...v0.2.3) (2025-10-05)
+
+
+### Bug Fixes
+
+* use ORAS to push Helm charts to GHCR for proper OCI manifest generation ([21bad16](https://github.com/robbeverhelst/Preparr/commit/21bad16367522827c6c379c009af51223e4d28c1))
+
 ## [0.2.2](https://github.com/robbeverhelst/Preparr/compare/v0.2.1...v0.2.2) (2025-10-05)
 
 
