@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PrepArr Helm Repository</title>
+  <style>
+    body { font-family: system-ui; max-width: 800px; margin: 50px auto; padding: 20px; }
+    pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>PrepArr Helm Chart Repository</h1>
+  <p>Infrastructure as Code for Servarr applications</p>
+
+  <h2>Quick Start</h2>
+  <pre><code># Add repository
+helm repo add preparr https://robbeverhelst.github.io/Preparr
+helm repo update
+
+# Install chart
+helm install my-media-stack preparr/preparr
+
+# Install with custom values
+helm install my-media-stack preparr/preparr -f custom-values.yaml</code></pre>
+
+  <h2>Resources</h2>
+  <ul>
+    <li><a href="https://github.com/robbeverhelst/Preparr">GitHub Repository</a></li>
+    <li><a href="https://github.com/robbeverhelst/Preparr/blob/main/helm/preparr/README.md">Chart Documentation</a></li>
+    <li><a href="https://github.com/robbeverhelst/Preparr/releases">Releases</a></li>
+  </ul>
+</body>
+</html>
