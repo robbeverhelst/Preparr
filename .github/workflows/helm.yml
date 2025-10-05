@@ -80,40 +80,10 @@ jobs:
           cat helm/preparr/Chart.yaml
           echo "Updated Chart.yaml to version ${{ steps.version.outputs.version }}"
 
-      - name: Log in to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
-
       - name: Package Helm chart
         run: |
           helm package helm/preparr
-          echo "✓ Helm chart packaged"
-
-      - name: Install ORAS
-        run: |
-          VERSION="1.2.2"
-          curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
-          mkdir -p oras-install/
-          tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
-          sudo mv oras-install/oras /usr/local/bin/
-          rm -rf oras_${VERSION}_*.tar.gz oras-install/
-          oras version
-
-      - name: Push to GHCR using ORAS
-        run: |
-          # Login with ORAS
-          echo "${{ secrets.GITHUB_TOKEN }}" | oras login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
-
-          # Push chart using ORAS for proper OCI manifest
-          oras push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }}:${{ steps.version.outputs.version }} \
-            ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz:application/vnd.cncf.helm.chart.content.v1.tar+gzip
-
-          echo "✓ Helm chart pushed to GHCR via ORAS"
-
-      - name: Verify OCI artifact
-        run: |
-          echo "Verifying OCI artifact..."
-          oras pull ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }}:${{ steps.version.outputs.version }} || echo "⚠️ Chart verification failed"
+          echo "✓ Helm chart packaged as ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz"
 
       - name: Update release notes and attach chart
         uses: softprops/action-gh-release@v2
@@ -129,20 +99,15 @@ jobs:
 
             ### Helm Chart Installation
 
-            **From GitHub Release (recommended for testing):**
             ```bash
-            # Download and install
-            helm install my-media-stack https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
+            # Install directly from GitHub release
+            helm install my-media-stack \
+              https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
 
-            # Or download to inspect first
+            # Or download and inspect first
             wget https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
             helm show all ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
-            ```
-
-            **From OCI Registry (GHCR):**
-            ```bash
-            # Note: OCI support requires proper manifest, work in progress
-            helm install my-media-stack oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }} --version ${{ steps.version.outputs.version }}
+            helm install my-media-stack ./${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
             ```
 
             ### Configuration
