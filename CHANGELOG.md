@@ -1,3 +1,19 @@
+# [0.2.0](https://github.com/robbeverhelst/Preparr/compare/v0.1.10...v0.2.0) (2025-10-05)
+
+
+### Features
+
+* add production-grade Helm chart with complete IaC support ([028a0c2](https://github.com/robbeverhelst/Preparr/commit/028a0c2dee9d590742e36786127990eeca1ecf0f))
+
+
+### BREAKING CHANGES
+
+* k8s deployment now requires Helm 3.8+
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## [0.1.10](https://github.com/robbeverhelst/Preparr/compare/v0.1.9...v0.1.10) (2025-10-03)
 
 
