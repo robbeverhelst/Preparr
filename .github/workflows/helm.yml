@@ -89,29 +89,31 @@ jobs:
           helm package helm/preparr
           echo "✓ Helm chart packaged"
 
-      - name: Push to GitHub Container Registry
+      - name: Install ORAS
         run: |
-          # Push chart to GHCR
-          helm push ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
-          echo "✓ Helm chart pushed to GHCR"
+          VERSION="1.2.2"
+          curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
+          mkdir -p oras-install/
+          tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
+          sudo mv oras-install/oras /usr/local/bin/
+          rm -rf oras_${VERSION}_*.tar.gz oras-install/
+          oras version
 
-          # Verify the push
+      - name: Push to GHCR using ORAS
+        run: |
+          # Login with ORAS
+          echo "${{ secrets.GITHUB_TOKEN }}" | oras login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
+
+          # Push chart using ORAS for proper OCI manifest
+          oras push ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }}:${{ steps.version.outputs.version }} \
+            ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz:application/vnd.cncf.helm.chart.content.v1.tar+gzip
+
+          echo "✓ Helm chart pushed to GHCR via ORAS"
+
+      - name: Verify OCI artifact
+        run: |
           echo "Verifying OCI artifact..."
-          helm show chart oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }} --version ${{ steps.version.outputs.version }} || echo "⚠️ Chart verification failed - package may be private"
-
-      - name: Make package public
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Try to make the package public
-          echo "Attempting to make package public..."
-          gh api \
-            --method PATCH \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /user/packages/container/${{ env.CHART_NAME }}/versions \
-            -f visibility='public' 2>&1 || echo "⚠️ Could not set package visibility - may require manual action"
+          oras pull ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }}:${{ steps.version.outputs.version }} || echo "⚠️ Chart verification failed"
 
       - name: Update release notes and attach chart
         uses: softprops/action-gh-release@v2
