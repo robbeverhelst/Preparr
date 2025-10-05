@@ -1,3 +1,10 @@
+## [0.2.1](https://github.com/robbeverhelst/Preparr/compare/v0.2.0...v0.2.1) (2025-10-05)
+
+
+### Bug Fixes
+
+* migrate Helm chart publishing to GitHub Container Registry (OCI) ([30f44fe](https://github.com/robbeverhelst/Preparr/commit/30f44fe3bb6ec394081a483cfa4120c5c9c63227))
+
 # [0.2.0](https://github.com/robbeverhelst/Preparr/compare/v0.1.10...v0.2.0) (2025-10-05)
 
 
