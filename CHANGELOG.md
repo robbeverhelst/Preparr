@@ -1,3 +1,11 @@
+## [0.2.2](https://github.com/robbeverhelst/Preparr/compare/v0.2.1...v0.2.2) (2025-10-05)
+
+
+### Bug Fixes
+
+* attach Helm chart tgz to releases for direct download and testing [skip ci] ([2b334d5](https://github.com/robbeverhelst/Preparr/commit/2b334d5c123b710d17f1214924d53a3fd5f6037b))
+* upgrade Helm to v3.16 and add package visibility management for OCI registry ([421adca](https://github.com/robbeverhelst/Preparr/commit/421adcae5ee3ebda732457610264c7f654db0e7e))
+
 ## [0.2.1](https://github.com/robbeverhelst/Preparr/compare/v0.2.0...v0.2.1) (2025-10-05)
 
 
