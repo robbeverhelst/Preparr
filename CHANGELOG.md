@@ -1,3 +1,10 @@
+## [0.2.4](https://github.com/robbeverhelst/Preparr/compare/v0.2.3...v0.2.4) (2025-10-05)
+
+
+### Bug Fixes
+
+* remove OCI registry support due to GHCR/Helm incompatibility, use direct .tgz downloads ([3055b80](https://github.com/robbeverhelst/Preparr/commit/3055b80dccb0383d7c63673e9b5c0e1ddafbfdae))
+
 ## [0.2.3](https://github.com/robbeverhelst/Preparr/compare/v0.2.2...v0.2.3) (2025-10-05)
 
 
