@@ -93,24 +93,34 @@ jobs:
           helm push ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
           echo "✓ Helm chart pushed to GHCR"
 
-      - name: Update release notes
+      - name: Update release notes and attach chart
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: Release v${{ steps.version.outputs.version }}
           draft: false
           prerelease: false
+          files: |
+            ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
           body: |
             ## Release v${{ steps.version.outputs.version }}
 
-            ### Helm Chart Installation (OCI Registry)
+            ### Helm Chart Installation
 
+            **From GitHub Release (recommended for testing):**
             ```bash
-            # Install directly from GHCR (recommended)
-            helm install my-media-stack oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }} --version ${{ steps.version.outputs.version }}
+            # Download and install
+            helm install my-media-stack https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
 
-            # Or pull and inspect first
-            helm pull oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }} --version ${{ steps.version.outputs.version }}
+            # Or download to inspect first
+            wget https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
+            helm show all ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
+            ```
+
+            **From OCI Registry (GHCR):**
+            ```bash
+            # Note: OCI support requires proper manifest, work in progress
+            helm install my-media-stack oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.CHART_NAME }} --version ${{ steps.version.outputs.version }}
             ```
 
             ### Configuration
