@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/robbeverhelst/Preparr/compare/v0.2.4...v0.3.0) (2025-10-06)
+
+
+### Features
+
+* add GitHub Pages Helm repository for ArtifactHub compatibility ([c3671d7](https://github.com/robbeverhelst/Preparr/commit/c3671d790e717b10983d1eec37a50e19f0ce7bcf))
+
 ## [0.2.4](https://github.com/robbeverhelst/Preparr/compare/v0.2.3...v0.2.4) (2025-10-05)
 
 
