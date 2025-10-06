@@ -1,3 +1,10 @@
+## [0.3.2](https://github.com/robbeverhelst/Preparr/compare/v0.3.1...v0.3.2) (2025-10-06)
+
+
+### Bug Fixes
+
+* update Chart description and README with Helm repository installation ([9e9dd47](https://github.com/robbeverhelst/Preparr/commit/9e9dd47b410a4df6f8f54e6c696b909b98397663))
+
 ## [0.3.1](https://github.com/robbeverhelst/Preparr/compare/v0.3.0...v0.3.1) (2025-10-06)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "preparr",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A Docker sidecar that fully automates Servarr initialization - from deployment to ready-to-use instances with zero manual setup",
   "main": "dist/index.js",
   "type": "module",
