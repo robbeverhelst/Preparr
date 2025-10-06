@@ -2,8 +2,37 @@ apiVersion: v1
 entries:
   preparr:
   - apiVersion: v2
+    appVersion: 0.3.2
+    created: "2025-10-06T08:57:31.410955791Z"
+    description: Complete Infrastructure as Code for Servarr applications using Helm.
+      Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
+      zero manual configuration - PrepArr automates user creation, API keys, service
+      linking, and configuration management.
+    digest: 97e0bc2d700110b8936b991dc383514fa07d07738c03520e8e216dc17c61a218
+    home: https://github.com/robbeverhelst/Preparr
+    keywords:
+    - servarr
+    - radarr
+    - sonarr
+    - prowlarr
+    - lidarr
+    - automation
+    - iac
+    - media
+    - qbittorrent
+    maintainers:
+    - name: Robbe Verhelst
+      url: https://github.com/robbeverhelst
+    name: preparr
+    sources:
+    - https://github.com/robbeverhelst/Preparr
+    type: application
+    urls:
+    - https://robbeverhelst.github.io/Preparr/preparr-0.3.2.tgz
+    version: 0.3.2
+  - apiVersion: v2
     appVersion: 0.3.1
-    created: "2025-10-06T08:56:51.698236311Z"
+    created: "2025-10-06T08:57:31.409176726Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -32,7 +61,7 @@ entries:
     version: 0.3.1
   - apiVersion: v2
     appVersion: 0.3.0
-    created: "2025-10-06T08:56:51.696566909Z"
+    created: "2025-10-06T08:57:31.407502345Z"
     description: A Helm chart for deploying Servarr applications with complete IaC
       automation via PrepArr
     digest: 41fad1ff21408efa49d0d32b7c3a4c223862191afad5c42e3ae7d0a32a1a65dc
@@ -59,7 +88,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.2.4
-    created: "2025-10-06T08:56:51.693590612Z"
+    created: "2025-10-06T08:57:31.404899099Z"
     description: A Helm chart for deploying Servarr applications with complete IaC
       automation via PrepArr
     digest: 30729cd630a54fc03ce28d6fc1429a62fe9d704e6dfce47b4755af116ee5353e
@@ -86,7 +115,7 @@ entries:
     version: 0.2.4
   - apiVersion: v2
     appVersion: 0.1.10
-    created: "2025-10-06T08:56:51.691903748Z"
+    created: "2025-10-06T08:57:31.403201566Z"
     description: A Helm chart for deploying Servarr applications with complete IaC
       automation via PrepArr
     digest: e42f293945184d980f5005dc030e79f8a898150b1890ba07ee38b89187691a51
@@ -111,4 +140,4 @@ entries:
     urls:
     - https://robbeverhelst.github.io/Preparr/preparr-0.1.0.tgz
     version: 0.1.0
-generated: "2025-10-06T08:56:51.690050904Z"
+generated: "2025-10-06T08:57:31.401312244Z"
