@@ -99,6 +99,14 @@ jobs:
           # Copy new chart to gh-pages
           cp ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz gh-pages/
 
+          # Create ArtifactHub metadata file at repository root
+          cat > gh-pages/artifacthub-repo.yml <<EOF
+          repositoryID: preparr
+          owners:
+            - name: Robbe Verhelst
+              email: robbe@verhelst.io
+          EOF
+
           # Generate/update index.yaml
           helm repo index gh-pages --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
 
