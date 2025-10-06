@@ -10,13 +10,24 @@ Complete Infrastructure as Code for Servarr applications using Helm. Deploy your
 
 ## Quick Start
 
-### 1. Add Helm Repository (Future)
+### 1. Install from Helm Repository (Recommended)
 
 ```bash
-# Once published to a Helm repository
-helm repo add preparr https://robbeverhelst.github.io/preparr
+# Add the Helm repository
+helm repo add preparr https://robbeverhelst.github.io/Preparr
 helm repo update
+
+# Install with default values
+helm install my-media-stack preparr/preparr
+
+# Or install with custom values
+helm install my-media-stack preparr/preparr -f custom-values.yaml
+
+# View all available versions
+helm search repo preparr --versions
 ```
+
+Find this chart on [ArtifactHub](https://artifacthub.io/packages/helm/preparr/preparr).
 
 ### 2. Install from Local Chart
 
