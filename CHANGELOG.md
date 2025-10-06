@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/robbeverhelst/Preparr/compare/v0.3.0...v0.3.1) (2025-10-06)
+
+
+### Bug Fixes
+
+* move ArtifactHub metadata to gh-pages branch root for proper indexing ([54725cf](https://github.com/robbeverhelst/Preparr/commit/54725cff3c2ce04e3cae18170b88a9b1b9a96350))
+
 # [0.3.0](https://github.com/robbeverhelst/Preparr/compare/v0.2.4...v0.3.0) (2025-10-06)
 
 
