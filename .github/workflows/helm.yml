@@ -85,6 +85,31 @@ jobs:
           helm package helm/preparr
           echo "✓ Helm chart packaged as ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz"
 
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Update Helm repository
+        run: |
+          # Create directory if it doesn't exist
+          mkdir -p gh-pages
+
+          # Copy new chart to gh-pages
+          cp ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz gh-pages/
+
+          # Generate/update index.yaml
+          helm repo index gh-pages --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+
+          # Commit and push to gh-pages
+          cd gh-pages
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git add .
+          git commit -m "Release ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          git push origin gh-pages
+
       - name: Update release notes and attach chart
         uses: softprops/action-gh-release@v2
         with:
@@ -99,15 +124,23 @@ jobs:
 
             ### Helm Chart Installation
 
+            **From Helm Repository (Recommended):**
             ```bash
-            # Install directly from GitHub release
+            # Add the Helm repository
+            helm repo add preparr https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+            helm repo update
+
+            # Install the chart
+            helm install my-media-stack preparr/${{ env.CHART_NAME }} --version ${{ steps.version.outputs.version }}
+
+            # Or search for available versions
+            helm search repo preparr
+            ```
+
+            **Direct from GitHub Release:**
+            ```bash
             helm install my-media-stack \
               https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
-
-            # Or download and inspect first
-            wget https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
-            helm show all ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
-            helm install my-media-stack ./${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz
             ```
 
             ### Configuration
