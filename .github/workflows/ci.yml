@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: arc-preparr
     steps:
       - uses: actions/checkout@v4
       
@@ -33,7 +33,7 @@ jobs:
 
   release:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: arc-preparr
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: write
