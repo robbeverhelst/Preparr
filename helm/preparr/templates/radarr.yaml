@@ -75,7 +75,7 @@ spec:
         - name: SERVARR_TYPE
           value: "radarr"
         - name: SERVARR_ADMIN_USER
-          value: "admin"
+          value: {{ .Values.radarr.auth.username | quote }}
         - name: SERVARR_ADMIN_PASSWORD
           value: {{ .Values.radarr.adminPassword | quote }}
         - name: SERVARR_API_KEY

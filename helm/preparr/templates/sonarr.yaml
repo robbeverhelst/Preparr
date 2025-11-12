@@ -272,7 +272,7 @@ spec:
         - name: SERVARR_TYPE
           value: "sonarr"
         - name: SERVARR_ADMIN_USER
-          value: "admin"
+          value: {{ .Values.sonarr.auth.username | quote }}
         - name: SERVARR_ADMIN_PASSWORD
           {{- if .Values.sonarr.auth.existingSecret }}
           valueFrom:

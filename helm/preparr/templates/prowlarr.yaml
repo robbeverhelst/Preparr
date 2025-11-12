@@ -75,7 +75,7 @@ spec:
         - name: SERVARR_TYPE
           value: "prowlarr"
         - name: SERVARR_ADMIN_USER
-          value: "admin"
+          value: {{ .Values.prowlarr.auth.username | quote }}
         - name: SERVARR_ADMIN_PASSWORD
           value: {{ .Values.prowlarr.adminPassword | quote }}
         - name: SERVARR_API_KEY
@@ -136,7 +136,7 @@ spec:
         - name: SERVARR_TYPE
           value: "prowlarr"
         - name: SERVARR_ADMIN_USER
-          value: "admin"
+          value: {{ .Values.prowlarr.auth.username | quote }}
         - name: SERVARR_ADMIN_PASSWORD
           value: {{ .Values.prowlarr.adminPassword | quote }}
         - name: SERVARR_API_KEY
