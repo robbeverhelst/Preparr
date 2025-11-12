@@ -1,3 +1,15 @@
+# [0.4.0](https://github.com/robbeverhelst/Preparr/compare/v0.3.3...v0.4.0) (2025-11-12)
+
+
+### Bug Fixes
+
+* add error handling for user renaming in ServarrManager ([9c07446](https://github.com/robbeverhelst/Preparr/commit/9c07446b86add66bfbb29e9b21e7c919fdeebac0))
+
+
+### Features
+
+* enhance admin user management by renaming existing users to match desired username ([af82c1f](https://github.com/robbeverhelst/Preparr/commit/af82c1f36e55e84e9300c30a36d578b04fe9563f))
+
 ## [0.3.3](https://github.com/robbeverhelst/Preparr/compare/v0.3.2...v0.3.3) (2025-11-12)
 
 
