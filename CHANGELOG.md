@@ -1,3 +1,10 @@
+## [0.3.3](https://github.com/robbeverhelst/Preparr/compare/v0.3.2...v0.3.3) (2025-11-12)
+
+
+### Bug Fixes
+
+* update admin user configuration in Helm templates for Prowlarr, Radarr, and Sonarr ([b72bc9a](https://github.com/robbeverhelst/Preparr/commit/b72bc9a2be4515900b7b47031b0c6131e87621cf))
+
 ## [0.3.2](https://github.com/robbeverhelst/Preparr/compare/v0.3.1...v0.3.2) (2025-10-06)
 
 
