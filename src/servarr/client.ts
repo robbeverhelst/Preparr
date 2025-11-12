@@ -771,13 +771,36 @@ export class ServarrManager {
 
       try {
         // Get all users from database to check for duplicates
-        const allUsers =
+        let allUsers =
           (await db`SELECT "Id", "Identifier", "Username", "Password", "Salt", "Iterations" FROM "Users"`) as DatabaseUser[]
+        const normalizedAdminUser = this.config.adminUser.toLowerCase()
 
         // Check if the desired admin user already exists
-        const existingUser = allUsers.find(
-          (user) => user.Username.toLowerCase() === this.config.adminUser.toLowerCase(),
+        let existingUser = allUsers.find(
+          (user) => user.Username.toLowerCase() === normalizedAdminUser,
         )
+
+        if (!existingUser && allUsers.length > 0) {
+          // Rename the first user (typically the default admin account) to match the desired username
+          const userToRename =
+            allUsers.find((user) => user.Username.toLowerCase() === 'admin') ?? allUsers[0]
+
+          await db`
+            UPDATE "Users"
+            SET "Username" = ${normalizedAdminUser}
+            WHERE "Id" = ${userToRename.Id}
+          `
+
+          logger.info('Renamed existing admin user to match desired username', {
+            previousUsername: userToRename.Username,
+            newUsername: this.config.adminUser,
+          })
+
+          existingUser = { ...userToRename, Username: normalizedAdminUser }
+          allUsers = allUsers.map((user) =>
+            user.Id === userToRename.Id ? existingUser! : user,
+          )
+        }
 
         if (!existingUser) {
           // Create new user
@@ -788,7 +811,7 @@ export class ServarrManager {
 
           await db`
             INSERT INTO "Users" ("Identifier", "Username", "Password", "Salt", "Iterations")
-            VALUES (${userId}, ${this.config.adminUser.toLowerCase()}, ${hashedPassword}, ${saltBase64}, 10000)
+            VALUES (${userId}, ${normalizedAdminUser}, ${hashedPassword}, ${saltBase64}, 10000)
           `
 
           logger.info('Initial admin user created successfully', {
