@@ -784,6 +784,10 @@ export class ServarrManager {
           const userToRename =
             allUsers.find((user) => user.Username.toLowerCase() === 'admin') ?? allUsers[0]
 
+          if (!userToRename) {
+            throw new Error('Unable to select user for renaming')
+          }
+
           await db`
             UPDATE "Users"
             SET "Username" = ${normalizedAdminUser}
@@ -795,10 +799,12 @@ export class ServarrManager {
             newUsername: this.config.adminUser,
           })
 
-          existingUser = { ...userToRename, Username: normalizedAdminUser }
-          allUsers = allUsers.map((user) =>
-            user.Id === userToRename.Id ? existingUser! : user,
-          )
+          const renamedUser: DatabaseUser = {
+            ...userToRename,
+            Username: normalizedAdminUser,
+          }
+          existingUser = renamedUser
+          allUsers = allUsers.map((user) => (user.Id === userToRename.Id ? renamedUser : user))
         }
 
         if (!existingUser) {
