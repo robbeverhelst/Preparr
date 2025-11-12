@@ -781,7 +781,6 @@ export class ServarrManager {
         )
 
         if (!existingUser && allUsers.length > 0) {
-          // Rename the first user (typically the default admin account) to match the desired username
           const userToRename =
             allUsers.find((user) => user.Username.toLowerCase() === 'admin') ?? allUsers[0]
 
