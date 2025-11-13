@@ -1,3 +1,10 @@
+# [0.7.0](https://github.com/robbeverhelst/Preparr/compare/v0.6.2...v0.7.0) (2025-11-13)
+
+
+### Features
+
+* **postgres:** add getApplicationsTable method to retrieve application data from the database ([a451cee](https://github.com/robbeverhelst/Preparr/commit/a451cee094acd36590cd878dd75fef3dc24740d0))
+
 ## [0.6.2](https://github.com/robbeverhelst/Preparr/compare/v0.6.1...v0.6.2) (2025-11-13)
 
 
