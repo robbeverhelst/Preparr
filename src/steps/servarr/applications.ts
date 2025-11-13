@@ -63,12 +63,13 @@ export class ApplicationsStep extends ConfigurationStep {
     _context: StepContext,
   ): ChangeRecord[] {
     const changes: ChangeRecord[] = []
-    const currentNames = current.map((a) => a.name)
     const desiredNames = desired.map((a) => a.name)
 
-    // Find applications to add
+    // Find applications to add or update
     for (const application of desired) {
-      if (!currentNames.includes(application.name)) {
+      const existing = current.find((a) => a.name === application.name)
+
+      if (!existing) {
         changes.push({
           type: 'create',
           resource: 'application',
@@ -81,6 +82,20 @@ export class ApplicationsStep extends ConfigurationStep {
             enable: application.enable,
             syncLevel: application.syncLevel,
             fieldCount: application.fields?.length || 0,
+          },
+        })
+      } else if (!applicationsMatch(existing, application)) {
+        changes.push({
+          type: 'update',
+          resource: 'application',
+          identifier: application.name,
+          details: {
+            name: application.name,
+            implementation: application.implementation,
+            implementationName: application.implementationName,
+            configContract: application.configContract,
+            fieldCount: application.fields?.length || 0,
+            currentId: existing.id,
           },
         })
       }
@@ -130,6 +145,33 @@ export class ApplicationsStep extends ConfigurationStep {
             })
           } else {
             errors.push(new Error(`Application not found in desired state: ${change.identifier}`))
+          }
+        } else if (change.type === 'update') {
+          const desiredApplications = this.getDesiredState(context)
+          const application = desiredApplications.find((a) => a.name === change.identifier)
+          const currentId =
+            typeof change.details?.currentId === 'number' ? change.details.currentId : undefined
+
+          if (currentId) {
+            await context.servarrClient.deleteApplication(currentId)
+          }
+
+          if (application) {
+            await context.servarrClient.addApplication(application)
+            results.push({
+              ...change,
+              type: 'update',
+            })
+
+            context.logger.info('Application updated successfully', {
+              name: application.name,
+              implementation: application.implementation,
+              syncLevel: application.syncLevel,
+            })
+          } else {
+            warnings.push(
+              new Warning(`Desired application missing during update: ${change.identifier}`),
+            )
           }
         } else if (change.type === 'delete') {
           // Find the application ID first
@@ -183,4 +225,25 @@ export class ApplicationsStep extends ConfigurationStep {
       return false
     }
   }
+}
+const normalizeFields = (
+  fields: Application['fields'] = [],
+): { name: string; value: string | number | boolean | number[] | undefined }[] =>
+  fields
+    .map((field) => ({
+      name: field?.name,
+      value: field?.value,
+    }))
+    .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+
+const applicationsMatch = (current?: Application, desired?: Application): boolean => {
+  if (!current || !desired) return false
+  return (
+    current.implementation === desired.implementation &&
+    current.configContract === desired.configContract &&
+    Boolean(current.enable) === Boolean(desired.enable) &&
+    (current.syncLevel ?? 'addOnly') === (desired.syncLevel ?? 'addOnly') &&
+    JSON.stringify(normalizeFields(current.fields)) ===
+      JSON.stringify(normalizeFields(desired.fields))
+  )
 }
