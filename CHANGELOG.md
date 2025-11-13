@@ -1,3 +1,10 @@
+# [0.5.0](https://github.com/robbeverhelst/Preparr/compare/v0.4.1...v0.5.0) (2025-11-13)
+
+
+### Features
+
+* **qbittorrent:** add support for extra volume mounts and volumes in Helm template ([b2d1616](https://github.com/robbeverhelst/Preparr/commit/b2d16161c9548f513725c5d64d670022908b2b93))
+
 ## [0.4.1](https://github.com/robbeverhelst/Preparr/compare/v0.4.0...v0.4.1) (2025-11-13)
 
 
