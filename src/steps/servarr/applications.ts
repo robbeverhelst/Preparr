@@ -226,24 +226,33 @@ export class ApplicationsStep extends ConfigurationStep {
     }
   }
 }
-const normalizeFields = (
+const fieldMap = (
   fields: Application['fields'] = [],
-): { name: string; value: string | number | boolean | number[] | undefined }[] =>
-  fields
-    .map((field) => ({
-      name: field?.name,
-      value: field?.value,
-    }))
-    .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+  filterNames?: Set<string>,
+): Record<string, string | number | boolean | number[] | undefined> => {
+  const map: Record<string, string | number | boolean | number[] | undefined> = {}
+  for (const field of fields) {
+    const name = field?.name
+    if (!name) continue
+    if (filterNames && !filterNames.has(name)) continue
+    map[name] = field?.value
+  }
+  return map
+}
 
 const applicationsMatch = (current?: Application, desired?: Application): boolean => {
   if (!current || !desired) return false
+  const relevantFieldNames = new Set(
+    (desired.fields ?? [])
+      .map((field) => field?.name)
+      .filter((name): name is string => Boolean(name)),
+  )
   return (
     current.implementation === desired.implementation &&
     current.configContract === desired.configContract &&
     Boolean(current.enable) === Boolean(desired.enable) &&
     (current.syncLevel ?? 'addOnly') === (desired.syncLevel ?? 'addOnly') &&
-    JSON.stringify(normalizeFields(current.fields)) ===
-      JSON.stringify(normalizeFields(desired.fields))
+    JSON.stringify(fieldMap(current.fields, relevantFieldNames)) ===
+      JSON.stringify(fieldMap(desired.fields, relevantFieldNames))
   )
 }
