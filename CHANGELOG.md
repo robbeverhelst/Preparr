@@ -1,3 +1,10 @@
+## [0.6.1](https://github.com/robbeverhelst/Preparr/compare/v0.6.0...v0.6.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* improve field normalization and matching logic for applications ([c919443](https://github.com/robbeverhelst/Preparr/commit/c919443e973aa4e27ec970c56976192b0fcd3837))
+
 # [0.6.0](https://github.com/robbeverhelst/Preparr/compare/v0.5.0...v0.6.0) (2025-11-13)
 
 
