@@ -1,3 +1,10 @@
+## [0.6.2](https://github.com/robbeverhelst/Preparr/compare/v0.6.1...v0.6.2) (2025-11-13)
+
+
+### Bug Fixes
+
+* add secret field filtering to application field mapping ([bbafc20](https://github.com/robbeverhelst/Preparr/commit/bbafc20504d4fb8a2edfe464af3b4f0732004053))
+
 ## [0.6.1](https://github.com/robbeverhelst/Preparr/compare/v0.6.0...v0.6.1) (2025-11-13)
 
 
