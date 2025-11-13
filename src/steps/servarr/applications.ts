@@ -25,8 +25,36 @@ export class ApplicationsStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<Application[]> {
     try {
+      const dbApplications = await context.postgresClient.getApplicationsTable()
+      if (dbApplications.length > 0) {
+        context.logger.debug('Loaded applications from database')
+        // We read from the database because the Servarr API masks sensitive fields (like API keys),
+        // which would cause perpetual drift when trying to detect changes.
+        return dbApplications.map((app) => ({
+          id: app.id,
+          name: app.name,
+          implementation: app.implementation,
+          implementationName: app.implementationName ?? '',
+          configContract: app.configContract ?? '',
+          enable: app.enable,
+          syncLevel: app.syncLevel ?? 'addOnly',
+          fields: Object.entries(app.settings ?? {})
+            .filter(([, value]) => value !== undefined)
+            .map(([name, value]) => ({
+              name,
+              value: value as string | number | boolean | number[],
+            })),
+          tags: [] as number[],
+        }))
+      }
+    } catch (error) {
+      context.logger.warn('Failed to read applications from database, falling back to API', {
+        error,
+      })
+    }
+
+    try {
       const apiApplications = await context.servarrClient.getApplications()
-      // Convert ApiApplication[] to Application[]
       return apiApplications.map((app) => ({
         id: app.id,
         name: app.name,
@@ -47,7 +75,7 @@ export class ApplicationsStep extends ConfigurationStep {
         tags: app.tags,
       }))
     } catch (error) {
-      context.logger.warn('Failed to read current applications', { error })
+      context.logger.warn('Failed to read current applications via API', { error })
       return []
     }
   }

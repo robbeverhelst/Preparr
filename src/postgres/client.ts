@@ -238,6 +238,58 @@ export class PostgresClient {
     }
   }
 
+  async getApplicationsTable(): Promise<
+    Array<{
+      id: number
+      name: string
+      implementation: string
+      implementationName: string | null
+      configContract: string | null
+      settings: Record<string, unknown> | null
+      enable: boolean
+      syncLevel: string | null
+    }>
+  > {
+    this.connect()
+
+    if (!this.db) {
+      throw new Error('Application database connection not established')
+    }
+
+    try {
+      const rows: Record<string, unknown>[] = await this.db`
+        SELECT
+          "Id" AS id,
+          "Name" AS name,
+          "Implementation" AS implementation,
+          "ImplementationName" AS "implementationName",
+          "ConfigContract" AS "configContract",
+          "Settings" AS settings,
+          "Enable" AS enable,
+          "SyncLevel" AS "syncLevel"
+        FROM "Applications"
+        ORDER BY "Id"
+      `
+
+      return rows.map((row: Record<string, unknown>) => ({
+        id: Number(row.id),
+        name: String(row.name),
+        implementation: String(row.implementation),
+        implementationName: row.implementationName ? String(row.implementationName) : null,
+        configContract: row.configContract ? String(row.configContract) : null,
+        settings:
+          typeof row.settings === 'string'
+            ? (JSON.parse(row.settings) as Record<string, unknown>)
+            : (row.settings as Record<string, unknown> | null),
+        enable: Boolean(row.enable),
+        syncLevel: row.syncLevel ? String(row.syncLevel) : null,
+      }))
+    } catch (error) {
+      logger.error('Failed to read Applications table', { error })
+      throw error
+    }
+  }
+
   async initializeServarrDatabases(servarrType: string): Promise<void> {
     logger.info('Initializing Servarr PostgreSQL databases...', { type: servarrType })
 
