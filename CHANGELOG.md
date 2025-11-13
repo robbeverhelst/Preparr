@@ -1,3 +1,10 @@
+# [0.6.0](https://github.com/robbeverhelst/Preparr/compare/v0.5.0...v0.6.0) (2025-11-13)
+
+
+### Features
+
+* **servarr:** enhance application management by adding update functionality and matching logic ([6c58d05](https://github.com/robbeverhelst/Preparr/commit/6c58d053bc256b9b6979ac6fd8a1c44df87080c0))
+
 # [0.5.0](https://github.com/robbeverhelst/Preparr/compare/v0.4.1...v0.5.0) (2025-11-13)
 
 
