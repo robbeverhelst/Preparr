@@ -1,3 +1,10 @@
+## [0.4.1](https://github.com/robbeverhelst/Preparr/compare/v0.4.0...v0.4.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* **radarr:** update Radarr admin user configuration to use dynamic username from values ([18e6749](https://github.com/robbeverhelst/Preparr/commit/18e67493a20a3ecd72299c884a48ec29aeb466a9))
+
 # [0.4.0](https://github.com/robbeverhelst/Preparr/compare/v0.3.3...v0.4.0) (2025-11-12)
 
 
