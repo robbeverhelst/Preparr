@@ -226,6 +226,8 @@ export class ApplicationsStep extends ConfigurationStep {
     }
   }
 }
+const secretFieldNames = new Set(['apiKey', 'apikey', 'api_key'])
+
 const fieldMap = (
   fields: Application['fields'] = [],
   filterNames?: Set<string>,
@@ -234,6 +236,7 @@ const fieldMap = (
   for (const field of fields) {
     const name = field?.name
     if (!name) continue
+    if (secretFieldNames.has(name)) continue
     if (filterNames && !filterNames.has(name)) continue
     map[name] = field?.value
   }
