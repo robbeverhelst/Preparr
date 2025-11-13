@@ -94,6 +94,9 @@ spec:
         - name: qbittorrent-config-file
           mountPath: /config/qbittorrent-config.json
           subPath: qbittorrent-config.json
+        {{- with .Values.qbittorrent.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       containers:
       - name: qbittorrent
         image: "{{ .Values.qbittorrent.image.repository }}:{{ .Values.qbittorrent.image.tag }}"
@@ -116,6 +119,9 @@ spec:
         volumeMounts:
         - name: qbittorrent-config-volume
           mountPath: /config
+        {{- with .Values.qbittorrent.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         readinessProbe:
           httpGet:
             path: /
@@ -128,4 +134,7 @@ spec:
       - name: qbittorrent-config-file
         configMap:
           name: qbittorrent-config
+      {{- with .Values.qbittorrent.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 {{- end }}
