@@ -137,11 +137,41 @@ spec:
           periodSeconds: 10
       volumes:
       - name: qbittorrent-config-volume
+        {{- if .Values.qbittorrent.configStorage.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ if .Values.qbittorrent.configStorage.existingClaim }}{{ .Values.qbittorrent.configStorage.existingClaim }}{{ else }}{{ include "preparr.qbittorrent.configPvcName" . }}{{ end }}
+        {{- else }}
         emptyDir: {}
+        {{- end }}
       - name: qbittorrent-config-file
         configMap:
           name: qbittorrent-config
       {{- with .Values.qbittorrent.extraVolumes }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
+{{- end }}
+
+{{- if and .Values.qbittorrent.configStorage.enabled (not .Values.qbittorrent.configStorage.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "preparr.qbittorrent.configPvcName" . }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: qbittorrent
+spec:
+  accessModes:
+    {{- range .Values.qbittorrent.configStorage.accessModes }}
+    - {{ . }}
+    {{- end }}
+  {{- if .Values.qbittorrent.configStorage.storageClass }}
+  storageClassName: {{ .Values.qbittorrent.configStorage.storageClass }}
+  {{- else if .Values.global.storageClass }}
+  storageClassName: {{ .Values.global.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.qbittorrent.configStorage.size }}
 {{- end }}

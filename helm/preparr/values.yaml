@@ -116,6 +116,14 @@ qbittorrent:
 
   downloadsPath: "/downloads"
 
+  configStorage:
+    enabled: false
+    existingClaim: ""
+    storageClass: ""
+    size: 1Gi
+    accessModes:
+      - ReadWriteOnce
+
   env:
     TZ: UTC
     PUID: "1000"

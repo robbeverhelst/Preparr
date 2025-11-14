@@ -6,6 +6,13 @@ Expand the name of the chart.
 {{- end }}
 
 {{/*
+qBittorrent config PVC name
+*/}}
+{{- define "preparr.qbittorrent.configPvcName" -}}
+{{- printf "%s-qbittorrent-config" .Release.Name -}}
+{{- end }}
+
+{{/*
 Create a default fully qualified app name.
 */}}
 {{- define "preparr.fullname" -}}

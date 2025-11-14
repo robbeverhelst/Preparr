@@ -475,6 +475,14 @@ radarr:
 
   downloadsPath: "/downloads"
 
+  configStorage:
+    enabled: false
+    existingClaim: ""
+    storageClass: ""
+    size: 5Gi
+    accessModes:
+      - ReadWriteOnce
+
   env:
     TZ: UTC
     PUID: "1000"

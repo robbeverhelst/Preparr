@@ -33,7 +33,7 @@ export class QBittorrentInitStep extends ConfigurationStep {
 
   async readCurrentState(
     context: StepContext,
-  ): Promise<{ configExists: boolean; username?: string }> {
+  ): Promise<{ configExists: boolean; username?: string; downloadsPath?: string }> {
     try {
       const configPath = '/config/qBittorrent/qBittorrent.conf'
       const configFile = file(configPath)
@@ -47,22 +47,38 @@ export class QBittorrentInitStep extends ConfigurationStep {
       const configContent = await configFile.text()
       const usernameMatch = configContent.match(/WebUI\\Username=(.+)/)
       const username = usernameMatch ? usernameMatch[1] : undefined
+      const downloadPathMatch = configContent.match(/Downloads\\SavePath=(.+)/)
+      const downloadsPath = downloadPathMatch ? downloadPathMatch[1]?.trim() : undefined
 
-      return username ? { configExists: true, username } : { configExists: true }
+      const state: { configExists: boolean; username?: string; downloadsPath?: string } = {
+        configExists: true,
+      }
+      if (username) {
+        state.username = username
+      }
+      if (downloadsPath) {
+        state.downloadsPath = downloadsPath
+      }
+      return state
     } catch (error) {
       context.logger.debug('Failed to check qBittorrent config file', { error })
       return { configExists: false }
     }
   }
 
-  protected getDesiredState(_context: StepContext): { configExists: boolean; username: string } {
+  protected getDesiredState(_context: StepContext): {
+    configExists: boolean
+    username: string
+    downloadsPath: string
+  } {
     const username = process.env.QBITTORRENT_USER || 'admin'
-    return { configExists: true, username }
+    const { downloadsPath } = this.getDownloadPaths()
+    return { configExists: true, username, downloadsPath }
   }
 
   compareAndPlan(
-    current: { configExists: boolean; username?: string },
-    desired: { configExists: boolean; username: string },
+    current: { configExists: boolean; username?: string; downloadsPath?: string },
+    desired: { configExists: boolean; username: string; downloadsPath: string },
     _context: StepContext,
   ): ChangeRecord[] {
     const changes: ChangeRecord[] = []
@@ -76,7 +92,10 @@ export class QBittorrentInitStep extends ConfigurationStep {
           action: 'create-config-file',
         },
       })
-    } else if (current.configExists && current.username !== desired.username) {
+    } else if (
+      current.configExists &&
+      (current.username !== desired.username || current.downloadsPath !== desired.downloadsPath)
+    ) {
       changes.push({
         type: 'update',
         resource: 'qbittorrent-config-file',
