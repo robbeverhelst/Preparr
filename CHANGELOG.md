@@ -1,3 +1,10 @@
+## [0.7.1](https://github.com/robbeverhelst/Preparr/compare/v0.7.0...v0.7.1) (2025-11-14)
+
+
+### Bug Fixes
+
+* **postgres:** enhance PostgresClient to support environment-based database configuration and improve application field mapping ([5b95ca9](https://github.com/robbeverhelst/Preparr/commit/5b95ca9c1e1b1058c10ea0e41c26a22d5cb19729))
+
 # [0.7.0](https://github.com/robbeverhelst/Preparr/compare/v0.6.2...v0.7.0) (2025-11-13)
 
 
