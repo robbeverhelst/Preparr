@@ -1,3 +1,10 @@
+## [0.7.2](https://github.com/robbeverhelst/Preparr/compare/v0.7.1...v0.7.2) (2025-11-14)
+
+
+### Bug Fixes
+
+* **applications:** streamline readCurrentState method to prioritize database retrieval for applications ([219bc65](https://github.com/robbeverhelst/Preparr/commit/219bc65a3efba35fe48ad8ceb8807c31eb8c32f3))
+
 ## [0.7.1](https://github.com/robbeverhelst/Preparr/compare/v0.7.0...v0.7.1) (2025-11-14)
 
 
