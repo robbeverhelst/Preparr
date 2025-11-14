@@ -1,3 +1,10 @@
+# [0.8.0](https://github.com/robbeverhelst/Preparr/compare/v0.7.4...v0.8.0) (2025-11-14)
+
+
+### Features
+
+* **helm:** add pod annotations support for prowlarr, qbittorrent, and radarr templates ([461f5bb](https://github.com/robbeverhelst/Preparr/commit/461f5bb0cc817c95f1378883025187d830d9b2a5))
+
 ## [0.7.4](https://github.com/robbeverhelst/Preparr/compare/v0.7.3...v0.7.4) (2025-11-14)
 
 
