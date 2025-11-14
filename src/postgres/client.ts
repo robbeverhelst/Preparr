@@ -15,7 +15,13 @@ export class PostgresClient {
   private adminDb: SQL | null = null
 
   constructor(config: PostgresConfig) {
-    this.config = config
+    this.config = { ...config }
+    if (process.env.POSTGRES_DB) {
+      this.config.database = process.env.POSTGRES_DB
+      logger.debug('Overriding postgres database from environment', {
+        database: this.config.database,
+      })
+    }
   }
 
   private getConnectionString(database = 'postgres'): string {
@@ -243,11 +249,12 @@ export class PostgresClient {
       id: number
       name: string
       implementation: string
-      implementationName: string | null
-      configContract: string | null
+      implementationName: string
+      configContract: string
       settings: Record<string, unknown> | null
       enable: boolean
-      syncLevel: string | null
+      syncLevel: string
+      tags: number[]
     }>
   > {
     this.connect()
@@ -262,11 +269,10 @@ export class PostgresClient {
           "Id" AS id,
           "Name" AS name,
           "Implementation" AS implementation,
-          "ImplementationName" AS "implementationName",
           "ConfigContract" AS "configContract",
           "Settings" AS settings,
-          "Enable" AS enable,
-          "SyncLevel" AS "syncLevel"
+          "SyncLevel" AS "syncLevel",
+          "Tags" AS tags
         FROM "Applications"
         ORDER BY "Id"
       `
@@ -275,14 +281,20 @@ export class PostgresClient {
         id: Number(row.id),
         name: String(row.name),
         implementation: String(row.implementation),
-        implementationName: row.implementationName ? String(row.implementationName) : null,
-        configContract: row.configContract ? String(row.configContract) : null,
+        implementationName: String(row.implementation),
+        configContract: row.configContract ? String(row.configContract) : '',
         settings:
           typeof row.settings === 'string'
             ? (JSON.parse(row.settings) as Record<string, unknown>)
             : (row.settings as Record<string, unknown> | null),
-        enable: Boolean(row.enable),
-        syncLevel: row.syncLevel ? String(row.syncLevel) : null,
+        enable: true,
+        syncLevel: row.syncLevel ? String(row.syncLevel) : 'addOnly',
+        tags:
+          typeof row.tags === 'string'
+            ? (JSON.parse(row.tags) as number[])
+            : Array.isArray(row.tags)
+              ? (row.tags as number[])
+              : [],
       }))
     } catch (error) {
       logger.error('Failed to read Applications table', { error })
