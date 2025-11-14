@@ -94,6 +94,9 @@ spec:
         - name: radarr-config-file
           mountPath: /config/radarr-config.json
           subPath: radarr-config.json
+        {{- with .Values.radarr.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       containers:
       - name: radarr
         image: "{{ .Values.radarr.image.repository }}:{{ .Values.radarr.image.tag }}"
@@ -116,6 +119,9 @@ spec:
         {{- if .Values.radarr.storage.movies.enabled }}
         - name: movies-storage
           mountPath: /movies
+        {{- end }}
+        {{- with .Values.radarr.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
         readinessProbe:
           httpGet:
@@ -169,6 +175,9 @@ spec:
         - name: radarr-config-file
           mountPath: /config/radarr-config.json
           subPath: radarr-config.json
+        {{- with .Values.radarr.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         readinessProbe:
           httpGet:
             path: /health
@@ -181,6 +190,9 @@ spec:
             port: {{ .Values.preparr.health.port }}
           initialDelaySeconds: 60
           periodSeconds: 30
+      {{- with .Values.radarr.extraContainers }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       volumes:
       - name: radarr-config-volume
         emptyDir: {}
@@ -191,6 +203,9 @@ spec:
       - name: movies-storage
         persistentVolumeClaim:
           claimName: radarr-movies-pvc
+      {{- end }}
+      {{- with .Values.radarr.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
       {{- end }}
 {{- if .Values.radarr.storage.movies.enabled }}
 ---
