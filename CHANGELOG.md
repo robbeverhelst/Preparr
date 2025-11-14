@@ -1,3 +1,10 @@
+# [0.9.0](https://github.com/robbeverhelst/Preparr/compare/v0.8.0...v0.9.0) (2025-11-14)
+
+
+### Features
+
+* **helm:** add support for extra volume mounts and containers in radarr template ([e8ca0c8](https://github.com/robbeverhelst/Preparr/commit/e8ca0c8ca27d10b73def633d21389d0ca1744619))
+
 # [0.8.0](https://github.com/robbeverhelst/Preparr/compare/v0.7.4...v0.8.0) (2025-11-14)
 
 
