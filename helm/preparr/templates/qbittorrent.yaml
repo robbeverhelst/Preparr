@@ -92,6 +92,8 @@ spec:
           value: "http://qbittorrent:{{ .Values.qbittorrent.service.webui.port }}"
         - name: CONFIG_PATH
           value: "/config/qbittorrent-config.json"
+        - name: QBITTORRENT_DOWNLOADS_PATH
+          value: {{ .Values.qbittorrent.downloadsPath | default "/downloads" | quote }}
         command: ["bun", "run", "dist/index.js", "--init"]
         volumeMounts:
         - name: qbittorrent-config-volume

@@ -114,6 +114,8 @@ qbittorrent:
             pathType: Prefix
     tls: []
 
+  downloadsPath: "/downloads"
+
   env:
     TZ: UTC
     PUID: "1000"

@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import path from 'node:path'
 import {
   type ChangeRecord,
   ConfigurationStep,
@@ -147,6 +148,7 @@ export class QBittorrentInitStep extends ConfigurationStep {
     // Read credentials directly from environment variables since config might not be loaded yet
     const username = process.env.QBITTORRENT_USER || 'admin'
     const password = process.env.QBITTORRENT_PASSWORD || 'adminpass'
+    const { downloadsPath, tempPath } = this.getDownloadPaths()
 
     context.logger.info('Creating qBittorrent configuration', { username })
 
@@ -158,12 +160,12 @@ program=
 
 [BitTorrent]
 Session\\AddTorrentStopped=false
-Session\\DefaultSavePath=/downloads/
+Session\\DefaultSavePath=${downloadsPath}
 Session\\Port=6881
 Session\\QueueingSystemEnabled=true
 Session\\SSL\\Port=53540
 Session\\ShareLimitAction=Stop
-Session\\TempPath=/downloads/incomplete/
+Session\\TempPath=${tempPath}
 
 [LegalNotice]
 Accepted=true
@@ -181,8 +183,8 @@ Proxy\\Profiles\\RSS=true
 [Preferences]
 Connection\\PortRangeMin=6881
 Connection\\UPnP=false
-Downloads\\SavePath=/downloads/
-Downloads\\TempPath=/downloads/incomplete/
+Downloads\\SavePath=${downloadsPath}
+Downloads\\TempPath=${tempPath}
 WebUI\\Address=*
 WebUI\\AuthSubnetWhitelist=127.0.0.1
 WebUI\\AuthSubnetWhitelistEnabled=false
@@ -211,6 +213,21 @@ WebUI\\Password_PBKDF2=${passwordHash}
 
     // Write the config file
     await write('/config/qBittorrent/qBittorrent.conf', configContent)
+  }
+
+  private getDownloadPaths(): { downloadsPath: string; tempPath: string } {
+    const basePath = process.env.QBITTORRENT_DOWNLOADS_PATH || '/downloads'
+    const downloadsPath = this.normalizePath(basePath)
+    const tempPath = this.normalizePath(path.posix.join(basePath, 'incomplete'))
+    return { downloadsPath, tempPath }
+  }
+
+  private normalizePath(value: string): string {
+    const normalized = path.posix.normalize(value || '/')
+    if (normalized === '/') {
+      return normalized
+    }
+    return normalized.endsWith('/') ? normalized : `${normalized}/`
   }
 
   private generatePBKDF2Hash(password: string, context: StepContext): string {
