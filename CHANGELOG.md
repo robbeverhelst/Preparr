@@ -1,3 +1,10 @@
+# [0.11.0](https://github.com/robbeverhelst/Preparr/compare/v0.10.0...v0.11.0) (2025-11-14)
+
+
+### Features
+
+* **qbittorrent:** add configStorage options and update initialization logic ([677cc77](https://github.com/robbeverhelst/Preparr/commit/677cc77a9517b66f9d193ace678aa8894211d392))
+
 # [0.10.0](https://github.com/robbeverhelst/Preparr/compare/v0.9.0...v0.10.0) (2025-11-14)
 
 
