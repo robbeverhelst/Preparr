@@ -1,3 +1,10 @@
+## [0.7.3](https://github.com/robbeverhelst/Preparr/compare/v0.7.2...v0.7.3) (2025-11-14)
+
+
+### Bug Fixes
+
+* **postgres:** enhance PostgresClient to improve implementation name handling and normalize sync level values ([ff9e3d6](https://github.com/robbeverhelst/Preparr/commit/ff9e3d6eb6e84a61e8aab66acc12a8f7f1483c5d))
+
 ## [0.7.2](https://github.com/robbeverhelst/Preparr/compare/v0.7.1...v0.7.2) (2025-11-14)
 
 
