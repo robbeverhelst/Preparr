@@ -54,6 +54,11 @@ spec:
     metadata:
       labels:
         app: prowlarr
+      {{- $podAnnotations := include "preparr.podAnnotations" (dict "local" .Values.prowlarr "Values" .Values) }}
+      {{- if $podAnnotations }}
+      annotations:
+        {{- $podAnnotations | nindent 8 }}
+      {{- end }}
     spec:
       initContainers:
       - name: preparr-init
