@@ -269,7 +269,6 @@ export class PostgresClient {
           "Id" AS id,
           "Name" AS name,
           "Implementation" AS implementation,
-          "ImplementationName" AS "implementationName",
           "ConfigContract" AS "configContract",
           "Settings" AS settings,
           "SyncLevel" AS "syncLevel",
@@ -282,9 +281,7 @@ export class PostgresClient {
         id: Number(row.id),
         name: String(row.name),
         implementation: String(row.implementation),
-        implementationName: row.implementationName
-          ? String(row.implementationName)
-          : String(row.implementation),
+        implementationName: String(row.implementation),
         configContract: row.configContract ? String(row.configContract) : '',
         settings:
           typeof row.settings === 'string'
