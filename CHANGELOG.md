@@ -1,3 +1,10 @@
+## [0.7.4](https://github.com/robbeverhelst/Preparr/compare/v0.7.3...v0.7.4) (2025-11-14)
+
+
+### Bug Fixes
+
+* **postgres:** simplify implementation name handling in PostgresClient ([b4a6a18](https://github.com/robbeverhelst/Preparr/commit/b4a6a18d93394798d170fe76cd02f35f58555acd))
+
 ## [0.7.3](https://github.com/robbeverhelst/Preparr/compare/v0.7.2...v0.7.3) (2025-11-14)
 
 
