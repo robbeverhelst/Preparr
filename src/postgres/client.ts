@@ -1,4 +1,4 @@
-import type { PostgresConfig } from '@/config/schema'
+import type { Application, PostgresConfig } from '@/config/schema'
 import { logger } from '@/utils/logger'
 import { SQL } from 'bun'
 
@@ -269,6 +269,7 @@ export class PostgresClient {
           "Id" AS id,
           "Name" AS name,
           "Implementation" AS implementation,
+          "ImplementationName" AS "implementationName",
           "ConfigContract" AS "configContract",
           "Settings" AS settings,
           "SyncLevel" AS "syncLevel",
@@ -281,14 +282,16 @@ export class PostgresClient {
         id: Number(row.id),
         name: String(row.name),
         implementation: String(row.implementation),
-        implementationName: String(row.implementation),
+        implementationName: row.implementationName
+          ? String(row.implementationName)
+          : String(row.implementation),
         configContract: row.configContract ? String(row.configContract) : '',
         settings:
           typeof row.settings === 'string'
             ? (JSON.parse(row.settings) as Record<string, unknown>)
             : (row.settings as Record<string, unknown> | null),
         enable: true,
-        syncLevel: row.syncLevel ? String(row.syncLevel) : 'addOnly',
+        syncLevel: normalizeSyncLevel(row.syncLevel),
         tags:
           typeof row.tags === 'string'
             ? (JSON.parse(row.tags) as number[])
@@ -355,4 +358,27 @@ export class PostgresClient {
     }
     logger.debug('PostgreSQL connections closed')
   }
+}
+
+const syncLevelMap: Application['syncLevel'][] = ['disabled', 'addOnly', 'fullSync']
+
+const normalizeSyncLevel = (value: unknown): Application['syncLevel'] => {
+  if (typeof value === 'string') {
+    if (value === 'fullSync' || value === 'addOnly' || value === 'disabled') {
+      return value
+    }
+    const lower = value.toLowerCase()
+    if (lower === 'fullsync') return 'fullSync'
+    if (lower === 'addonly') return 'addOnly'
+    if (lower === 'disabled') return 'disabled'
+  }
+
+  if (typeof value === 'number') {
+    const mapped = syncLevelMap[value]
+    if (mapped) {
+      return mapped
+    }
+  }
+
+  return 'addOnly'
 }
