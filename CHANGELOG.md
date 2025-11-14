@@ -1,3 +1,10 @@
+# [0.10.0](https://github.com/robbeverhelst/Preparr/compare/v0.9.0...v0.10.0) (2025-11-14)
+
+
+### Features
+
+* **qbittorrent:** add downloadsPath configuration and update initialization logic ([6f5b54f](https://github.com/robbeverhelst/Preparr/commit/6f5b54fc37350ec3046f0ad17ae1461367d48cee))
+
 # [0.9.0](https://github.com/robbeverhelst/Preparr/compare/v0.8.0...v0.9.0) (2025-11-14)
 
 
