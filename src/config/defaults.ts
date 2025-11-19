@@ -13,6 +13,7 @@ export const defaultConfig: Partial<Config> = {
     apiKey: undefined,
     adminUser: 'admin',
     adminPassword: '', // Will be required via validation
+    authenticationMethod: 'forms',
   },
   services: {
     qbittorrent: undefined,
@@ -42,6 +43,7 @@ export const envMapping = {
   SERVARR_API_KEY: 'servarr.apiKey',
   SERVARR_ADMIN_USER: 'servarr.adminUser',
   SERVARR_ADMIN_PASSWORD: 'servarr.adminPassword',
+  SERVARR_AUTHENTICATION_METHOD: 'servarr.authenticationMethod',
 
   QBITTORRENT_URL: 'services.qbittorrent.url',
   QBITTORRENT_USER: 'services.qbittorrent.username',

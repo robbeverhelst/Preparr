@@ -596,8 +596,7 @@ export class ServarrManager {
             : this.config.type === 'readarr'
               ? 8787
               : 9696
-    const authenticationMethod =
-      this.config.authenticationMethod === 'forms' ? 'Forms' : 'Basic'
+    const authenticationMethod = this.config.authenticationMethod === 'forms' ? 'Forms' : 'Basic'
 
     const configXml = `<Config>
   <BindAddress>*</BindAddress>
