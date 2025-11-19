@@ -109,6 +109,7 @@ describe('Configuration Schema Validation', () => {
       expect(result.data.health.port).toBe(8080) // Default
       expect(result.data.logLevel).toBe('info') // Default
       expect(result.data.configWatch).toBe(true) // Default
+      expect(result.data.servarr.authenticationMethod).toBe('forms') // Default
     }
   })
 })

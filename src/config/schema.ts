@@ -21,6 +21,7 @@ export const ServarrConfigSchema = z
       .optional(),
     adminUser: z.string().default('admin'),
     adminPassword: z.string(),
+    authenticationMethod: z.enum(['basic', 'forms']).default('forms'),
   })
   .refine(
     (data) => {
