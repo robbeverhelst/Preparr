@@ -1,3 +1,11 @@
+# [0.12.0](https://github.com/robbeverhelst/Preparr/compare/v0.11.0...v0.12.0) (2025-11-19)
+
+
+### Features
+
+* **config:** add authenticationMethod to defaults and update envMapping ([2112f1c](https://github.com/robbeverhelst/Preparr/commit/2112f1c701684c2a9f09b4b14909688e72edf65f))
+* **servarr:** add authenticationMethod to configuration schema and update client handling ([5f0fb57](https://github.com/robbeverhelst/Preparr/commit/5f0fb57710f2f5721ba4a5fc24646004c6022e98))
+
 # [0.11.0](https://github.com/robbeverhelst/Preparr/compare/v0.10.0...v0.11.0) (2025-11-14)
 
 
