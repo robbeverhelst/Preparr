@@ -1,3 +1,10 @@
+## [0.13.1](https://github.com/robbeverhelst/Preparr/compare/v0.13.0...v0.13.1) (2026-01-27)
+
+
+### Bug Fixes
+
+* improve type compatibility for newer type definitions ([#35](https://github.com/robbeverhelst/Preparr/issues/35)) ([21290b0](https://github.com/robbeverhelst/Preparr/commit/21290b0a1d59bb9b1f8847c780e5202742d49fe3))
+
 # [0.13.0](https://github.com/robbeverhelst/Preparr/compare/v0.12.0...v0.13.0) (2026-01-27)
 
 
