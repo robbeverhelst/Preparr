@@ -1,4 +1,3 @@
-// @ts-expect-error - YAML exists in Bun runtime but not yet in type definitions
 import { file, TOML, YAML } from 'bun'
 import type { Config } from '../schema'
 
