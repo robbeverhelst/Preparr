@@ -1,6 +1,5 @@
 import type { ReconciliationManager, ReconciliationState } from '@/core/reconciliation'
 import { logger } from '@/utils/logger'
-import type { Server } from 'bun'
 
 export interface HealthStatus {
   status: 'healthy' | 'unhealthy' | 'starting'
@@ -22,7 +21,7 @@ export interface HealthStatus {
 }
 
 export class HealthServer {
-  private server: Server | undefined = undefined
+  private server: ReturnType<typeof Bun.serve> | undefined = undefined
   private startTime: Date = new Date()
   private reconciliationManager?: ReconciliationManager
   private healthStatus: HealthStatus['status'] = 'starting'

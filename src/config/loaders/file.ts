@@ -72,7 +72,7 @@ function parseJSON(content: string): Partial<Config> {
  */
 function parseYAML(content: string): Partial<Config> {
   try {
-    return YAML.parse(content)
+    return YAML.parse(content) as Partial<Config>
   } catch (error) {
     throw new Error(`Invalid YAML: ${error instanceof Error ? error.message : String(error)}`)
   }
@@ -83,7 +83,7 @@ function parseYAML(content: string): Partial<Config> {
  */
 function parseTOML(content: string): Partial<Config> {
   try {
-    return TOML.parse(content)
+    return TOML.parse(content) as Partial<Config>
   } catch (error) {
     throw new Error(`Invalid TOML: ${error instanceof Error ? error.message : String(error)}`)
   }

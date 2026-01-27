@@ -868,10 +868,12 @@ export class ServarrManager {
     const encoder = new TextEncoder()
     const passwordBytes = encoder.encode(password)
     const key = await crypto.subtle.importKey('raw', passwordBytes, 'PBKDF2', false, ['deriveBits'])
+    // Create a new Uint8Array backed by a regular ArrayBuffer for PBKDF2 compatibility
+    const salt = new Uint8Array(saltArray.buffer.slice(0)) as Uint8Array<ArrayBuffer>
     const hashBuffer = await crypto.subtle.deriveBits(
       {
         name: 'PBKDF2',
-        salt: saltArray,
+        salt,
         iterations: 10000,
         hash: 'SHA-512',
       },
