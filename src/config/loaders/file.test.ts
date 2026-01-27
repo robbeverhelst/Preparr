@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { file } from 'bun'
 import { detectFileFormat, findConfigFile, loadConfigFile } from './file'
 
 const testDir = '/tmp/preparr-test-config'

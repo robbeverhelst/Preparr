@@ -1,5 +1,5 @@
-import { logger } from '@/utils/logger'
 import { serve } from 'bun'
+import { logger } from '@/utils/logger'
 
 interface HealthStatus {
   status: 'healthy' | 'unhealthy'

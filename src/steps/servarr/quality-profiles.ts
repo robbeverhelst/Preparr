@@ -77,6 +77,7 @@ export class QualityProfilesStep extends ConfigurationStep {
     return changes
   }
 
+  // biome-ignore lint/suspicious/useAwait: Method signature required by base class interface
   async executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult> {
     const results: ChangeRecord[] = []
     const errors: Error[] = []

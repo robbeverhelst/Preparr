@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { file } from 'bun'
 import { loadConfiguration, loadConfigurationSafe } from './index'
 
 const testDir = '/tmp/preparr-integration-test'
@@ -67,7 +66,7 @@ describe('loadConfiguration', () => {
 
     // Mock process.exit and console.log
     process.exit = ((code?: string | number) => {
-      exitCode = typeof code === 'number' ? code : code ? Number.parseInt(code) : 0
+      exitCode = typeof code === 'number' ? code : code ? Number.parseInt(code, 10) : 0
       throw new Error('process.exit called') // Stop execution
     }) as typeof process.exit
 
@@ -100,7 +99,7 @@ describe('loadConfiguration', () => {
 
     // Mock process.exit and console.log
     process.exit = ((code?: string | number) => {
-      exitCode = typeof code === 'number' ? code : code ? Number.parseInt(code) : 0
+      exitCode = typeof code === 'number' ? code : code ? Number.parseInt(code, 10) : 0
       throw new Error('process.exit called')
     }) as typeof process.exit
 
@@ -128,7 +127,7 @@ describe('loadConfiguration', () => {
 
     // Mock process.exit and console.log
     process.exit = ((code?: string | number) => {
-      exitCode = typeof code === 'number' ? code : code ? Number.parseInt(code) : 0
+      exitCode = typeof code === 'number' ? code : code ? Number.parseInt(code, 10) : 0
       throw new Error('process.exit called')
     }) as typeof process.exit
 
@@ -397,7 +396,7 @@ describe('loadConfigurationSafe', () => {
 
     // Mock process.exit and console.error
     process.exit = ((code?: string | number) => {
-      exitCode = typeof code === 'number' ? code : code ? Number.parseInt(code) : 0
+      exitCode = typeof code === 'number' ? code : code ? Number.parseInt(code, 10) : 0
       throw new Error('process.exit called')
     }) as typeof process.exit
 

@@ -1,13 +1,11 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.13/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -16,7 +14,7 @@
     "lineEnding": "lf",
     "lineWidth": 100,
     "attributePosition": "auto",
-    "ignore": ["**/dist", "**/node_modules", "**/.git", "**/coverage", "*.min.js"]
+    "includes": ["**", "!**/dist", "!**/node_modules", "!**/.git", "!**/coverage", "!**/*.min.js"]
   },
   "linter": {
     "enabled": true,
@@ -25,12 +23,11 @@
       "complexity": {
         "noBannedTypes": "error",
         "noExtraBooleanCast": "error",
-        "noMultipleSpacesInRegularExpressionLiterals": "error",
         "noUselessCatch": "error",
         "noUselessConstructor": "error",
         "noUselessTypeConstraint": "error",
-        "noWith": "error",
-        "useArrowFunction": "error"
+        "useArrowFunction": "error",
+        "noAdjacentSpacesInRegex": "error"
       },
       "correctness": {
         "noConstAssign": "error",
@@ -40,7 +37,6 @@
         "noGlobalObjectCalls": "error",
         "noInnerDeclarations": "error",
         "noInvalidConstructorSuper": "error",
-        "noNewSymbol": "error",
         "noNonoctalDecimalEscape": "error",
         "noPrecisionLoss": "error",
         "noSelfAssign": "error",
@@ -57,13 +53,13 @@
         "useIsNan": "error",
         "useValidForDirection": "error",
         "useYield": "error",
-        "useHookAtTopLevel": "error"
+        "useHookAtTopLevel": "error",
+        "noInvalidBuiltinInstantiation": "error"
       },
       "style": {
         "noDefaultExport": "error",
         "noNamespace": "error",
         "noParameterAssign": "error",
-        "noVar": "error",
         "useAsConstAssertion": "error",
         "useBlockStatements": "off",
         "useConst": "error",
@@ -100,7 +96,9 @@
         "noUnsafeDeclarationMerging": "error",
         "noUnsafeNegation": "error",
         "useAwait": "error",
-        "useGetterReturn": "error"
+        "useGetterReturn": "error",
+        "noWith": "error",
+        "noVar": "error"
       },
       "performance": {
         "noAccumulatingSpread": "error",
@@ -109,7 +107,7 @@
         "noReExportAll": "error"
       }
     },
-    "ignore": ["**/dist", "**/node_modules", "**/.git", "**/coverage", "**/.claude"]
+    "includes": ["**", "!**/dist", "!**/node_modules", "!**/.git", "!**/coverage", "!**/.claude"]
   },
   "javascript": {
     "globals": ["Bun"],
@@ -127,13 +125,13 @@
   },
   "overrides": [
     {
-      "include": ["*.json", "*.jsonc"],
+      "includes": ["**/*.json", "**/*.jsonc"],
       "formatter": {
         "indentWidth": 2
       }
     },
     {
-      "include": ["src/utils/logger.ts", "src/index.ts", "generate-*.ts", "*.test.ts"],
+      "includes": ["**/src/utils/logger.ts", "**/src/index.ts", "**/generate-*.ts", "**/*.test.ts"],
       "linter": {
         "rules": {
           "suspicious": {
@@ -144,6 +142,15 @@
     }
   ],
   "files": {
-    "ignore": ["node_modules", "dist", ".git", "coverage", "*.log", "*.lock", ".claude"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/.git",
+      "!**/coverage",
+      "!**/*.log",
+      "!**/*.lock",
+      "!**/.claude"
+    ]
   }
 }

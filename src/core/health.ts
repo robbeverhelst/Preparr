@@ -1,6 +1,6 @@
+import type { Server } from 'bun'
 import type { ReconciliationManager, ReconciliationState } from '@/core/reconciliation'
 import { logger } from '@/utils/logger'
-import type { Server } from 'bun'
 
 export interface HealthStatus {
   status: 'healthy' | 'unhealthy' | 'starting'

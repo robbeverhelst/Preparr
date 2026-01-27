@@ -1,7 +1,7 @@
 import { pbkdf2Sync, randomBytes } from 'node:crypto'
+import { spawn, write } from 'bun'
 import type { QBittorrentConfig, ServiceIntegration } from '@/config/schema'
 import { logger } from '@/utils/logger'
-import { spawn, write } from 'bun'
 
 export class QBittorrentManager {
   private config: ServiceIntegration['qbittorrent']
