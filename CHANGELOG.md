@@ -1,3 +1,11 @@
+# [0.13.0](https://github.com/robbeverhelst/Preparr/compare/v0.12.0...v0.13.0) (2026-01-27)
+
+
+### Features
+
+* **postgres:** add POSTGRES_SKIP_PROVISIONING option ([dee5322](https://github.com/robbeverhelst/Preparr/commit/dee53220d749c04ee883256d4b5214f8a1f1fc1a))
+* **postgres:** add POSTGRES_SKIP_PROVISIONING option ([5fe502d](https://github.com/robbeverhelst/Preparr/commit/5fe502d9cabd665a5dd4eb47d63ab6b558f2ce57)), closes [#24](https://github.com/robbeverhelst/Preparr/issues/24)
+
 # [0.12.0](https://github.com/robbeverhelst/Preparr/compare/v0.11.0...v0.12.0) (2025-11-19)
 
 
