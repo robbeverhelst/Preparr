@@ -2,8 +2,37 @@ apiVersion: v1
 entries:
   preparr:
   - apiVersion: v2
+    appVersion: 0.13.0
+    created: "2026-01-27T11:21:22.75752215Z"
+    description: Complete Infrastructure as Code for Servarr applications using Helm.
+      Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
+      zero manual configuration - PrepArr automates user creation, API keys, service
+      linking, and configuration management.
+    digest: d44935460e7bd5392a74605a6b2b5c0c61e65be04ce1b449c33d2a34e45f8936
+    home: https://github.com/robbeverhelst/Preparr
+    keywords:
+    - servarr
+    - radarr
+    - sonarr
+    - prowlarr
+    - lidarr
+    - automation
+    - iac
+    - media
+    - qbittorrent
+    maintainers:
+    - name: Robbe Verhelst
+      url: https://github.com/robbeverhelst
+    name: preparr
+    sources:
+    - https://github.com/robbeverhelst/Preparr
+    type: application
+    urls:
+    - https://robbeverhelst.github.io/Preparr/preparr-0.13.0.tgz
+    version: 0.13.0
+  - apiVersion: v2
     appVersion: 0.12.0
-    created: "2026-01-27T11:16:44.308283402Z"
+    created: "2026-01-27T11:21:22.755083447Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -32,7 +61,7 @@ entries:
     version: 0.12.0
   - apiVersion: v2
     appVersion: 0.11.0
-    created: "2026-01-27T11:16:44.307271865Z"
+    created: "2026-01-27T11:21:22.753898435Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -61,7 +90,7 @@ entries:
     version: 0.11.0
   - apiVersion: v2
     appVersion: 0.10.0
-    created: "2026-01-27T11:16:44.305887729Z"
+    created: "2026-01-27T11:21:22.752838237Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -90,7 +119,7 @@ entries:
     version: 0.10.0
   - apiVersion: v2
     appVersion: 0.9.0
-    created: "2026-01-27T11:16:44.328862409Z"
+    created: "2026-01-27T11:21:22.780095036Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -119,7 +148,7 @@ entries:
     version: 0.9.0
   - apiVersion: v2
     appVersion: 0.8.0
-    created: "2026-01-27T11:16:44.327820546Z"
+    created: "2026-01-27T11:21:22.778974215Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -148,7 +177,7 @@ entries:
     version: 0.8.0
   - apiVersion: v2
     appVersion: 0.7.4
-    created: "2026-01-27T11:16:44.326678735Z"
+    created: "2026-01-27T11:21:22.777843184Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -177,7 +206,7 @@ entries:
     version: 0.7.4
   - apiVersion: v2
     appVersion: 0.7.3
-    created: "2026-01-27T11:16:44.325254665Z"
+    created: "2026-01-27T11:21:22.776712823Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -206,7 +235,7 @@ entries:
     version: 0.7.3
   - apiVersion: v2
     appVersion: 0.7.2
-    created: "2026-01-27T11:16:44.324320904Z"
+    created: "2026-01-27T11:21:22.775498417Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -235,7 +264,7 @@ entries:
     version: 0.7.2
   - apiVersion: v2
     appVersion: 0.7.1
-    created: "2026-01-27T11:16:44.323400858Z"
+    created: "2026-01-27T11:21:22.77331888Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -264,7 +293,7 @@ entries:
     version: 0.7.1
   - apiVersion: v2
     appVersion: 0.7.0
-    created: "2026-01-27T11:16:44.322291428Z"
+    created: "2026-01-27T11:21:22.77218841Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -293,7 +322,7 @@ entries:
     version: 0.7.0
   - apiVersion: v2
     appVersion: 0.6.2
-    created: "2026-01-27T11:16:44.320739348Z"
+    created: "2026-01-27T11:21:22.771012545Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -322,7 +351,7 @@ entries:
     version: 0.6.2
   - apiVersion: v2
     appVersion: 0.6.1
-    created: "2026-01-27T11:16:44.319634586Z"
+    created: "2026-01-27T11:21:22.769743956Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -351,7 +380,7 @@ entries:
     version: 0.6.1
   - apiVersion: v2
     appVersion: 0.6.0
-    created: "2026-01-27T11:16:44.318323649Z"
+    created: "2026-01-27T11:21:22.768442175Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -380,7 +409,7 @@ entries:
     version: 0.6.0
   - apiVersion: v2
     appVersion: 0.5.0
-    created: "2026-01-27T11:16:44.317076921Z"
+    created: "2026-01-27T11:21:22.766809173Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -409,7 +438,7 @@ entries:
     version: 0.5.0
   - apiVersion: v2
     appVersion: 0.4.1
-    created: "2026-01-27T11:16:44.315765271Z"
+    created: "2026-01-27T11:21:22.765749076Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -438,7 +467,7 @@ entries:
     version: 0.4.1
   - apiVersion: v2
     appVersion: 0.4.0
-    created: "2026-01-27T11:16:44.314566974Z"
+    created: "2026-01-27T11:21:22.764707693Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -467,7 +496,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: 0.3.3
-    created: "2026-01-27T11:16:44.313622462Z"
+    created: "2026-01-27T11:21:22.763641474Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -496,7 +525,7 @@ entries:
     version: 0.3.3
   - apiVersion: v2
     appVersion: 0.3.2
-    created: "2026-01-27T11:16:44.312672131Z"
+    created: "2026-01-27T11:21:22.762031124Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -525,7 +554,7 @@ entries:
     version: 0.3.2
   - apiVersion: v2
     appVersion: 0.3.1
-    created: "2026-01-27T11:16:44.311703083Z"
+    created: "2026-01-27T11:21:22.760869095Z"
     description: Complete Infrastructure as Code for Servarr applications using Helm.
       Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with
       zero manual configuration - PrepArr automates user creation, API keys, service
@@ -554,7 +583,7 @@ entries:
     version: 0.3.1
   - apiVersion: v2
     appVersion: 0.3.0
-    created: "2026-01-27T11:16:44.310318979Z"
+    created: "2026-01-27T11:21:22.75976215Z"
     description: A Helm chart for deploying Servarr applications with complete IaC
       automation via PrepArr
     digest: 41fad1ff21408efa49d0d32b7c3a4c223862191afad5c42e3ae7d0a32a1a65dc
@@ -581,7 +610,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.2.4
-    created: "2026-01-27T11:16:44.309264661Z"
+    created: "2026-01-27T11:21:22.758730105Z"
     description: A Helm chart for deploying Servarr applications with complete IaC
       automation via PrepArr
     digest: 30729cd630a54fc03ce28d6fc1429a62fe9d704e6dfce47b4755af116ee5353e
@@ -608,7 +637,7 @@ entries:
     version: 0.2.4
   - apiVersion: v2
     appVersion: 0.1.10
-    created: "2026-01-27T11:16:44.303999999Z"
+    created: "2026-01-27T11:21:22.751756379Z"
     description: A Helm chart for deploying Servarr applications with complete IaC
       automation via PrepArr
     digest: e42f293945184d980f5005dc030e79f8a898150b1890ba07ee38b89187691a51
@@ -633,4 +662,4 @@ entries:
     urls:
     - https://robbeverhelst.github.io/Preparr/preparr-0.1.0.tgz
     version: 0.1.0
-generated: "2026-01-27T11:16:44.302586529Z"
+generated: "2026-01-27T11:21:22.750488511Z"
