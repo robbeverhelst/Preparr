@@ -5,7 +5,7 @@
     "": {
       "name": "preparr",
       "dependencies": {
-        "tsarr": "^1.9.0",
+        "tsarr": "^1.10.0",
         "zod": "^3.25.76",
       },
       "devDependencies": {
@@ -482,7 +482,7 @@
 
     "traverse": ["traverse@0.6.8", "", {}, "sha512-aXJDbk6SnumuaZSANd21XAo15ucCDE38H4fkqiGsc3MhCK+wOlZvLP9cB/TvpHT0mOyWgC4Z8EwRlzqYSUzdsA=="],
 
-    "tsarr": ["tsarr@1.9.0", "", {}, "sha512-GqS+0xrFUi+45lPAuCIf4GehGtCgb/xxFhwRpxFRduUflZOrB3AG/iQgxtZjrABjuxzBh8qRxYHTX4DDXNSfCg=="],
+    "tsarr": ["tsarr@1.10.0", "", {}, "sha512-fxIASzJeHySao77OtoNB5Z2j+YiQaevAOoBSIX3bGz8Af1gE5gC2GAnSivL2pipkILUGfDKA4jhWiLOfYrqujg=="],
 
     "type-fest": ["type-fest@4.41.0", "", {}, "sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA=="],
 
