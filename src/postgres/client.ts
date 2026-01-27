@@ -1,6 +1,6 @@
+import { SQL } from 'bun'
 import type { Application, PostgresConfig } from '@/config/schema'
 import { logger } from '@/utils/logger'
-import { SQL } from 'bun'
 
 interface RetryOptions {
   maxRetries?: number

@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import path from 'node:path'
+import { file, spawn, write } from 'bun'
 import {
   type ChangeRecord,
   ConfigurationStep,
@@ -7,7 +8,6 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
-import { file, spawn, write } from 'bun'
 
 export class QBittorrentInitStep extends ConfigurationStep {
   readonly name = 'qbittorrent-init'

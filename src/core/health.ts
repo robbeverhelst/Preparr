@@ -1,3 +1,4 @@
+import type { Server } from 'bun'
 import type { ReconciliationManager, ReconciliationState } from '@/core/reconciliation'
 import { logger } from '@/utils/logger'
 

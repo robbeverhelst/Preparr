@@ -1,5 +1,5 @@
-// @ts-ignore - YAML exists in Bun runtime but not yet in type definitions
-import { TOML, YAML, file } from 'bun'
+// @ts-expect-error - YAML exists in Bun runtime but not yet in type definitions
+import { file, TOML, YAML } from 'bun'
 import type { Config } from '../schema'
 
 export type ConfigFileFormat = 'yaml' | 'json' | 'toml'

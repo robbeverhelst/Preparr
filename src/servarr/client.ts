@@ -1,3 +1,4 @@
+import { file, SQL, write } from 'bun'
 import type {
   Application,
   DownloadClient,
@@ -8,7 +9,6 @@ import type {
 } from '@/config/schema'
 import { logger } from '@/utils/logger'
 import { withRetry } from '@/utils/retry'
-import { SQL, file, write } from 'bun'
 
 interface DatabaseUser {
   Id: number
@@ -18,6 +18,7 @@ interface DatabaseUser {
   Salt: string
   Iterations: number
 }
+
 import {
   LidarrClient,
   ProwlarrClient,

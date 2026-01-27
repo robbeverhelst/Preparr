@@ -1,8 +1,3 @@
-import { logger } from '@/utils/logger'
-import type { ExecutionContext } from './context'
-import { StepRegistry } from './registry'
-import type { StepResult } from './step'
-
 // Import all step classes
 import { PostgresConnectivityStep } from '@/steps/connectivity/postgres-connectivity'
 import { QBittorrentConnectivityStep } from '@/steps/connectivity/qbittorrent-connectivity'
@@ -19,6 +14,10 @@ import { IndexersStep } from '@/steps/servarr/indexers'
 import { QualityProfilesStep } from '@/steps/servarr/quality-profiles'
 import { RootFoldersStep } from '@/steps/servarr/root-folders'
 import { ConfigLoadingStep } from '@/steps/validation/config-loading'
+import { logger } from '@/utils/logger'
+import type { ExecutionContext } from './context'
+import { StepRegistry } from './registry'
+import type { StepResult } from './step'
 
 export interface ExecutionResult {
   success: boolean
