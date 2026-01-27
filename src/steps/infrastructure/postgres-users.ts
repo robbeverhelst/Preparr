@@ -13,6 +13,11 @@ export class PostgresUsersStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'init'
 
   validatePrerequisites(context: StepContext): boolean {
+    // Skip if provisioning is disabled (for pre-provisioned databases)
+    if (context.config.postgres.skipProvisioning) {
+      context.logger.info('PostgreSQL user provisioning skipped (POSTGRES_SKIP_PROVISIONING=true)')
+      return false
+    }
     return context.executionMode === 'init'
   }
 

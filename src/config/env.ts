@@ -9,6 +9,7 @@ export function loadEnvironmentConfig(): Config {
       username: env.POSTGRES_USER,
       password: env.POSTGRES_PASSWORD || '',
       database: env.POSTGRES_DB,
+      skipProvisioning: env.POSTGRES_SKIP_PROVISIONING === 'true',
     },
     servarr: {
       url: env.SERVARR_URL || '',

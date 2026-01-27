@@ -6,6 +6,7 @@ export const defaultConfig: Partial<Config> = {
     username: 'postgres',
     password: '', // Will be required via validation
     database: 'servarr',
+    skipProvisioning: false,
   },
   servarr: {
     url: '', // Will be required via validation
@@ -37,6 +38,7 @@ export const envMapping = {
   POSTGRES_PASSWORD: 'postgres.password',
   POSTGRES_DB: 'postgres.database',
   POSTGRES_DATABASE: 'postgres.database', // Alternative name
+  POSTGRES_SKIP_PROVISIONING: 'postgres.skipProvisioning',
 
   SERVARR_URL: 'servarr.url',
   SERVARR_TYPE: 'servarr.type',
