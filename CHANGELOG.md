@@ -1,3 +1,10 @@
+## [0.13.2](https://github.com/robbeverhelst/Preparr/compare/v0.13.1...v0.13.2) (2026-01-27)
+
+
+### Bug Fixes
+
+* **ci:** add Node.js 22 setup for semantic-release compatibility ([#41](https://github.com/robbeverhelst/Preparr/issues/41)) ([56a825d](https://github.com/robbeverhelst/Preparr/commit/56a825de8ffe204a4ef4e81bbbf81b0f47061949))
+
 ## [0.13.1](https://github.com/robbeverhelst/Preparr/compare/v0.13.0...v0.13.1) (2026-01-27)
 
 
