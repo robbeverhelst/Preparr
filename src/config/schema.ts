@@ -183,7 +183,7 @@ export const ConfigSchema = z.object({
     .object({
       port: z.number().default(8080),
     })
-    .default({}),
+    .default({ port: 8080 }),
   logLevel: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   logFormat: z.enum(['json', 'pretty']).default('json'),
   configPath: z.string().default('/config/servarr.yaml'),
