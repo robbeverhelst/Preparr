@@ -39,13 +39,13 @@ export class BazarrConnectivityStep extends ConfigurationStep {
     }
   }
 
-  protected getDesiredState(context: StepContext): { connected: boolean } {
+  protected getDesiredState(_context: StepContext): { connected: boolean } {
     return { connected: true }
   }
 
   compareAndPlan(
     current: { connected: boolean; apiKeyValid?: boolean },
-    desired: { connected: boolean },
+    _desired: { connected: boolean },
   ): ChangeRecord[] {
     if (!current.connected) {
       return [
@@ -72,10 +72,7 @@ export class BazarrConnectivityStep extends ConfigurationStep {
     return []
   }
 
-  async executeChanges(
-    changes: ChangeRecord[],
-    context: StepContext,
-  ): Promise<StepResult> {
+  async executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult> {
     const errors: Error[] = []
     const warnings: Warning[] = []
 

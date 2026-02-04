@@ -209,7 +209,7 @@ export async function waitForDeployment(
  * Call a Bazarr API endpoint
  */
 export async function callBazarrApi<T = unknown>(
-  service: BazarrService,
+  _service: BazarrService,
   path: string,
   options?: { apiKey?: string } & RequestInit,
 ): Promise<{ ok: boolean; status: number; data: T | null; error?: string }> {

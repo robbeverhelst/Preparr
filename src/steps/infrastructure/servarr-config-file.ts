@@ -14,7 +14,11 @@ export class ServarrConfigFileStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Only run in init mode and only for Servarr applications (not qBittorrent or Bazarr)
-    return context.executionMode === 'init' && context.servarrType !== 'qbittorrent' && context.servarrType !== 'bazarr'
+    return (
+      context.executionMode === 'init' &&
+      context.servarrType !== 'qbittorrent' &&
+      context.servarrType !== 'bazarr'
+    )
   }
 
   async readCurrentState(

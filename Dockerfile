@@ -3,11 +3,17 @@ FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
+# Install git for git dependencies
+RUN apk add --no-cache git
+
 # Copy package files
 COPY package.json bun.lock ./
 
-# Install dependencies
-RUN bun install --frozen-lockfile --production
+# Install dependencies (including dev dependencies for tsarr git dependency build)
+RUN bun install --frozen-lockfile
+
+# Build tsarr since it's a git dependency that needs compilation
+RUN cd node_modules/tsarr && bun run generate && bun run generate:types && bun run build:js && bun run build:types
 
 # Copy source code
 COPY . .

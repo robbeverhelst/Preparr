@@ -4,12 +4,7 @@
  */
 
 import { beforeAll, describe, expect, test } from 'bun:test'
-import {
-  callBazarrApi,
-  getInitContainerExitCode,
-  waitForBazarrApi,
-  getServiceUrl,
-} from './utils'
+import { callBazarrApi, getInitContainerExitCode, waitForBazarrApi } from './utils'
 
 const BAZARR_API_KEY = 'e2e33333333333333333333333333333'
 
@@ -57,11 +52,9 @@ describe('Bazarr Integration', () => {
 
   describe('Sonarr Integration', () => {
     test('Bazarr has Sonarr integration configured', async () => {
-      const result = await callBazarrApi<Record<string, unknown>>(
-        'bazarr',
-        '/system/settings',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
+        apiKey: BAZARR_API_KEY,
+      })
 
       expect(result.ok).toBe(true)
       expect(result.data).toBeDefined()
@@ -74,23 +67,18 @@ describe('Bazarr Integration', () => {
     })
 
     test('Bazarr Sonarr URL is correctly set', async () => {
-      const result = await callBazarrApi<Record<string, unknown>>(
-        'bazarr',
-        '/system/settings',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
+        apiKey: BAZARR_API_KEY,
+      })
 
       const sonarrSettings = result.data?.sonarr as Record<string, unknown> | undefined
-      const expectedUrl = getServiceUrl('sonarr')
       expect(sonarrSettings?.ip).toContain('sonarr')
     })
 
     test('Bazarr Sonarr API key is configured', async () => {
-      const result = await callBazarrApi<Record<string, unknown>>(
-        'bazarr',
-        '/system/settings',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
+        apiKey: BAZARR_API_KEY,
+      })
 
       const sonarrSettings = result.data?.sonarr as Record<string, unknown> | undefined
       expect(sonarrSettings?.apikey).toBeDefined()
@@ -101,11 +89,9 @@ describe('Bazarr Integration', () => {
 
   describe('Radarr Integration', () => {
     test('Bazarr has Radarr integration configured', async () => {
-      const result = await callBazarrApi<Record<string, unknown>>(
-        'bazarr',
-        '/system/settings',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
+        apiKey: BAZARR_API_KEY,
+      })
 
       expect(result.ok).toBe(true)
 
@@ -117,22 +103,18 @@ describe('Bazarr Integration', () => {
     })
 
     test('Bazarr Radarr URL is correctly set', async () => {
-      const result = await callBazarrApi<Record<string, unknown>>(
-        'bazarr',
-        '/system/settings',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
+        apiKey: BAZARR_API_KEY,
+      })
 
       const radarrSettings = result.data?.radarr as Record<string, unknown> | undefined
       expect(radarrSettings?.ip).toContain('radarr')
     })
 
     test('Bazarr Radarr API key is configured', async () => {
-      const result = await callBazarrApi<Record<string, unknown>>(
-        'bazarr',
-        '/system/settings',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
+        apiKey: BAZARR_API_KEY,
+      })
 
       const radarrSettings = result.data?.radarr as Record<string, unknown> | undefined
       expect(radarrSettings?.apikey).toBeDefined()

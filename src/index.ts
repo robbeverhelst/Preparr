@@ -1,6 +1,6 @@
+import { BazarrManager } from '@/bazarr/client'
 import { type Config, loadConfigurationSafe } from '@/config'
 import { getEnvironmentInfo } from '@/config/loaders/env'
-import { BazarrManager } from '@/bazarr/client'
 import { ContextBuilder } from '@/core/context'
 import { ConfigurationEngine } from '@/core/engine'
 import { HealthServer } from '@/core/health'

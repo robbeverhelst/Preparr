@@ -1,4 +1,4 @@
-import type { BazarrConfig, BazarrLanguage, BazarrProvider, BazarrSubtitleDefaults } from '@/config/schema'
+import type { BazarrLanguage, BazarrProvider, BazarrSubtitleDefaults } from '@/config/schema'
 import { logger } from '@/utils/logger'
 import { withRetry } from '@/utils/retry'
 

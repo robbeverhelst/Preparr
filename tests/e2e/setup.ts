@@ -3,8 +3,8 @@
  * Verifies deployment is ready before running tests
  */
 
-import type { ServarrService, BazarrService } from './utils'
-import { kubectl, NAMESPACE, waitForDeployment, waitForServarrApi, waitForBazarrApi } from './utils'
+import type { BazarrService, ServarrService } from './utils'
+import { kubectl, NAMESPACE, waitForBazarrApi, waitForDeployment, waitForServarrApi } from './utils'
 
 const DEPLOYMENTS = ['postgres', 'qbittorrent', 'prowlarr', 'sonarr', 'radarr', 'bazarr']
 const SERVARR_SERVICES: readonly ServarrService[] = ['sonarr', 'radarr', 'prowlarr']

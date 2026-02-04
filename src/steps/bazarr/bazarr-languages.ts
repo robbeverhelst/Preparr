@@ -70,10 +70,7 @@ export class BazarrLanguagesStep extends ConfigurationStep {
     return changes
   }
 
-  async executeChanges(
-    changes: ChangeRecord[],
-    context: StepContext,
-  ): Promise<StepResult> {
+  async executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult> {
     const errors: Error[] = []
     const warnings: Warning[] = []
 

@@ -1,4 +1,8 @@
 // Import all step classes
+
+import { BazarrIntegrationStep } from '@/steps/bazarr/bazarr-integration'
+import { BazarrLanguagesStep } from '@/steps/bazarr/bazarr-languages'
+import { BazarrProvidersStep } from '@/steps/bazarr/bazarr-providers'
 import { BazarrConnectivityStep } from '@/steps/connectivity/bazarr-connectivity'
 import { PostgresConnectivityStep } from '@/steps/connectivity/postgres-connectivity'
 import { QBittorrentConnectivityStep } from '@/steps/connectivity/qbittorrent-connectivity'
@@ -9,9 +13,6 @@ import { QBittorrentInitStep } from '@/steps/infrastructure/qbittorrent-init'
 import { ServarrConfigFileStep } from '@/steps/infrastructure/servarr-config-file'
 import { UserCreationStep } from '@/steps/infrastructure/user-creation'
 import { QBittorrentConfigStep } from '@/steps/integrations/qbittorrent-config'
-import { BazarrIntegrationStep } from '@/steps/bazarr/bazarr-integration'
-import { BazarrLanguagesStep } from '@/steps/bazarr/bazarr-languages'
-import { BazarrProvidersStep } from '@/steps/bazarr/bazarr-providers'
 import { ApplicationsStep } from '@/steps/servarr/applications'
 import { CustomFormatsStep } from '@/steps/servarr/custom-formats'
 import { DownloadClientsStep } from '@/steps/servarr/download-clients'
