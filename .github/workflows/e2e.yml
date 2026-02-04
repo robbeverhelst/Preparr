@@ -59,7 +59,7 @@ jobs:
             -f helm/preparr/values-e2e.yaml \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
-            --timeout 20m
+            --timeout 25m
           echo "Helm deployment completed. Current pod status:"
           kubectl get pods -n ${{ env.NAMESPACE }}
 

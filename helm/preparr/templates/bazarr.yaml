@@ -51,6 +51,23 @@ spec:
         app: bazarr
     spec:
       initContainers:
+      - name: wait-for-postgres
+        image: postgres:18-alpine
+        command:
+          - sh
+          - -c
+          - |
+            echo "Waiting for PostgreSQL to be ready..."
+            until pg_isready -h {{ include "preparr.postgresHost" . }} -p {{ .Values.postgresql.service.port }} -U {{ .Values.postgresql.auth.username }}; do
+              echo "PostgreSQL is unavailable - sleeping"
+              sleep 2
+            done
+            echo "PostgreSQL is ready - testing connection..."
+            PGPASSWORD="{{ .Values.postgresql.auth.password }}" psql -h {{ include "preparr.postgresHost" . }} -p {{ .Values.postgresql.service.port }} -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "SELECT 1"
+            echo "PostgreSQL connection verified"
+        env:
+          - name: PGPASSWORD
+            value: {{ .Values.postgresql.auth.password | quote }}
       - name: preparr-init
         image: {{ include "preparr.image" . }}
         imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
