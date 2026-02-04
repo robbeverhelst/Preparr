@@ -94,12 +94,12 @@ export function validateRequiredFields(config: Partial<Config>): string[] {
     errors.push('postgres.password is required')
   }
 
-  if (!config.servarr?.adminPassword) {
-    errors.push('servarr.adminPassword is required')
+  if (!config.servarr?.adminPassword && config.servarr?.type !== 'qbittorrent' && config.servarr?.type !== 'bazarr') {
+    errors.push('servarr.adminPassword is required when type is not qbittorrent or bazarr')
   }
 
-  if (!config.servarr?.url && config.servarr?.type !== 'qbittorrent') {
-    errors.push('servarr.url is required when type is not qbittorrent')
+  if (!config.servarr?.url && config.servarr?.type !== 'qbittorrent' && config.servarr?.type !== 'bazarr') {
+    errors.push('servarr.url is required when type is not qbittorrent or bazarr')
   }
 
   return errors

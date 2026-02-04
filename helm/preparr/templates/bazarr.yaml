@@ -70,9 +70,9 @@ spec:
           value: {{ .Values.postgresql.auth.database | quote }}
         - name: SERVARR_TYPE
           value: "bazarr"
-        - name: BAZARR_URL
+        - name: SERVARR_URL
           value: "http://bazarr:{{ .Values.bazarr.service.webui.port }}"
-        - name: BAZARR_API_KEY
+        - name: SERVARR_API_KEY
           value: {{ .Values.bazarr.apiKey | quote }}
         - name: CONFIG_PATH
           value: "/config/bazarr-config.json"
