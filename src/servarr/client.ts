@@ -1,9 +1,14 @@
 import { file, SQL, write } from 'bun'
 import type {
   Application,
+  CustomFormat,
   DownloadClient,
   Indexer,
+  MediaManagementConfig,
+  NamingConfig,
   PostgresConfig,
+  QualityDefinition,
+  ReleaseProfile,
   RootFolder,
   ServarrConfig,
 } from '@/config/schema'
@@ -85,6 +90,11 @@ interface ClientCapabilities {
   hasDownloadClients: boolean
   hasApplications: boolean
   hasQualityProfiles: boolean
+  hasCustomFormats: boolean
+  hasReleaseProfiles: boolean
+  hasNamingConfig: boolean
+  hasMediaManagement: boolean
+  hasQualityDefinitions: boolean
 }
 
 export class ServarrManager {
@@ -108,6 +118,11 @@ export class ServarrManager {
       hasDownloadClients: type !== 'qbittorrent' && type !== 'bazarr',
       hasApplications: type === 'prowlarr',
       hasQualityProfiles: type !== 'prowlarr' && type !== 'qbittorrent' && type !== 'bazarr',
+      hasCustomFormats: type === 'sonarr' || type === 'radarr',
+      hasReleaseProfiles: type === 'sonarr',
+      hasNamingConfig: type !== 'prowlarr' && type !== 'qbittorrent' && type !== 'bazarr',
+      hasMediaManagement: type !== 'prowlarr' && type !== 'qbittorrent' && type !== 'bazarr',
+      hasQualityDefinitions: type !== 'prowlarr' && type !== 'qbittorrent' && type !== 'bazarr',
     }
   }
 
@@ -1823,5 +1838,453 @@ export class ServarrManager {
       logger.error('Failed to configure applications', { error })
       throw error
     }
+  }
+
+  // Helper method for direct API calls
+  private async fetchApi<T>(
+    endpoint: string,
+    options: { method?: string; body?: unknown } = {},
+  ): Promise<T> {
+    if (!this.apiKey) {
+      throw new Error('API key not available')
+    }
+
+    const url = `${this.config.url}/api/v3${endpoint}`
+    const response = await fetch(url, {
+      method: options.method || 'GET',
+      headers: {
+        'X-Api-Key': this.apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText} - ${errorText}`,
+      )
+    }
+
+    // Handle empty responses (e.g., DELETE requests)
+    const text = await response.text()
+    if (!text) {
+      return undefined as T
+    }
+
+    return JSON.parse(text) as T
+  }
+
+  // ============================================
+  // Custom Formats (Radarr/Sonarr v4+)
+  // ============================================
+
+  async getCustomFormats(): Promise<CustomFormat[]> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasCustomFormats) {
+      logger.debug('Custom formats not supported for this Servarr type')
+      return []
+    }
+
+    try {
+      const formats = await this.fetchApi<CustomFormat[]>('/customformat')
+      return formats || []
+    } catch (error) {
+      logger.error('Failed to get custom formats', { error })
+      throw error
+    }
+  }
+
+  async addCustomFormat(customFormat: CustomFormat): Promise<CustomFormat> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasCustomFormats) {
+      throw new Error('Custom formats not supported for this Servarr type')
+    }
+
+    logger.info('Adding custom format...', { name: customFormat.name })
+
+    try {
+      const result = await this.fetchApi<CustomFormat>('/customformat', {
+        method: 'POST',
+        body: customFormat,
+      })
+
+      logger.info('Custom format added successfully', { name: customFormat.name, id: result.id })
+      return result
+    } catch (error) {
+      logger.error('Failed to add custom format', { name: customFormat.name, error })
+      throw error
+    }
+  }
+
+  async updateCustomFormat(id: number, customFormat: CustomFormat): Promise<CustomFormat> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasCustomFormats) {
+      throw new Error('Custom formats not supported for this Servarr type')
+    }
+
+    logger.info('Updating custom format...', { id, name: customFormat.name })
+
+    try {
+      const result = await this.fetchApi<CustomFormat>(`/customformat/${id}`, {
+        method: 'PUT',
+        body: { ...customFormat, id },
+      })
+
+      logger.info('Custom format updated successfully', { name: customFormat.name, id })
+      return result
+    } catch (error) {
+      logger.error('Failed to update custom format', { id, name: customFormat.name, error })
+      throw error
+    }
+  }
+
+  async deleteCustomFormat(id: number): Promise<void> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasCustomFormats) {
+      throw new Error('Custom formats not supported for this Servarr type')
+    }
+
+    logger.info('Deleting custom format...', { id })
+
+    try {
+      await this.fetchApi(`/customformat/${id}`, { method: 'DELETE' })
+      logger.info('Custom format deleted successfully', { id })
+    } catch (error) {
+      logger.error('Failed to delete custom format', { id, error })
+      throw error
+    }
+  }
+
+  // ============================================
+  // Release Profiles (Sonarr only)
+  // ============================================
+
+  async getReleaseProfiles(): Promise<ReleaseProfile[]> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasReleaseProfiles) {
+      logger.debug('Release profiles not supported for this Servarr type')
+      return []
+    }
+
+    try {
+      const profiles = await this.fetchApi<ReleaseProfile[]>('/releaseprofile')
+      return profiles || []
+    } catch (error) {
+      logger.error('Failed to get release profiles', { error })
+      throw error
+    }
+  }
+
+  async addReleaseProfile(releaseProfile: ReleaseProfile): Promise<ReleaseProfile> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasReleaseProfiles) {
+      throw new Error('Release profiles not supported for this Servarr type')
+    }
+
+    logger.info('Adding release profile...', { name: releaseProfile.name })
+
+    try {
+      const result = await this.fetchApi<ReleaseProfile>('/releaseprofile', {
+        method: 'POST',
+        body: releaseProfile,
+      })
+
+      logger.info('Release profile added successfully', {
+        name: releaseProfile.name,
+        id: result.id,
+      })
+      return result
+    } catch (error) {
+      logger.error('Failed to add release profile', { name: releaseProfile.name, error })
+      throw error
+    }
+  }
+
+  async updateReleaseProfile(id: number, releaseProfile: ReleaseProfile): Promise<ReleaseProfile> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasReleaseProfiles) {
+      throw new Error('Release profiles not supported for this Servarr type')
+    }
+
+    logger.info('Updating release profile...', { id, name: releaseProfile.name })
+
+    try {
+      const result = await this.fetchApi<ReleaseProfile>(`/releaseprofile/${id}`, {
+        method: 'PUT',
+        body: { ...releaseProfile, id },
+      })
+
+      logger.info('Release profile updated successfully', { name: releaseProfile.name, id })
+      return result
+    } catch (error) {
+      logger.error('Failed to update release profile', { id, name: releaseProfile.name, error })
+      throw error
+    }
+  }
+
+  async deleteReleaseProfile(id: number): Promise<void> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasReleaseProfiles) {
+      throw new Error('Release profiles not supported for this Servarr type')
+    }
+
+    logger.info('Deleting release profile...', { id })
+
+    try {
+      await this.fetchApi(`/releaseprofile/${id}`, { method: 'DELETE' })
+      logger.info('Release profile deleted successfully', { id })
+    } catch (error) {
+      logger.error('Failed to delete release profile', { id, error })
+      throw error
+    }
+  }
+
+  // ============================================
+  // Naming Configuration
+  // ============================================
+
+  async getNamingConfig(): Promise<NamingConfig | null> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasNamingConfig) {
+      logger.debug('Naming config not supported for this Servarr type')
+      return null
+    }
+
+    try {
+      const config = await this.fetchApi<NamingConfig>('/config/naming')
+      return config
+    } catch (error) {
+      logger.error('Failed to get naming config', { error })
+      throw error
+    }
+  }
+
+  async updateNamingConfig(namingConfig: Partial<NamingConfig>): Promise<NamingConfig> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasNamingConfig) {
+      throw new Error('Naming config not supported for this Servarr type')
+    }
+
+    logger.info('Updating naming config...')
+
+    try {
+      // Get current config to merge with updates
+      const current = await this.getNamingConfig()
+      const merged = { ...current, ...namingConfig, id: 1 }
+
+      const result = await this.fetchApi<NamingConfig>('/config/naming/1', {
+        method: 'PUT',
+        body: merged,
+      })
+
+      logger.info('Naming config updated successfully')
+      return result
+    } catch (error) {
+      logger.error('Failed to update naming config', { error })
+      throw error
+    }
+  }
+
+  // ============================================
+  // Media Management Configuration
+  // ============================================
+
+  async getMediaManagementConfig(): Promise<MediaManagementConfig | null> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasMediaManagement) {
+      logger.debug('Media management config not supported for this Servarr type')
+      return null
+    }
+
+    try {
+      const config = await this.fetchApi<MediaManagementConfig>('/config/mediamanagement')
+      return config
+    } catch (error) {
+      logger.error('Failed to get media management config', { error })
+      throw error
+    }
+  }
+
+  async updateMediaManagementConfig(
+    mediaConfig: Partial<MediaManagementConfig>,
+  ): Promise<MediaManagementConfig> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasMediaManagement) {
+      throw new Error('Media management config not supported for this Servarr type')
+    }
+
+    logger.info('Updating media management config...')
+
+    try {
+      // Get current config to merge with updates
+      const current = await this.getMediaManagementConfig()
+      const merged = { ...current, ...mediaConfig, id: 1 }
+
+      const result = await this.fetchApi<MediaManagementConfig>('/config/mediamanagement/1', {
+        method: 'PUT',
+        body: merged,
+      })
+
+      logger.info('Media management config updated successfully')
+      return result
+    } catch (error) {
+      logger.error('Failed to update media management config', { error })
+      throw error
+    }
+  }
+
+  // ============================================
+  // Quality Definitions
+  // ============================================
+
+  async getQualityDefinitions(): Promise<QualityDefinition[]> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasQualityDefinitions) {
+      logger.debug('Quality definitions not supported for this Servarr type')
+      return []
+    }
+
+    try {
+      interface ApiQualityDefinition {
+        id: number
+        quality: { id: number; name: string }
+        title: string
+        minSize: number
+        maxSize: number
+        preferredSize: number
+      }
+
+      const definitions = await this.fetchApi<ApiQualityDefinition[]>('/qualitydefinition')
+
+      // Map API response to our schema format
+      return (definitions || []).map((def) => ({
+        quality: def.quality?.name || '',
+        title: def.title,
+        minSize: def.minSize,
+        maxSize: def.maxSize,
+        preferredSize: def.preferredSize,
+      }))
+    } catch (error) {
+      logger.error('Failed to get quality definitions', { error })
+      throw error
+    }
+  }
+
+  async updateQualityDefinition(
+    qualityName: string,
+    updates: Partial<QualityDefinition>,
+  ): Promise<void> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasQualityDefinitions) {
+      throw new Error('Quality definitions not supported for this Servarr type')
+    }
+
+    logger.info('Updating quality definition...', { qualityName })
+
+    try {
+      interface ApiQualityDefinition {
+        id: number
+        quality: { id: number; name: string }
+        title: string
+        minSize: number
+        maxSize: number
+        preferredSize: number
+      }
+
+      // Get all definitions to find the one we need to update
+      const definitions = await this.fetchApi<ApiQualityDefinition[]>('/qualitydefinition')
+      const definition = definitions?.find(
+        (def) => def.quality?.name?.toLowerCase() === qualityName.toLowerCase(),
+      )
+
+      if (!definition) {
+        throw new Error(`Quality definition not found: ${qualityName}`)
+      }
+
+      // Update the definition with new values
+      const updated = {
+        ...definition,
+        minSize: updates.minSize ?? definition.minSize,
+        maxSize: updates.maxSize ?? definition.maxSize,
+        preferredSize: updates.preferredSize ?? definition.preferredSize,
+      }
+
+      await this.fetchApi(`/qualitydefinition/${definition.id}`, {
+        method: 'PUT',
+        body: updated,
+      })
+
+      logger.info('Quality definition updated successfully', { qualityName })
+    } catch (error) {
+      logger.error('Failed to update quality definition', { qualityName, error })
+      throw error
+    }
+  }
+
+  // Bulk update quality definitions
+  async updateQualityDefinitions(definitions: QualityDefinition[]): Promise<void> {
+    if (!this.isInitialized || !this.apiKey) {
+      throw new Error('ServarrManager not initialized')
+    }
+
+    if (!this.capabilities.hasQualityDefinitions) {
+      throw new Error('Quality definitions not supported for this Servarr type')
+    }
+
+    logger.info('Updating quality definitions...', { count: definitions.length })
+
+    for (const def of definitions) {
+      await this.updateQualityDefinition(def.quality, def)
+    }
+
+    logger.info('Quality definitions updated successfully', { count: definitions.length })
+  }
+
+  // Expose capabilities for steps to check
+  getCapabilities(): ClientCapabilities {
+    return this.capabilities
   }
 }
