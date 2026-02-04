@@ -6,9 +6,8 @@
 import type { BazarrService, ServarrService } from './utils'
 import { kubectl, NAMESPACE, waitForBazarrApi, waitForDeployment, waitForServarrApi } from './utils'
 
-const DEPLOYMENTS = ['postgres', 'qbittorrent', 'prowlarr', 'sonarr', 'radarr', 'bazarr']
+const DEPLOYMENTS = ['postgres', 'qbittorrent', 'prowlarr', 'sonarr', 'radarr']
 const SERVARR_SERVICES: readonly ServarrService[] = ['sonarr', 'radarr', 'prowlarr']
-const BAZARR_SERVICE: BazarrService = 'bazarr'
 
 /**
  * Verify all deployments are ready
@@ -34,17 +33,9 @@ export async function verifyServarrApisReady(): Promise<void> {
 }
 
 /**
- * Verify Bazarr API is accessible
- */
-export async function verifyBazarrApiReady(): Promise<void> {
-  await waitForBazarrApi(BAZARR_SERVICE, { timeoutMs: 120000 })
-}
-
-/**
  * Full pre-test verification
  */
 export async function verifyTestEnvironment(): Promise<void> {
   await verifyDeploymentsReady()
   await verifyServarrApisReady()
-  await verifyBazarrApiReady()
 }
