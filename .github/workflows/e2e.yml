@@ -25,6 +25,9 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
       - name: Setup Helm
         uses: azure/setup-helm@v4
         with:
