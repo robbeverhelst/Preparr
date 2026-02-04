@@ -9,8 +9,9 @@ describe('Environment Configuration', () => {
     for (const key in Bun.env) {
       delete Bun.env[key]
     }
-    // Set required URL for tests
+    // Set required values for tests
     Bun.env.SERVARR_URL = 'http://localhost:8989'
+    Bun.env.SERVARR_ADMIN_PASSWORD = 'admin'
   })
 
   afterEach(() => {
@@ -24,7 +25,6 @@ describe('Environment Configuration', () => {
   test('loads default configuration', () => {
     // Set minimum required values
     Bun.env.POSTGRES_PASSWORD = 'postgres'
-    Bun.env.SERVARR_ADMIN_PASSWORD = 'admin'
 
     const config = loadEnvironmentConfig()
 
