@@ -9,7 +9,7 @@ metadata:
     app: bazarr
 data:
   bazarr-config.json: |
-    {{- dict "app" .Values.bazarr.config | toJson | nindent 4 }}
+    {{- .Values.bazarr.config | toJson | nindent 4 }}
 ---
 apiVersion: v1
 kind: Service
