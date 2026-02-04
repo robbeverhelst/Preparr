@@ -21,7 +21,7 @@ export const ServarrConfigSchema = z
       .regex(/^[a-f0-9]+$/, 'API key must be hexadecimal')
       .optional(),
     adminUser: z.string().default('admin'),
-    adminPassword: z.string(),
+    adminPassword: z.string().optional(),
     authenticationMethod: z.enum(['basic', 'forms']).default('forms'),
   })
   .refine(
@@ -43,6 +43,21 @@ export const ServarrConfigSchema = z
     {
       message: 'Valid URL is required when type is not qbittorrent or bazarr',
       path: ['url'],
+    },
+  )
+  .refine(
+    (data) => {
+      // adminPassword validation: required for Servarr types, optional for qbittorrent and bazarr
+      if (data.type !== 'qbittorrent' && data.type !== 'bazarr') {
+        if (!data.adminPassword) {
+          return false
+        }
+      }
+      return true
+    },
+    {
+      message: 'Admin password is required when type is not qbittorrent or bazarr',
+      path: ['adminPassword'],
     },
   )
 

@@ -76,6 +76,8 @@ spec:
           value: {{ .Values.bazarr.apiKey | quote }}
         - name: CONFIG_PATH
           value: "/config/bazarr-config.json"
+        - name: LOG_LEVEL
+          value: "debug"
         command: ["bun", "run", "dist/index.js", "--init"]
         volumeMounts:
         - name: bazarr-config-volume
