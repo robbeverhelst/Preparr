@@ -60,6 +60,8 @@ jobs:
             --namespace ${{ env.NAMESPACE }} \
             --wait \
             --timeout 20m
+          echo "Helm deployment completed. Current pod status:"
+          kubectl get pods -n ${{ env.NAMESPACE }}
 
       - name: Wait for all pods ready
         run: |
