@@ -14,7 +14,15 @@
     "lineEnding": "lf",
     "lineWidth": 100,
     "attributePosition": "auto",
-    "includes": ["**", "!**/dist", "!**/node_modules", "!**/.git", "!**/coverage", "!**/*.min.js"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/.git",
+      "!**/coverage",
+      "!**/*.min.js",
+      "!**/docs"
+    ]
   },
   "linter": {
     "enabled": true,
@@ -107,7 +115,15 @@
         "noReExportAll": "error"
       }
     },
-    "includes": ["**", "!**/dist", "!**/node_modules", "!**/.git", "!**/coverage", "!**/.claude"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/.git",
+      "!**/coverage",
+      "!**/.claude",
+      "!**/docs"
+    ]
   },
   "javascript": {
     "globals": ["Bun"],
@@ -150,7 +166,8 @@
       "!**/coverage",
       "!**/*.log",
       "!**/*.lock",
-      "!**/.claude"
+      "!**/.claude",
+      "!**/docs"
     ]
   }
 }

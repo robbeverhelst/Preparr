@@ -254,11 +254,12 @@ Use the Helm chart or manual manifests with init containers + sidecars + ConfigM
 
 ## 📖 Documentation
 
-- **[Complete Setup Guide](docs/setup.md)** - Detailed deployment instructions
-- **[Configuration Reference](docs/configuration.md)** - All configuration options
-- **[Kubernetes Deployment](docs/kubernetes.md)** - K8s manifests and Helm charts
-- **[Health & Monitoring](docs/monitoring.md)** - Health checks and Prometheus metrics
-- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
+Full documentation is available at **[robbeverhelst.github.io/Preparr](https://robbeverhelst.github.io/Preparr)**.
+
+- **[Quick Start](https://robbeverhelst.github.io/Preparr/getting-started/quick-start/)** - Get up and running
+- **[Deployment Guides](https://robbeverhelst.github.io/Preparr/deployment/docker-compose/)** - Docker Compose, Kubernetes, Helm
+- **[Configuration Reference](https://robbeverhelst.github.io/Preparr/configuration/overview/)** - All configuration options
+- **[Troubleshooting](https://robbeverhelst.github.io/Preparr/troubleshooting/)** - Common issues and solutions
 
 ## 🤝 Contributing
 
