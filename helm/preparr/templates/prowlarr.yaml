@@ -175,7 +175,7 @@ spec:
           subPath: prowlarr-config.json
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: /ready
             port: {{ .Values.preparr.health.port }}
           initialDelaySeconds: 30
           periodSeconds: 10

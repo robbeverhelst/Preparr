@@ -116,10 +116,8 @@ spec:
         volumeMounts:
         - name: radarr-config-volume
           mountPath: /config
-        {{- if .Values.radarr.storage.movies.enabled }}
         - name: movies-storage
           mountPath: /movies
-        {{- end }}
         {{- with .Values.radarr.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -180,7 +178,7 @@ spec:
         {{- end }}
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: /ready
             port: {{ .Values.preparr.health.port }}
           initialDelaySeconds: 30
           periodSeconds: 10
@@ -199,11 +197,13 @@ spec:
       - name: radarr-config-file
         configMap:
           name: radarr-config
-      {{- if .Values.radarr.storage.movies.enabled }}
       - name: movies-storage
+        {{- if .Values.radarr.storage.movies.enabled }}
         persistentVolumeClaim:
           claimName: radarr-movies-pvc
-      {{- end }}
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
       {{- with .Values.radarr.extraVolumes }}
       {{- toYaml . | nindent 6 }}
       {{- end }}

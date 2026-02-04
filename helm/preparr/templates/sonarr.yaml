@@ -209,10 +209,8 @@ spec:
         volumeMounts:
         - name: sonarr-config-volume
           mountPath: /config
-        {{- if .Values.sonarr.storage.tv.enabled }}
         - name: tv-storage
           mountPath: /tv
-        {{- end }}
         {{- with .Values.sonarr.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -324,7 +322,7 @@ spec:
         {{- end }}
         readinessProbe:
           httpGet:
-            path: /healthz
+            path: /ready
             port: {{ .Values.preparr.health.port }}
           initialDelaySeconds: 30
           periodSeconds: 10
@@ -343,11 +341,13 @@ spec:
       - name: sonarr-config-file
         configMap:
           name: sonarr-config
-      {{- if .Values.sonarr.storage.tv.enabled }}
       - name: tv-storage
+        {{- if .Values.sonarr.storage.tv.enabled }}
         persistentVolumeClaim:
           claimName: sonarr-tv-pvc
-      {{- end }}
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
       {{- with .Values.sonarr.extraVolumes }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
