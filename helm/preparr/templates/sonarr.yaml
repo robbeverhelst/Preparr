@@ -10,7 +10,7 @@ metadata:
     {{- include "preparr.serviceLabels" (dict "local" .Values.sonarr "Values" .Values) | nindent 4 }}
 data:
   sonarr-config.json: |
-    {{- .Values.sonarr.config | toJson | nindent 4 }}
+    {{- dict "app" .Values.sonarr.config | toJson | nindent 4 }}
 ---
 apiVersion: v1
 kind: Service
@@ -324,13 +324,13 @@ spec:
         {{- end }}
         readinessProbe:
           httpGet:
-            path: /health
+            path: /healthz
             port: {{ .Values.preparr.health.port }}
           initialDelaySeconds: 30
           periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /health
+            path: /healthz
             port: {{ .Values.preparr.health.port }}
           initialDelaySeconds: 60
           periodSeconds: 30
