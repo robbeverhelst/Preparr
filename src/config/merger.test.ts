@@ -309,7 +309,9 @@ describe('validateRequiredFields', () => {
     }
 
     const errors = validateRequiredFields(config)
-    expect(errors).toContain('servarr.adminPassword is required when type is not qbittorrent or bazarr')
+    expect(errors).toContain(
+      'servarr.adminPassword is required when type is not qbittorrent or bazarr',
+    )
   })
 
   test('validates servarr URL required when type is not qbittorrent', () => {
@@ -341,7 +343,9 @@ describe('validateRequiredFields', () => {
 
     const errors = validateRequiredFields(config)
     expect(errors).not.toContain('servarr.url is required when type is not qbittorrent or bazarr')
-    expect(errors).not.toContain('servarr.adminPassword is required when type is not qbittorrent or bazarr')
+    expect(errors).not.toContain(
+      'servarr.adminPassword is required when type is not qbittorrent or bazarr',
+    )
   })
 
   test('detects multiple missing fields', () => {
@@ -355,7 +359,9 @@ describe('validateRequiredFields', () => {
 
     const errors = validateRequiredFields(config)
     expect(errors).toContain('postgres.password is required')
-    expect(errors).toContain('servarr.adminPassword is required when type is not qbittorrent or bazarr')
+    expect(errors).toContain(
+      'servarr.adminPassword is required when type is not qbittorrent or bazarr',
+    )
     expect(errors).toContain('servarr.url is required when type is not qbittorrent or bazarr')
     expect(errors.length).toBe(3)
   })
@@ -365,7 +371,9 @@ describe('validateRequiredFields', () => {
 
     const errors = validateRequiredFields(config)
     expect(errors).toContain('postgres.password is required')
-    expect(errors).toContain('servarr.adminPassword is required when type is not qbittorrent or bazarr')
+    expect(errors).toContain(
+      'servarr.adminPassword is required when type is not qbittorrent or bazarr',
+    )
   })
 })
 
