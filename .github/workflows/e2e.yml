@@ -39,6 +39,11 @@ jobs:
       - name: Build PrepArr
         run: bun run build
 
+      - name: Build Docker image
+        run: |
+          docker build -t ghcr.io/robbeverhelst/preparr:latest .
+          echo "Docker image built successfully"
+
       - name: Ensure namespace exists
         run: |
           kubectl create namespace ${{ env.NAMESPACE }} 2>/dev/null || true
