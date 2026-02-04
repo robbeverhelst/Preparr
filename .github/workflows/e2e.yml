@@ -58,6 +58,8 @@ jobs:
           helm upgrade --install ${{ env.RELEASE_NAME }} ./helm/preparr \
             -f helm/preparr/values-e2e.yaml \
             --namespace ${{ env.NAMESPACE }} \
+            --atomic=false \
+            --skip-crds \
             --timeout 10m
 
       - name: Wait for all pods ready
