@@ -69,6 +69,36 @@ export const RootFolderSchema = z.object({
   unmappedFolders: z.array(z.string()).default([]),
 })
 
+// Custom Format Specification Schema
+export const CustomFormatSpecificationSchema = z.object({
+  name: z.string(),
+  implementation: z.string(),
+  negate: z.boolean().default(false),
+  required: z.boolean().default(false),
+  fields: z
+    .array(
+      z.object({
+        name: z.string(),
+        value: z.union([z.string(), z.number(), z.boolean(), z.array(z.number())]),
+      }),
+    )
+    .default([]),
+})
+
+// Custom Format Schema (Radarr/Sonarr v4+)
+export const CustomFormatSchema = z.object({
+  id: z.number().optional(),
+  name: z.string(),
+  includeCustomFormatWhenRenaming: z.boolean().default(false),
+  specifications: z.array(CustomFormatSpecificationSchema).default([]),
+})
+
+// Format Item for Quality Profile integration
+export const FormatItemSchema = z.object({
+  format: z.string(), // Reference by name (resolved to ID at runtime)
+  score: z.number(),
+})
+
 export const QualityProfileSchema = z.object({
   name: z.string(),
   cutoff: z.number(),
@@ -81,6 +111,98 @@ export const QualityProfileSchema = z.object({
       allowed: z.boolean(),
     }),
   ),
+  // Custom Format integration
+  formatItems: z.array(FormatItemSchema).default([]),
+  minFormatScore: z.number().default(0),
+  cutoffFormatScore: z.number().default(0),
+  upgradeAllowed: z.boolean().default(true),
+})
+
+// Release Profile Schema (Sonarr only)
+export const ReleaseProfileTermSchema = z.object({
+  key: z.string(), // The term or regex pattern
+  value: z.number(), // Score
+})
+
+export const ReleaseProfileSchema = z.object({
+  id: z.number().optional(),
+  name: z.string(),
+  enabled: z.boolean().default(true),
+  required: z.string().nullable().default(null), // Comma-separated or null
+  ignored: z.string().nullable().default(null), // Comma-separated or null
+  preferred: z.array(ReleaseProfileTermSchema).default([]),
+  includePreferredWhenRenaming: z.boolean().default(false),
+  indexerId: z.number().default(0), // 0 = all indexers
+  tags: z.array(z.number()).default([]),
+})
+
+// Naming Configuration Schema
+export const NamingConfigSchema = z.object({
+  // Sonarr fields
+  renameEpisodes: z.boolean().optional(),
+  standardEpisodeFormat: z.string().optional(),
+  dailyEpisodeFormat: z.string().optional(),
+  animeEpisodeFormat: z.string().optional(),
+  seriesFolderFormat: z.string().optional(),
+  seasonFolderFormat: z.string().optional(),
+  specialsFolderFormat: z.string().optional(),
+  multiEpisodeStyle: z.number().optional(), // 0-5
+  // Radarr fields
+  renameMovies: z.boolean().optional(),
+  movieFormat: z.string().optional(),
+  movieFolderFormat: z.string().optional(),
+  colonReplacementFormat: z.number().optional(),
+  // Lidarr fields
+  renameTracks: z.boolean().optional(),
+  trackFormat: z.string().optional(),
+  artistFolderFormat: z.string().optional(),
+  albumFolderFormat: z.string().optional(),
+  // Readarr fields
+  renameBooks: z.boolean().optional(),
+  standardBookFormat: z.string().optional(),
+  authorFolderFormat: z.string().optional(),
+  // Common
+  replaceIllegalCharacters: z.boolean().default(true),
+})
+
+// Media Management Configuration Schema
+export const MediaManagementConfigSchema = z.object({
+  // File handling
+  importExtraFiles: z.boolean().default(false),
+  extraFileExtensions: z.string().default('srt,sub,idx'),
+  // Permissions
+  setPermissionsLinux: z.boolean().default(false),
+  chmodFolder: z.string().default('755'),
+  chmodFile: z.string().default('644'),
+  chownGroup: z.string().optional(),
+  // Download handling
+  autoUnmonitorPreviouslyDownloaded: z.boolean().default(false),
+  downloadPropersAndRepacks: z.string().default('preferAndUpgrade'), // 'preferAndUpgrade' | 'doNotUpgrade' | 'doNotPrefer'
+  createEmptySeriesFolders: z.boolean().optional(), // Sonarr
+  createEmptyMovieFolders: z.boolean().optional(), // Radarr
+  deleteEmptyFolders: z.boolean().default(false),
+  // File management
+  fileDate: z.string().default('none'), // 'none' | 'localAirDate' | 'utcAirDate'
+  recycleBin: z.string().optional(),
+  recycleBinCleanupDays: z.number().default(7),
+  // Hardlinks/Copy
+  skipFreeSpaceCheckWhenImporting: z.boolean().default(false),
+  minimumFreeSpaceWhenImporting: z.number().default(100), // MB
+  copyUsingHardlinks: z.boolean().default(true),
+  useScriptImport: z.boolean().default(false),
+  scriptImportPath: z.string().optional(),
+  // Analysis
+  enableMediaInfo: z.boolean().default(true),
+  rescanAfterRefresh: z.string().default('always'), // 'always' | 'afterManual' | 'never'
+})
+
+// Quality Definition Schema
+export const QualityDefinitionSchema = z.object({
+  quality: z.string(), // Quality name like "Bluray-1080p"
+  title: z.string().optional(), // Display title
+  minSize: z.number().min(0).optional(), // MB per minute
+  maxSize: z.number().min(0).optional(), // MB per minute (null = unlimited)
+  preferredSize: z.number().min(0).optional(), // MB per minute
 })
 
 export const IndexerSchema = z.object({
@@ -165,6 +287,16 @@ export const AppConfigSchema = z.object({
   downloadClients: z.array(DownloadClientSchema).default([]),
   applications: z.array(ApplicationSchema).default([]),
   qbittorrent: QBittorrentConfigSchema,
+  // Custom Formats (Radarr/Sonarr v4+)
+  customFormats: z.array(CustomFormatSchema).default([]),
+  // Release Profiles (Sonarr only)
+  releaseProfiles: z.array(ReleaseProfileSchema).default([]),
+  // Naming Configuration
+  naming: NamingConfigSchema.optional(),
+  // Media Management
+  mediaManagement: MediaManagementConfigSchema.optional(),
+  // Quality Definitions (size limits)
+  qualityDefinitions: z.array(QualityDefinitionSchema).default([]),
 })
 
 export const ConfigSchema = z.object({
@@ -178,6 +310,9 @@ export const ConfigSchema = z.object({
     qualityProfiles: [],
     downloadClients: [],
     applications: [],
+    customFormats: [],
+    releaseProfiles: [],
+    qualityDefinitions: [],
   }),
   health: z
     .object({
@@ -195,7 +330,15 @@ export type PostgresConfig = z.infer<typeof PostgresConfigSchema>
 export type ServarrConfig = z.infer<typeof ServarrConfigSchema>
 export type ServiceIntegration = z.infer<typeof ServiceIntegrationSchema>
 export type RootFolder = z.infer<typeof RootFolderSchema>
+export type CustomFormatSpecification = z.infer<typeof CustomFormatSpecificationSchema>
+export type CustomFormat = z.infer<typeof CustomFormatSchema>
+export type FormatItem = z.infer<typeof FormatItemSchema>
 export type QualityProfile = z.infer<typeof QualityProfileSchema>
+export type ReleaseProfileTerm = z.infer<typeof ReleaseProfileTermSchema>
+export type ReleaseProfile = z.infer<typeof ReleaseProfileSchema>
+export type NamingConfig = z.infer<typeof NamingConfigSchema>
+export type MediaManagementConfig = z.infer<typeof MediaManagementConfigSchema>
+export type QualityDefinition = z.infer<typeof QualityDefinitionSchema>
 export type Indexer = z.infer<typeof IndexerSchema>
 export type DownloadClient = z.infer<typeof DownloadClientSchema>
 export type Application = z.infer<typeof ApplicationSchema>
