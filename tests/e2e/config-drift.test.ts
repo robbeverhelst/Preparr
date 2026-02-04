@@ -27,6 +27,41 @@ interface RootFolder {
   path: string
 }
 
+interface CustomFormat {
+  id: number
+  name: string
+  includeCustomFormatWhenRenaming: boolean
+  specifications: Array<{
+    name: string
+    implementation: string
+    negate: boolean
+    required: boolean
+    fields: Array<{ name: string; value: unknown }>
+  }>
+}
+
+interface ReleaseProfile {
+  id: number
+  name: string
+  enabled: boolean
+  preferred: Array<{ key: string; value: number }>
+}
+
+interface MediaManagementConfig {
+  id: number
+  importExtraFiles: boolean
+  copyUsingHardlinks: boolean
+  [key: string]: unknown
+}
+
+interface QualityDefinition {
+  id: number
+  quality: { id: number; name: string }
+  minSize: number
+  maxSize: number
+  preferredSize: number
+}
+
 describe('Configuration Drift Detection', () => {
   beforeAll(async () => {
     // Wait for APIs to be ready
@@ -246,6 +281,235 @@ describe('Configuration Drift Detection', () => {
       // Verify client exists again
       const finalResult = await callServarrApi<DownloadClient[]>('radarr', '/api/v3/downloadclient')
       expect(finalResult.data?.find((dc) => dc.name === 'qBittorrent')).toBeDefined()
+    })
+  })
+
+  // Custom format drift - requires E2E config with customFormats defined
+  describe('Custom Format Drift', () => {
+    test.skip('PrepArr recreates deleted custom format in Sonarr', async () => {
+      // Get current custom formats
+      const initialResult = await callServarrApi<CustomFormat[]>('sonarr', '/api/v3/customformat')
+      expect(initialResult.ok).toBe(true)
+
+      // Find a PrepArr-managed custom format (name from E2E config)
+      const managedFormat = initialResult.data?.[0]
+      expect(managedFormat).toBeDefined()
+
+      const formatName = managedFormat?.name
+
+      // Delete the custom format
+      const deleteResult = await callServarrApi(
+        'sonarr',
+        `/api/v3/customformat/${managedFormat?.id}`,
+        { method: 'DELETE' },
+      )
+      expect(deleteResult.ok).toBe(true)
+
+      // Verify it's deleted
+      const afterDeleteResult = await callServarrApi<CustomFormat[]>(
+        'sonarr',
+        '/api/v3/customformat',
+      )
+      expect(afterDeleteResult.data?.find((cf) => cf.name === formatName)).toBeUndefined()
+
+      // Wait for PrepArr to recreate it
+      await waitForCondition(
+        async () => {
+          const result = await callServarrApi<CustomFormat[]>('sonarr', '/api/v3/customformat')
+          return result.data?.some((cf) => cf.name === formatName) ?? false
+        },
+        {
+          timeoutMs: DRIFT_CORRECTION_TIMEOUT,
+          intervalMs: 3000,
+          description: 'custom format to be recreated',
+        },
+      )
+
+      // Verify format exists again
+      const finalResult = await callServarrApi<CustomFormat[]>('sonarr', '/api/v3/customformat')
+      expect(finalResult.data?.find((cf) => cf.name === formatName)).toBeDefined()
+    })
+
+    test.skip('PrepArr recreates deleted custom format in Radarr', async () => {
+      // Get current custom formats
+      const initialResult = await callServarrApi<CustomFormat[]>('radarr', '/api/v3/customformat')
+      expect(initialResult.ok).toBe(true)
+
+      const managedFormat = initialResult.data?.[0]
+      expect(managedFormat).toBeDefined()
+
+      const formatName = managedFormat?.name
+
+      // Delete the custom format
+      const deleteResult = await callServarrApi(
+        'radarr',
+        `/api/v3/customformat/${managedFormat?.id}`,
+        { method: 'DELETE' },
+      )
+      expect(deleteResult.ok).toBe(true)
+
+      // Wait for PrepArr to recreate it
+      await waitForCondition(
+        async () => {
+          const result = await callServarrApi<CustomFormat[]>('radarr', '/api/v3/customformat')
+          return result.data?.some((cf) => cf.name === formatName) ?? false
+        },
+        {
+          timeoutMs: DRIFT_CORRECTION_TIMEOUT,
+          intervalMs: 3000,
+          description: 'custom format to be recreated',
+        },
+      )
+
+      const finalResult = await callServarrApi<CustomFormat[]>('radarr', '/api/v3/customformat')
+      expect(finalResult.data?.find((cf) => cf.name === formatName)).toBeDefined()
+    })
+  })
+
+  // Release profile drift - requires E2E config with releaseProfiles defined (Sonarr only)
+  describe('Release Profile Drift', () => {
+    test.skip('PrepArr recreates deleted release profile in Sonarr', async () => {
+      // Get current release profiles
+      const initialResult = await callServarrApi<ReleaseProfile[]>(
+        'sonarr',
+        '/api/v3/releaseprofile',
+      )
+      expect(initialResult.ok).toBe(true)
+
+      const managedProfile = initialResult.data?.[0]
+      expect(managedProfile).toBeDefined()
+
+      const profileName = managedProfile?.name
+
+      // Delete the release profile
+      const deleteResult = await callServarrApi(
+        'sonarr',
+        `/api/v3/releaseprofile/${managedProfile?.id}`,
+        { method: 'DELETE' },
+      )
+      expect(deleteResult.ok).toBe(true)
+
+      // Wait for PrepArr to recreate it
+      await waitForCondition(
+        async () => {
+          const result = await callServarrApi<ReleaseProfile[]>('sonarr', '/api/v3/releaseprofile')
+          return result.data?.some((rp) => rp.name === profileName) ?? false
+        },
+        {
+          timeoutMs: DRIFT_CORRECTION_TIMEOUT,
+          intervalMs: 3000,
+          description: 'release profile to be recreated',
+        },
+      )
+
+      const finalResult = await callServarrApi<ReleaseProfile[]>('sonarr', '/api/v3/releaseprofile')
+      expect(finalResult.data?.find((rp) => rp.name === profileName)).toBeDefined()
+    })
+  })
+
+  // Media management drift - requires E2E config with mediaManagement defined
+  describe('Media Management Drift', () => {
+    test.skip('PrepArr restores modified media management settings in Sonarr', async () => {
+      // Get current media management config
+      const initialResult = await callServarrApi<MediaManagementConfig>(
+        'sonarr',
+        '/api/v3/config/mediamanagement',
+      )
+      expect(initialResult.ok).toBe(true)
+      expect(initialResult.data).toBeDefined()
+
+      const originalCopyUsingHardlinks = initialResult.data?.copyUsingHardlinks
+
+      // Flip the setting
+      const updateResult = await callServarrApi(
+        'sonarr',
+        `/api/v3/config/mediamanagement/${initialResult.data?.id}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            ...initialResult.data,
+            copyUsingHardlinks: !originalCopyUsingHardlinks,
+          }),
+        },
+      )
+      expect(updateResult.ok).toBe(true)
+
+      // Wait for PrepArr to restore it
+      await waitForCondition(
+        async () => {
+          const result = await callServarrApi<MediaManagementConfig>(
+            'sonarr',
+            '/api/v3/config/mediamanagement',
+          )
+          return result.data?.copyUsingHardlinks === originalCopyUsingHardlinks
+        },
+        {
+          timeoutMs: DRIFT_CORRECTION_TIMEOUT,
+          intervalMs: 3000,
+          description: 'media management config to be restored',
+        },
+      )
+
+      const finalResult = await callServarrApi<MediaManagementConfig>(
+        'sonarr',
+        '/api/v3/config/mediamanagement',
+      )
+      expect(finalResult.data?.copyUsingHardlinks).toBe(originalCopyUsingHardlinks)
+    })
+  })
+
+  // Quality definition drift - requires E2E config with qualityDefinitions defined
+  describe('Quality Definition Drift', () => {
+    test.skip('PrepArr restores modified quality definition sizes in Sonarr', async () => {
+      // Get current quality definitions
+      const initialResult = await callServarrApi<QualityDefinition[]>(
+        'sonarr',
+        '/api/v3/qualitydefinition',
+      )
+      expect(initialResult.ok).toBe(true)
+
+      const bluray1080p = initialResult.data?.find((qd) => qd.quality.name === 'Bluray-1080p')
+      expect(bluray1080p).toBeDefined()
+
+      const originalMinSize = bluray1080p?.minSize
+
+      // Modify the min size
+      const updateResult = await callServarrApi(
+        'sonarr',
+        `/api/v3/qualitydefinition/${bluray1080p?.id}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            ...bluray1080p,
+            minSize: originalMinSize + 50,
+          }),
+        },
+      )
+      expect(updateResult.ok).toBe(true)
+
+      // Wait for PrepArr to restore it
+      await waitForCondition(
+        async () => {
+          const result = await callServarrApi<QualityDefinition[]>(
+            'sonarr',
+            '/api/v3/qualitydefinition',
+          )
+          const def = result.data?.find((qd) => qd.quality.name === 'Bluray-1080p')
+          return def?.minSize === originalMinSize
+        },
+        {
+          timeoutMs: DRIFT_CORRECTION_TIMEOUT,
+          intervalMs: 3000,
+          description: 'quality definition to be restored',
+        },
+      )
+
+      const finalResult = await callServarrApi<QualityDefinition[]>(
+        'sonarr',
+        '/api/v3/qualitydefinition',
+      )
+      const restoredDef = finalResult.data?.find((qd) => qd.quality.name === 'Bluray-1080p')
+      expect(restoredDef?.minSize).toBe(originalMinSize)
     })
   })
 })
