@@ -59,7 +59,7 @@ jobs:
             -f helm/preparr/values-e2e.yaml \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
-            --timeout 10m
+            --timeout 20m
 
       - name: Wait for all pods ready
         run: |
@@ -94,8 +94,7 @@ jobs:
           mkdir -p ./e2e-logs
 
           echo "Collecting PrepArr sidecar logs..."
-          for app in sonarr radarr prowlarr; do
-            kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-sidecar --tail=500 > ./e2e-logs/${app}-preparr-sidecar.log 2>&1 || true
+          for app in sonarr radarr prowlarr bazarr; do
             kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-init --tail=500 > ./e2e-logs/${app}-preparr-init.log 2>&1 || true
             kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c $app --tail=200 > ./e2e-logs/${app}-app.log 2>&1 || true
           done
