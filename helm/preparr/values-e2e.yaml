@@ -1,0 +1,269 @@
+# E2E Test values for PrepArr
+# Minimal configuration optimized for CI testing
+
+global:
+  namespace: preparr-test
+  createNamespace: false
+
+preparr:
+  image:
+    repository: ghcr.io/robbeverhelst/preparr
+    pullPolicy: Always
+    tag: "latest"
+  health:
+    port: 9001
+  logLevel: debug
+
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "18-alpine"
+    pullPolicy: IfNotPresent
+  auth:
+    username: postgres
+    password: postgres-e2e-test
+    database: servarr
+  service:
+    type: ClusterIP
+    port: 5432
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+  persistence:
+    enabled: false
+
+qbittorrent:
+  enabled: true
+  image:
+    repository: linuxserver/qbittorrent
+    tag: latest
+    pullPolicy: IfNotPresent
+  auth:
+    username: admin
+    password: e2e-test-pass
+  service:
+    type: ClusterIP
+    webui:
+      port: 8080
+    bittorrent:
+      port: 6881
+  downloadsPath: "/downloads"
+  configStorage:
+    enabled: false
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+prowlarr:
+  enabled: true
+  image:
+    repository: linuxserver/prowlarr
+    tag: latest
+    pullPolicy: IfNotPresent
+  apiKey: "e2e00000000000000000000000000000"
+  adminPassword: e2e-test-pass
+  service:
+    type: ClusterIP
+    webui:
+      port: 9696
+    health:
+      port: 9001
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+  reconciliation:
+    enabled: true
+    interval: 15
+    watch: true
+  config:
+    apiKey: "e2e00000000000000000000000000000"
+    indexers: []
+    applications:
+      - name: "Sonarr"
+        implementation: "Sonarr"
+        implementationName: "Sonarr"
+        configContract: "SonarrSettings"
+        syncLevel: "fullSync"
+        fields:
+          - name: "prowlarrUrl"
+            value: "http://prowlarr:9696"
+          - name: "baseUrl"
+            value: "http://sonarr:8989"
+          - name: "apiKey"
+            value: "e2e11111111111111111111111111111"
+      - name: "Radarr"
+        implementation: "Radarr"
+        implementationName: "Radarr"
+        configContract: "RadarrSettings"
+        syncLevel: "fullSync"
+        fields:
+          - name: "prowlarrUrl"
+            value: "http://prowlarr:9696"
+          - name: "baseUrl"
+            value: "http://radarr:7878"
+          - name: "apiKey"
+            value: "e2e22222222222222222222222222222"
+
+sonarr:
+  enabled: true
+  image:
+    repository: linuxserver/sonarr
+    tag: latest
+    pullPolicy: IfNotPresent
+  apiKey: "e2e11111111111111111111111111111"
+  adminPassword: e2e-test-pass
+  service:
+    type: ClusterIP
+    webui:
+      port: 8989
+    health:
+      port: 9001
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+  reconciliation:
+    enabled: true
+    interval: 15
+    watch: true
+  storage:
+    tv:
+      enabled: false
+  config:
+    apiKey: "e2e11111111111111111111111111111"
+    prowlarrSync: true
+    rootFolders:
+      - path: "/tv"
+        accessible: true
+    qualityProfiles:
+      - name: "HD - 1080p"
+        upgradeAllowed: true
+        cutoff: 1080
+        items:
+          - quality:
+              id: 1
+              name: "HDTV-1080p"
+            allowed: true
+          - quality:
+              id: 2
+              name: "WEBDL-1080p"
+            allowed: true
+    downloadClients:
+      - name: "qBittorrent"
+        implementation: "QBittorrent"
+        implementationName: "qBittorrent"
+        configContract: "QBittorrentSettings"
+        fields:
+          - name: "host"
+            value: "qbittorrent"
+          - name: "port"
+            value: 8080
+          - name: "username"
+            value: "admin"
+          - name: "password"
+            value: "e2e-test-pass"
+          - name: "category"
+            value: "tv"
+        enable: true
+        priority: 1
+
+radarr:
+  enabled: true
+  image:
+    repository: linuxserver/radarr
+    tag: latest
+    pullPolicy: IfNotPresent
+  apiKey: "e2e22222222222222222222222222222"
+  adminPassword: e2e-test-pass
+  service:
+    type: ClusterIP
+    webui:
+      port: 7878
+    health:
+      port: 9001
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+  reconciliation:
+    enabled: true
+    interval: 15
+    watch: true
+  storage:
+    movies:
+      enabled: false
+  config:
+    apiKey: "e2e22222222222222222222222222222"
+    prowlarrSync: true
+    rootFolders:
+      - path: "/movies"
+        accessible: true
+    qualityProfiles:
+      - name: "HD - 1080p"
+        upgradeAllowed: true
+        cutoff: 1080
+        items:
+          - quality:
+              id: 1
+              name: "Bluray-1080p"
+            allowed: true
+          - quality:
+              id: 2
+              name: "WEBDL-1080p"
+            allowed: true
+    downloadClients:
+      - name: "qBittorrent"
+        implementation: "QBittorrent"
+        implementationName: "qBittorrent"
+        configContract: "QBittorrentSettings"
+        fields:
+          - name: "host"
+            value: "qbittorrent"
+          - name: "port"
+            value: 8080
+          - name: "username"
+            value: "admin"
+          - name: "password"
+            value: "e2e-test-pass"
+          - name: "category"
+            value: "movies"
+        enable: true
+        priority: 1
+
+lidarr:
+  enabled: false

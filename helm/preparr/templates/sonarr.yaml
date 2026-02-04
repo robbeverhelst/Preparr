@@ -10,7 +10,7 @@ metadata:
     {{- include "preparr.serviceLabels" (dict "local" .Values.sonarr "Values" .Values) | nindent 4 }}
 data:
   sonarr-config.json: |
-    {{- .Values.sonarr.config | toJson | nindent 4 }}
+    {{- dict "app" .Values.sonarr.config | toJson | nindent 4 }}
 ---
 apiVersion: v1
 kind: Service
@@ -159,9 +159,6 @@ spec:
           {{- end }}
         - name: CONFIG_PATH
           value: "/config/sonarr-config.json"
-        {{- with .Values.sonarr.env }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
         {{- with .Values.sonarr.envFrom }}
         envFrom:
         {{- toYaml . | nindent 8 }}
@@ -191,9 +188,6 @@ spec:
           value: {{ .Values.sonarr.env.PGID | quote }}
         - name: TZ
           value: {{ .Values.sonarr.env.TZ | quote }}
-        {{- with .Values.sonarr.env }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
         {{- with .Values.sonarr.envFrom }}
         envFrom:
         {{- toYaml . | nindent 8 }}
@@ -209,10 +203,8 @@ spec:
         volumeMounts:
         - name: sonarr-config-volume
           mountPath: /config
-        {{- if .Values.sonarr.storage.tv.enabled }}
         - name: tv-storage
           mountPath: /tv
-        {{- end }}
         {{- with .Values.sonarr.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -301,9 +293,6 @@ spec:
           value: {{ .Values.preparr.health.port | quote }}
         - name: LOG_LEVEL
           value: {{ .Values.preparr.logLevel | quote }}
-        {{- with .Values.sonarr.env }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
         {{- with .Values.sonarr.envFrom }}
         envFrom:
         {{- toYaml . | nindent 8 }}
@@ -324,13 +313,13 @@ spec:
         {{- end }}
         readinessProbe:
           httpGet:
-            path: /health
+            path: /health/ready
             port: {{ .Values.preparr.health.port }}
           initialDelaySeconds: 30
           periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /health
+            path: /health/live
             port: {{ .Values.preparr.health.port }}
           initialDelaySeconds: 60
           periodSeconds: 30
@@ -343,11 +332,13 @@ spec:
       - name: sonarr-config-file
         configMap:
           name: sonarr-config
-      {{- if .Values.sonarr.storage.tv.enabled }}
       - name: tv-storage
+        {{- if .Values.sonarr.storage.tv.enabled }}
         persistentVolumeClaim:
           claimName: sonarr-tv-pvc
-      {{- end }}
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
       {{- with .Values.sonarr.extraVolumes }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
