@@ -1,11 +1,10 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "preparr",
       "dependencies": {
-        "tsarr": "^1.10.0",
+        "tsarr": "github:robbeverhelst/Tsarr#main",
         "zod": "^4.3.6",
       },
       "devDependencies": {
@@ -492,7 +491,7 @@
 
     "traverse": ["traverse@0.6.8", "", {}, "sha512-aXJDbk6SnumuaZSANd21XAo15ucCDE38H4fkqiGsc3MhCK+wOlZvLP9cB/TvpHT0mOyWgC4Z8EwRlzqYSUzdsA=="],
 
-    "tsarr": ["tsarr@1.10.0", "", {}, "sha512-fxIASzJeHySao77OtoNB5Z2j+YiQaevAOoBSIX3bGz8Af1gE5gC2GAnSivL2pipkILUGfDKA4jhWiLOfYrqujg=="],
+    "tsarr": ["tsarr@github:robbeverhelst/Tsarr#cc15038", {}, "robbeverhelst-Tsarr-cc15038"],
 
     "tunnel": ["tunnel@0.0.6", "", {}, "sha512-1h/Lnq9yajKY2PEbBadPXj3VxsDDu844OnaAo52UVmIzIvwwtBPIuNvkjuzBlTWpfJyUbG3ez0KSBibQkj4ojg=="],
 

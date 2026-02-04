@@ -1,3 +1,4 @@
+import type { BazarrManager } from '@/bazarr/client'
 import type { Config } from '@/config/schema'
 import type { PostgresClient } from '@/postgres/client'
 import type { QBittorrentManager } from '@/qbittorrent/client'
@@ -43,6 +44,11 @@ export class ContextBuilder {
 
   setQBittorrentClient(client?: QBittorrentManager): this {
     this.context.qbittorrentClient = client
+    return this
+  }
+
+  setBazarrClient(client?: BazarrManager): this {
+    this.context.bazarrClient = client
     return this
   }
 

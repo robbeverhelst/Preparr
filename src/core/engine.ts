@@ -1,4 +1,5 @@
 // Import all step classes
+import { BazarrConnectivityStep } from '@/steps/connectivity/bazarr-connectivity'
 import { PostgresConnectivityStep } from '@/steps/connectivity/postgres-connectivity'
 import { QBittorrentConnectivityStep } from '@/steps/connectivity/qbittorrent-connectivity'
 import { ServarrConnectivityStep } from '@/steps/connectivity/servarr-connectivity'
@@ -8,6 +9,9 @@ import { QBittorrentInitStep } from '@/steps/infrastructure/qbittorrent-init'
 import { ServarrConfigFileStep } from '@/steps/infrastructure/servarr-config-file'
 import { UserCreationStep } from '@/steps/infrastructure/user-creation'
 import { QBittorrentConfigStep } from '@/steps/integrations/qbittorrent-config'
+import { BazarrIntegrationStep } from '@/steps/bazarr/bazarr-integration'
+import { BazarrLanguagesStep } from '@/steps/bazarr/bazarr-languages'
+import { BazarrProvidersStep } from '@/steps/bazarr/bazarr-providers'
 import { ApplicationsStep } from '@/steps/servarr/applications'
 import { DownloadClientsStep } from '@/steps/servarr/download-clients'
 import { IndexersStep } from '@/steps/servarr/indexers'
@@ -55,6 +59,7 @@ export class ConfigurationEngine {
       this.registry.register(new PostgresConnectivityStep())
       this.registry.register(new ServarrConnectivityStep())
       this.registry.register(new QBittorrentConnectivityStep())
+      this.registry.register(new BazarrConnectivityStep())
       this.registry.register(new PostgresDatabasesStep())
       this.registry.register(new PostgresUsersStep())
       this.registry.register(new ServarrConfigFileStep())
@@ -67,6 +72,9 @@ export class ConfigurationEngine {
       this.registry.register(new QualityProfilesStep())
       this.registry.register(new ApplicationsStep())
       this.registry.register(new QBittorrentConfigStep())
+      this.registry.register(new BazarrIntegrationStep())
+      this.registry.register(new BazarrLanguagesStep())
+      this.registry.register(new BazarrProvidersStep())
 
       logger.info('Configuration steps registered successfully', {
         totalSteps: this.registry.getAll().length,

@@ -14,6 +14,10 @@ export class DownloadClientsStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
+    // Skip for Bazarr as it doesn't have download clients
+    if (context.servarrType === 'bazarr') {
+      return false
+    }
     // In init mode, Servarr won't be running yet, so we can't validate connectivity
     if (context.executionMode === 'init') {
       return true

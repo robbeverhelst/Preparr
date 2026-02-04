@@ -14,6 +14,10 @@ export class IndexersStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
+    // Skip for Bazarr as it doesn't have indexers
+    if (context.servarrType === 'bazarr') {
+      return false
+    }
     // Check if Servarr is ready and API key is available
     if (!context.servarrClient.isReady()) {
       return false

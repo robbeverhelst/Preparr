@@ -14,8 +14,8 @@ export class RootFoldersStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    // Skip for Prowlarr as it doesn't have root folders
-    if (context.servarrType === 'prowlarr') {
+    // Skip for Prowlarr and Bazarr as they don't have root folders
+    if (context.servarrType === 'prowlarr' || context.servarrType === 'bazarr') {
       return false
     }
 

@@ -13,6 +13,8 @@ export class ServarrConnectivityStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
+    // Skip for Bazarr - it has its own connectivity step
+    if (context.servarrType === 'bazarr') return false
     if (context.executionMode === 'init') return false
     return context.executionMode === 'sidecar'
   }

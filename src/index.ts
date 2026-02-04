@@ -1,5 +1,6 @@
 import { type Config, loadConfigurationSafe } from '@/config'
 import { getEnvironmentInfo } from '@/config/loaders/env'
+import { BazarrManager } from '@/bazarr/client'
 import { ContextBuilder } from '@/core/context'
 import { ConfigurationEngine } from '@/core/engine'
 import { HealthServer } from '@/core/health'
@@ -29,6 +30,9 @@ class PrepArrNew {
     try {
       const servarrClient = new ServarrManager(this.config.servarr)
 
+      const bazarrConfig = this.config.services?.bazarr || this.config.app?.bazarr
+      const bazarrClient = bazarrConfig?.url ? new BazarrManager(bazarrConfig) : undefined
+
       const context = new ContextBuilder()
         .setConfig(this.config)
         .setServarrType(this.config.servarr.type)
@@ -42,6 +46,7 @@ class PrepArrNew {
               )
             : undefined,
         )
+        .setBazarrClient(bazarrClient)
         .setExecutionMode('init')
         .setConfigPath(this.config.configPath)
         .setConfigWatch(this.config.configWatch)
@@ -83,6 +88,9 @@ class PrepArrNew {
       const servarrClient = new ServarrManager(this.config.servarr)
       await servarrClient.initializeSidecarMode()
 
+      const bazarrConfig = this.config.services?.bazarr || this.config.app?.bazarr
+      const bazarrClient = bazarrConfig?.url ? new BazarrManager(bazarrConfig) : undefined
+
       const context = new ContextBuilder()
         .setConfig(this.config)
         .setServarrType(this.config.servarr.type)
@@ -96,6 +104,7 @@ class PrepArrNew {
               )
             : undefined,
         )
+        .setBazarrClient(bazarrClient)
         .setExecutionMode('sidecar')
         .setConfigPath(this.config.configPath)
         .setConfigWatch(this.config.configWatch)

@@ -13,7 +13,7 @@ export const ServarrConfigSchema = z
   .object({
     url: z.string().optional(),
     type: z
-      .enum(['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr', 'qbittorrent', 'auto'])
+      .enum(['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr', 'qbittorrent', 'bazarr', 'auto'])
       .default('auto'),
     apiKey: z
       .string()
@@ -26,12 +26,12 @@ export const ServarrConfigSchema = z
   })
   .refine(
     (data) => {
-      // URL validation: required for all Servarr types except qbittorrent
-      if (data.type !== 'qbittorrent') {
+      // URL validation: required for all Servarr types except qbittorrent and bazarr
+      if (data.type !== 'qbittorrent' && data.type !== 'bazarr') {
         if (!data.url) {
           return false
         }
-        // Validate URL format for non-qbittorrent types
+        // Validate URL format for non-qbittorrent/bazarr types
         try {
           new URL(data.url)
         } catch {
@@ -41,10 +41,51 @@ export const ServarrConfigSchema = z
       return true
     },
     {
-      message: 'Valid URL is required when type is not qbittorrent',
+      message: 'Valid URL is required when type is not qbittorrent or bazarr',
       path: ['url'],
     },
   )
+
+export const BazarrLanguageSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+  enabled: z.boolean().default(true),
+})
+
+export const BazarrProviderSchema = z.object({
+  name: z.string(),
+  enabled: z.boolean().default(true),
+  settings: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).default({}),
+})
+
+export const BazarrSubtitleDefaultsSchema = z.object({
+  seriesType: z.string().default('hearing_impaired_preferred'),
+  movieType: z.string().default('hearing_impaired_preferred'),
+  searchOnUpgrade: z.boolean().default(true),
+  searchOnDownload: z.boolean().default(true),
+})
+
+export const BazarrConfigSchema = z
+  .object({
+    url: z.string().url().optional(),
+    apiKey: z.string().optional(),
+    sonarr: z
+      .object({
+        url: z.string().url(),
+        apiKey: z.string(),
+      })
+      .optional(),
+    radarr: z
+      .object({
+        url: z.string().url(),
+        apiKey: z.string(),
+      })
+      .optional(),
+    languages: z.array(BazarrLanguageSchema).default([]),
+    providers: z.array(BazarrProviderSchema).default([]),
+    subtitleDefaults: BazarrSubtitleDefaultsSchema.optional(),
+  })
+  .optional()
 
 export const ServiceIntegrationSchema = z.object({
   qbittorrent: z
@@ -55,6 +96,12 @@ export const ServiceIntegrationSchema = z.object({
     })
     .optional(),
   prowlarr: z
+    .object({
+      url: z.string().url(),
+      apiKey: z.string().optional(),
+    })
+    .optional(),
+  bazarr: z
     .object({
       url: z.string().url(),
       apiKey: z.string().optional(),
@@ -165,6 +212,7 @@ export const AppConfigSchema = z.object({
   downloadClients: z.array(DownloadClientSchema).default([]),
   applications: z.array(ApplicationSchema).default([]),
   qbittorrent: QBittorrentConfigSchema,
+  bazarr: BazarrConfigSchema,
 })
 
 export const ConfigSchema = z.object({
@@ -200,5 +248,9 @@ export type Indexer = z.infer<typeof IndexerSchema>
 export type DownloadClient = z.infer<typeof DownloadClientSchema>
 export type Application = z.infer<typeof ApplicationSchema>
 export type QBittorrentConfig = z.infer<typeof QBittorrentConfigSchema>
+export type BazarrLanguage = z.infer<typeof BazarrLanguageSchema>
+export type BazarrProvider = z.infer<typeof BazarrProviderSchema>
+export type BazarrSubtitleDefaults = z.infer<typeof BazarrSubtitleDefaultsSchema>
+export type BazarrConfig = z.infer<typeof BazarrConfigSchema>
 export type AppConfig = z.infer<typeof AppConfigSchema>
 export type Config = z.infer<typeof ConfigSchema>

@@ -13,6 +13,8 @@ export class UserCreationStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
+    // Skip for Bazarr - it handles users differently
+    if (context.servarrType === 'bazarr') return false
     // Only run in sidecar mode when Servarr is ready
     return context.executionMode === 'sidecar' && context.servarrClient.isReady()
   }
