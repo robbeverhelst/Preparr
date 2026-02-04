@@ -1,0 +1,115 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NAMESPACE: preparr-test
+  RELEASE_NAME: preparr-e2e
+
+jobs:
+  e2e:
+    runs-on: arc-preparr
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.0
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build PrepArr
+        run: bun run build
+
+      - name: Ensure namespace exists
+        run: |
+          kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Clean previous Helm release
+        run: |
+          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait || true
+
+      - name: Deploy stack via Helm
+        run: |
+          helm install ${{ env.RELEASE_NAME }} ./helm/preparr \
+            -f helm/preparr/values-e2e.yaml \
+            --namespace ${{ env.NAMESPACE }} \
+            --wait \
+            --timeout 10m
+
+      - name: Wait for all pods ready
+        run: |
+          echo "Waiting for PostgreSQL..."
+          kubectl wait --for=condition=ready pod -l app=postgres -n ${{ env.NAMESPACE }} --timeout=120s
+
+          echo "Waiting for qBittorrent..."
+          kubectl wait --for=condition=ready pod -l app=qbittorrent -n ${{ env.NAMESPACE }} --timeout=120s
+
+          echo "Waiting for Prowlarr..."
+          kubectl wait --for=condition=ready pod -l app=prowlarr -n ${{ env.NAMESPACE }} --timeout=180s
+
+          echo "Waiting for Sonarr..."
+          kubectl wait --for=condition=ready pod -l app=sonarr -n ${{ env.NAMESPACE }} --timeout=180s
+
+          echo "Waiting for Radarr..."
+          kubectl wait --for=condition=ready pod -l app=radarr -n ${{ env.NAMESPACE }} --timeout=180s
+
+          echo "All pods ready"
+
+      - name: Run E2E tests
+        run: |
+          bun test tests/e2e/ --timeout 300000
+        env:
+          E2E_NAMESPACE: ${{ env.NAMESPACE }}
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          mkdir -p ./e2e-logs
+
+          echo "Collecting PrepArr sidecar logs..."
+          for app in sonarr radarr prowlarr; do
+            kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-sidecar --tail=500 > ./e2e-logs/${app}-preparr-sidecar.log 2>&1 || true
+            kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-init --tail=500 > ./e2e-logs/${app}-preparr-init.log 2>&1 || true
+            kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c $app --tail=200 > ./e2e-logs/${app}-app.log 2>&1 || true
+          done
+
+          echo "Collecting infrastructure logs..."
+          kubectl logs -n ${{ env.NAMESPACE }} -l app=postgres --tail=200 > ./e2e-logs/postgres.log 2>&1 || true
+          kubectl logs -n ${{ env.NAMESPACE }} -l app=qbittorrent --tail=200 > ./e2e-logs/qbittorrent.log 2>&1 || true
+
+          echo "Collecting pod descriptions..."
+          kubectl describe pods -n ${{ env.NAMESPACE }} > ./e2e-logs/pod-descriptions.txt 2>&1 || true
+
+          echo "Collecting events..."
+          kubectl get events -n ${{ env.NAMESPACE }} --sort-by='.lastTimestamp' > ./e2e-logs/events.txt 2>&1 || true
+
+          echo "Logs collected"
+
+      - name: Upload logs artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs
+          path: ./e2e-logs/
+          retention-days: 7
+
+      - name: Cleanup Helm release
+        if: always()
+        run: |
+          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait || true
