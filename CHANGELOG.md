@@ -1,3 +1,10 @@
+# [0.15.0](https://github.com/robbeverhelst/Preparr/compare/v0.14.0...v0.15.0) (2026-02-04)
+
+
+### Features
+
+* add custom formats and media management support ([#46](https://github.com/robbeverhelst/Preparr/issues/46)) ([71694f3](https://github.com/robbeverhelst/Preparr/commit/71694f3b7c5552c9e820e1d11f4e906e79335881)), closes [#44](https://github.com/robbeverhelst/Preparr/issues/44)
+
 # [0.14.0](https://github.com/robbeverhelst/Preparr/compare/v0.13.2...v0.14.0) (2026-02-04)
 
 
