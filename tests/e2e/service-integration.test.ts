@@ -4,7 +4,7 @@
  */
 
 import { beforeAll, describe, expect, test } from 'bun:test'
-import { callPreparrHealth, callServarrApi, waitForServarrApi } from './utils'
+import { callPreparrHealth, callServarrApi, waitForCondition, waitForServarrApi } from './utils'
 
 interface DownloadClient {
   id: number
@@ -99,26 +99,55 @@ describe('Service Integration', () => {
 
   describe('Prowlarr Application Sync', () => {
     // Prowlarr validates connectivity when adding applications. Since all services
-    // start simultaneously, Sonarr/Radarr may not be reachable during reconciliation.
-    test.skip('Prowlarr has Sonarr application configured', async () => {
+    // start simultaneously, Sonarr/Radarr may not be reachable during the first
+    // reconciliation cycle. We poll until the reconciliation loop succeeds.
+    const APP_SYNC_TIMEOUT = 90000 // 6 reconciliation cycles at 15s interval
+
+    test('Prowlarr has Sonarr application configured', async () => {
+      await waitForCondition(
+        async () => {
+          const result = await callServarrApi<ProwlarrApplication[]>(
+            'prowlarr',
+            '/api/v1/applications',
+          )
+          if (!result.ok || !result.data) return false
+          const sonarrApp = result.data.find((app) => app.name === 'Sonarr')
+          return sonarrApp?.syncLevel === 'fullSync'
+        },
+        {
+          timeoutMs: APP_SYNC_TIMEOUT,
+          intervalMs: 5000,
+          description: 'Sonarr application to be configured in Prowlarr',
+        },
+      )
+
       const result = await callServarrApi<ProwlarrApplication[]>('prowlarr', '/api/v1/applications')
-
       expect(result.ok).toBe(true)
-      expect(result.data).toBeDefined()
-      expect(Array.isArray(result.data)).toBe(true)
-
       const sonarrApp = result.data?.find((app) => app.name === 'Sonarr')
       expect(sonarrApp).toBeDefined()
       expect(sonarrApp?.syncLevel).toBe('fullSync')
     })
 
-    test.skip('Prowlarr has Radarr application configured', async () => {
+    test('Prowlarr has Radarr application configured', async () => {
+      await waitForCondition(
+        async () => {
+          const result = await callServarrApi<ProwlarrApplication[]>(
+            'prowlarr',
+            '/api/v1/applications',
+          )
+          if (!result.ok || !result.data) return false
+          const radarrApp = result.data.find((app) => app.name === 'Radarr')
+          return radarrApp?.syncLevel === 'fullSync'
+        },
+        {
+          timeoutMs: APP_SYNC_TIMEOUT,
+          intervalMs: 5000,
+          description: 'Radarr application to be configured in Prowlarr',
+        },
+      )
+
       const result = await callServarrApi<ProwlarrApplication[]>('prowlarr', '/api/v1/applications')
-
       expect(result.ok).toBe(true)
-      expect(result.data).toBeDefined()
-      expect(Array.isArray(result.data)).toBe(true)
-
       const radarrApp = result.data?.find((app) => app.name === 'Radarr')
       expect(radarrApp).toBeDefined()
       expect(radarrApp?.syncLevel).toBe('fullSync')
