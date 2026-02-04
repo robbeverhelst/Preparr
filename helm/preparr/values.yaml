@@ -6,6 +6,8 @@
 global:
   # Namespace to deploy into
   namespace: preparr
+  # Whether to create the namespace (set to false if namespace is pre-created)
+  createNamespace: true
 
 # PrepArr sidecar configuration
 preparr:

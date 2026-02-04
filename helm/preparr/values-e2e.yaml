@@ -3,6 +3,7 @@
 
 global:
   namespace: preparr-test
+  createNamespace: false
 
 preparr:
   image:

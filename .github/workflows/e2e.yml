@@ -39,13 +39,13 @@ jobs:
       - name: Build PrepArr
         run: bun run build
 
-      - name: Verify namespace exists
+      - name: Ensure namespace exists
         run: |
-          kubectl get namespace ${{ env.NAMESPACE }}
+          kubectl create namespace ${{ env.NAMESPACE }} 2>/dev/null || true
 
       - name: Clean previous Helm release
         run: |
-          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait --no-hooks || true
+          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait --no-hooks 2>/dev/null || true
 
       - name: Deploy stack via Helm
         run: |
