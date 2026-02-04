@@ -1,0 +1,101 @@
+---
+title: PrepArr
+description: Infrastructure as Code for Servarr - Complete automation from fresh PostgreSQL to fully configured Servarr stacks
+template: splash
+hero:
+  tagline: Infrastructure as Code for Servarr. Complete automation from fresh PostgreSQL to fully configured Servarr stacks.
+  actions:
+    - text: Get Started
+      link: /Preparr/getting-started/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/robbeverhelst/Preparr
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## What is PrepArr?
+
+PrepArr is a lightweight Docker sidecar that fully automates Servarr application initialization and ongoing configuration management. It takes your Servarr stack from a blank PostgreSQL database to a fully working, configured system -- without ever opening a browser or clicking through a setup wizard.
+
+Think of PrepArr as **Infrastructure as Code for your media automation stack**. You define your desired configuration in JSON files, and PrepArr continuously ensures your Servarr instances match that specification.
+
+## The Problem
+
+Setting up a Servarr stack involves a surprising amount of manual work:
+
+- **Database provisioning** -- Creating PostgreSQL databases, users, and permissions for each service
+- **Setup wizards** -- Clicking through first-run configuration for every instance
+- **Download client configuration** -- Connecting qBittorrent, SABnzbd, or other clients by hand
+- **Quality profiles** -- Building quality profiles and custom formats through the UI
+- **No version control** -- Configuration lives in databases and XML files with no audit trail
+- **Configuration drift** -- Manual changes accumulate, and rebuilds never match the original
+
+## How PrepArr Solves It
+
+You write a JSON configuration file describing your desired state, and PrepArr handles everything:
+
+1. **Creates PostgreSQL databases and users** with the correct permissions
+2. **Generates `config.xml`** with API keys and database connection strings
+3. **Completes the setup wizard** programmatically
+4. **Applies your full configuration** -- root folders, quality profiles, custom formats, download clients, indexers, naming conventions, and more
+5. **Watches for changes** and continuously reconciles your running configuration against the desired state
+
+<CardGrid>
+  <Card title="Automated Database Setup">
+    Creates and configures PostgreSQL databases, users, and permissions for each Servarr instance automatically.
+  </Card>
+  <Card title="Configuration as Code">
+    Define quality profiles, custom formats, download clients, indexers, root folders, and naming conventions in JSON files.
+  </Card>
+  <Card title="Continuous Reconciliation">
+    Runs as a sidecar container, monitoring your configuration files and reconciling the running state against your specification.
+  </Card>
+  <Card title="GitOps Ready">
+    Store your configuration in Git. Update a file, and PrepArr applies the changes. Works with any GitOps workflow.
+  </Card>
+</CardGrid>
+
+## Supported Services
+
+| Service | Status | Notes |
+|---------|--------|-------|
+| **Sonarr** | Full support | All configuration resources managed |
+| **Radarr** | Full support | All configuration resources managed |
+| **Prowlarr** | Full support | Indexer management and application sync |
+| **qBittorrent** | Init support | Initial configuration and category setup |
+| **Lidarr** | Coming soon | Planned for a future release |
+| **Readarr** | Coming soon | Planned for a future release |
+
+## Requirements
+
+- **PostgreSQL** -- SQLite is not supported. PrepArr automates the entire PostgreSQL setup process.
+- **Docker or Kubernetes** -- Works with Docker Compose, Docker Swarm, Kubernetes, or any container orchestration platform.
+
+## Next Steps
+
+<CardGrid>
+  <Card title="Quick Start" icon="rocket">
+    Get a fully configured Sonarr instance running with Docker Compose.
+
+    [Quick Start](/Preparr/getting-started/quick-start/)
+  </Card>
+  <Card title="Core Concepts" icon="open-book">
+    Understand the three-container pattern, init vs sidecar modes, and the reconciliation loop.
+
+    [Concepts](/Preparr/getting-started/concepts/)
+  </Card>
+  <Card title="Deployment" icon="setting">
+    Deploy with Docker Compose, Kubernetes, or Helm.
+
+    [Deployment](/Preparr/deployment/docker-compose/)
+  </Card>
+  <Card title="Configuration" icon="document">
+    Explore all configuration options for quality profiles, download clients, indexers, and more.
+
+    [Configuration](/Preparr/configuration/overview/)
+  </Card>
+</CardGrid>
