@@ -493,8 +493,10 @@ export class ServarrManager {
     this.client = this.createClient(this.apiKey)
     this.isInitialized = true
 
-    // Create web login user after tables are initialized
-    await this.createInitialUser()
+    // Create web login user after tables are initialized (only for Servarr types that support it)
+    if (this.config.adminPassword) {
+      await this.createInitialUser()
+    }
 
     logger.info('ServarrManager sidecar initialization completed', { type: this.config.type })
   }
@@ -781,6 +783,11 @@ export class ServarrManager {
   async createInitialUser(): Promise<void> {
     if (!this.isInitialized) {
       throw new Error('ServarrManager must be initialized before creating user')
+    }
+
+    if (!this.config.adminPassword) {
+      logger.debug('Skipping user creation - no admin password configured')
+      return
     }
 
     logger.info('Creating initial admin user...', {
