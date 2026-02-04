@@ -1,5 +1,17 @@
 {{- if .Values.bazarr.enabled }}
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bazarr-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: bazarr
+data:
+  bazarr-config.json: |
+    {{- .Values.bazarr.config | toJson | nindent 4 }}
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: bazarr
@@ -15,6 +27,7 @@ spec:
     - name: webui
       port: {{ .Values.bazarr.service.webui.port }}
       targetPort: 6767
+      protocol: TCP
       {{- if and (eq .Values.bazarr.service.type "NodePort") .Values.bazarr.service.webui.nodePort }}
       nodePort: {{ .Values.bazarr.service.webui.nodePort }}
       {{- end }}
@@ -36,11 +49,6 @@ spec:
     metadata:
       labels:
         app: bazarr
-      {{- $podAnnotations := include "preparr.podAnnotations" (dict "local" .Values.bazarr "Values" .Values) }}
-      {{- if $podAnnotations }}
-      annotations:
-        {{- $podAnnotations | nindent 8 }}
-      {{- end }}
     spec:
       initContainers:
       - name: preparr-init
@@ -62,22 +70,23 @@ spec:
           value: {{ .Values.postgresql.auth.database | quote }}
         - name: SERVARR_TYPE
           value: "bazarr"
-        - name: BAZARR_API_KEY
-          value: {{ .Values.bazarr.apiKey | quote }}
         - name: BAZARR_URL
           value: "http://bazarr:{{ .Values.bazarr.service.webui.port }}"
+        - name: BAZARR_API_KEY
+          value: {{ .Values.bazarr.apiKey | quote }}
         - name: CONFIG_PATH
           value: "/config/bazarr-config.json"
         command: ["bun", "run", "dist/index.js", "--init"]
         volumeMounts:
         - name: bazarr-config-volume
           mountPath: /config
-        {{- with .Values.bazarr.extraVolumeMounts }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        - name: bazarr-config-file
+          mountPath: /config/bazarr-config.json
+          subPath: bazarr-config.json
       containers:
       - name: bazarr
         image: "{{ .Values.bazarr.image.repository }}:{{ .Values.bazarr.image.tag }}"
+        imagePullPolicy: {{ .Values.bazarr.image.pullPolicy | default "IfNotPresent" }}
         env:
         - name: PUID
           value: {{ .Values.bazarr.env.PUID | quote }}
@@ -86,7 +95,9 @@ spec:
         - name: TZ
           value: {{ .Values.bazarr.env.TZ | quote }}
         ports:
-        - containerPort: 6767
+        - name: webui
+          containerPort: 6767
+          protocol: TCP
         {{- if .Values.bazarr.resources }}
         resources:
           {{- toYaml .Values.bazarr.resources | nindent 10 }}
@@ -94,49 +105,19 @@ spec:
         volumeMounts:
         - name: bazarr-config-volume
           mountPath: /config
-        {{- with .Values.bazarr.extraVolumeMounts }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        - name: bazarr-config-file
+          mountPath: /config/bazarr-config.json
+          subPath: bazarr-config.json
         readinessProbe:
           httpGet:
-            path: /
+            path: /api/system/health
             port: 6767
           initialDelaySeconds: 30
           periodSeconds: 10
       volumes:
       - name: bazarr-config-volume
-        {{- if .Values.bazarr.configStorage.enabled }}
-        persistentVolumeClaim:
-          claimName: {{ if .Values.bazarr.configStorage.existingClaim }}{{ .Values.bazarr.configStorage.existingClaim }}{{ else }}{{ include "preparr.bazarr.configPvcName" . }}{{ end }}
-        {{- else }}
         emptyDir: {}
-        {{- end }}
-      {{- with .Values.bazarr.extraVolumes }}
-      {{- toYaml . | nindent 6 }}
-      {{- end }}
-{{- end }}
-
-{{- if and .Values.bazarr.configStorage.enabled (not .Values.bazarr.configStorage.existingClaim) }}
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ include "preparr.bazarr.configPvcName" . }}
-  namespace: {{ .Values.global.namespace }}
-  labels:
-    {{- include "preparr.labels" . | nindent 4 }}
-    app: bazarr
-spec:
-  accessModes:
-    {{- range .Values.bazarr.configStorage.accessModes }}
-    - {{ . }}
-    {{- end }}
-  {{- if .Values.bazarr.configStorage.storageClass }}
-  storageClassName: {{ .Values.bazarr.configStorage.storageClass }}
-  {{- else if .Values.global.storageClass }}
-  storageClassName: {{ .Values.global.storageClass }}
-  {{- end }}
-  resources:
-    requests:
-      storage: {{ .Values.bazarr.configStorage.size }}
+      - name: bazarr-config-file
+        configMap:
+          name: bazarr-config
 {{- end }}
