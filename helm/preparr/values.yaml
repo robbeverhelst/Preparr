@@ -9,10 +9,6 @@ global:
   # Whether to create the namespace (set to false if namespace is pre-created)
   createNamespace: true
 
-# RBAC configuration
-rbac:
-  create: true
-
 # PrepArr sidecar configuration
 preparr:
   image:
