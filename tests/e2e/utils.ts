@@ -7,9 +7,9 @@ export const NAMESPACE = process.env.E2E_NAMESPACE || 'preparr-test'
 
 // API keys matching values-e2e.yaml
 export const API_KEYS = {
-  sonarr: 'e2e1111111111111111111111111test',
-  radarr: 'e2e2222222222222222222222222test',
-  prowlarr: 'e2e0000000000000000000000000test',
+  sonarr: 'e2e11111111111111111111111111111',
+  radarr: 'e2e22222222222222222222222222222',
+  prowlarr: 'e2e00000000000000000000000000000',
 } as const
 
 // Service ports matching values-e2e.yaml
@@ -210,9 +210,11 @@ export async function waitForServarrApi(
 ): Promise<void> {
   const { timeoutMs = 120000 } = options
 
+  const apiVersion = service === 'prowlarr' ? 'v1' : 'v3'
+
   await waitForCondition(
     async () => {
-      const result = await callServarrApi(service, '/api/v3/system/status')
+      const result = await callServarrApi(service, `/api/${apiVersion}/system/status`)
       return result.ok
     },
     { timeoutMs, description: `${service} API to be accessible` },
