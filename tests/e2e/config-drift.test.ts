@@ -473,7 +473,7 @@ describe('Configuration Drift Detection', () => {
 
       const originalMinSize = bluray1080p?.minSize
 
-      // Modify the min size
+      // Modify the min size - must respect constraint: minSize <= preferredSize <= maxSize
       const updateResult = await callServarrApi(
         'sonarr',
         `/api/v3/qualitydefinition/${bluray1080p?.id}`,
@@ -481,7 +481,7 @@ describe('Configuration Drift Detection', () => {
           method: 'PUT',
           body: JSON.stringify({
             ...bluray1080p,
-            minSize: originalMinSize + 50,
+            minSize: (originalMinSize ?? 0) + 1,
           }),
         },
       )

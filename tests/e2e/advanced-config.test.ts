@@ -491,8 +491,9 @@ describe('Advanced Configuration', () => {
 
       const originalMinSize = bluray1080p?.minSize
       const originalMaxSize = bluray1080p?.maxSize
+      const originalPreferredSize = bluray1080p?.preferredSize
 
-      // Update it
+      // Update it - must respect constraint: minSize <= preferredSize <= maxSize
       const updateResult = await callServarrApi<QualityDefinition>(
         'sonarr',
         `/api/v3/qualitydefinition/${bluray1080p?.id}`,
@@ -500,15 +501,17 @@ describe('Advanced Configuration', () => {
           method: 'PUT',
           body: JSON.stringify({
             ...bluray1080p,
-            minSize: 10,
-            maxSize: 60,
+            minSize: 5,
+            preferredSize: 30,
+            maxSize: 100,
           }),
         },
       )
 
       expect(updateResult.ok).toBe(true)
-      expect(updateResult.data?.minSize).toBe(10)
-      expect(updateResult.data?.maxSize).toBe(60)
+      expect(updateResult.data?.minSize).toBe(5)
+      expect(updateResult.data?.preferredSize).toBe(30)
+      expect(updateResult.data?.maxSize).toBe(100)
 
       // Restore original values
       const restoreResult = await callServarrApi<QualityDefinition>(
@@ -519,6 +522,7 @@ describe('Advanced Configuration', () => {
           body: JSON.stringify({
             ...bluray1080p,
             minSize: originalMinSize,
+            preferredSize: originalPreferredSize,
             maxSize: originalMaxSize,
           }),
         },
