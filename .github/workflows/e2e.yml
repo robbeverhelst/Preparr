@@ -39,9 +39,9 @@ jobs:
       - name: Build PrepArr
         run: bun run build
 
-      - name: Ensure namespace exists
+      - name: Verify namespace exists
         run: |
-          kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+          kubectl get namespace ${{ env.NAMESPACE }}
 
       - name: Clean previous Helm release
         run: |
