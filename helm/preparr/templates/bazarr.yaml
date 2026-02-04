@@ -1,17 +1,5 @@
 {{- if .Values.bazarr.enabled }}
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: bazarr-config
-  namespace: {{ .Values.global.namespace }}
-  labels:
-    {{- include "preparr.labels" . | nindent 4 }}
-    app: bazarr
-data:
-  bazarr-config.json: |
-    {{- .Values.bazarr.config | toJson | nindent 4 }}
----
-apiVersion: v1
 kind: Service
 metadata:
   name: bazarr
@@ -84,9 +72,6 @@ spec:
         volumeMounts:
         - name: bazarr-config-volume
           mountPath: /config
-        - name: bazarr-config-file
-          mountPath: /config/bazarr-config.json
-          subPath: bazarr-config.json
         {{- with .Values.bazarr.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -109,9 +94,6 @@ spec:
         volumeMounts:
         - name: bazarr-config-volume
           mountPath: /config
-        - name: bazarr-config-file
-          mountPath: /config/bazarr-config.json
-          subPath: bazarr-config.json
         {{- with .Values.bazarr.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -129,9 +111,6 @@ spec:
         {{- else }}
         emptyDir: {}
         {{- end }}
-      - name: bazarr-config-file
-        configMap:
-          name: bazarr-config
       {{- with .Values.bazarr.extraVolumes }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
