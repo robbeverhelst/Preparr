@@ -1,3 +1,10 @@
+# [0.14.0](https://github.com/robbeverhelst/Preparr/compare/v0.13.2...v0.14.0) (2026-02-04)
+
+
+### Features
+
+* **ci:** add Kubernetes E2E testing workflow ([#45](https://github.com/robbeverhelst/Preparr/issues/45)) ([b480d89](https://github.com/robbeverhelst/Preparr/commit/b480d89bd1308043bcf36b057769fd8dcb4768c4))
+
 ## [0.13.2](https://github.com/robbeverhelst/Preparr/compare/v0.13.1...v0.13.2) (2026-01-27)
 
 
