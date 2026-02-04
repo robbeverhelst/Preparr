@@ -10,21 +10,14 @@ Complete Infrastructure as Code for Servarr applications using Helm. Deploy your
 
 ## Quick Start
 
-### 1. Install from Helm Repository (Recommended)
+### 1. Install from OCI Registry (Recommended)
 
 ```bash
-# Add the Helm repository
-helm repo add preparr https://robbeverhelst.github.io/Preparr
-helm repo update
-
 # Install with default values
-helm install my-media-stack preparr/preparr
+helm install my-media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version>
 
 # Or install with custom values
-helm install my-media-stack preparr/preparr -f custom-values.yaml
-
-# View all available versions
-helm search repo preparr --versions
+helm install my-media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version> -f custom-values.yaml
 ```
 
 Find this chart on [ArtifactHub](https://artifacthub.io/packages/helm/preparr/preparr).
@@ -426,10 +419,7 @@ radarr:
 
 ```bash
 # Upgrade with new values
-helm upgrade media-stack ./preparr -f custom-values.yaml
-
-# Upgrade to new chart version
-helm upgrade media-stack ./preparr --version 0.2.0
+helm upgrade media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version> -f custom-values.yaml
 ```
 
 ## Uninstall

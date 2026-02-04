@@ -85,38 +85,18 @@ jobs:
           helm package helm/preparr
           echo "✓ Helm chart packaged as ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz"
 
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v6
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          ref: gh-pages
-          path: gh-pages
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update Helm repository
+      - name: Push chart to GHCR
         run: |
-          # Create directory if it doesn't exist
-          mkdir -p gh-pages
-
-          # Copy new chart to gh-pages
-          cp ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz gh-pages/
-
-          # Create ArtifactHub metadata file at repository root
-          cat > gh-pages/artifacthub-repo.yml <<EOF
-          repositoryID: preparr
-          owners:
-            - name: Robbe Verhelst
-              email: robbe@verhelst.io
-          EOF
-
-          # Generate/update index.yaml
-          helm repo index gh-pages --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
-
-          # Commit and push to gh-pages
-          cd gh-pages
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          git add .
-          git commit -m "Release ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}" || echo "No changes to commit"
-          git push origin gh-pages
+          helm push ${{ env.CHART_NAME }}-${{ steps.version.outputs.version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
+          echo "✓ Chart pushed to oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/${{ env.CHART_NAME }}:${{ steps.version.outputs.version }}"
 
       - name: Update release notes and attach chart
         uses: softprops/action-gh-release@v2
@@ -132,17 +112,19 @@ jobs:
 
             ### Helm Chart Installation
 
-            **From Helm Repository (Recommended):**
+            **From OCI Registry (Recommended):**
             ```bash
-            # Add the Helm repository
-            helm repo add preparr https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
-            helm repo update
+            helm install my-media-stack \
+              oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/${{ env.CHART_NAME }} \
+              --version ${{ steps.version.outputs.version }}
+            ```
 
-            # Install the chart
-            helm install my-media-stack preparr/${{ env.CHART_NAME }} --version ${{ steps.version.outputs.version }}
-
-            # Or search for available versions
-            helm search repo preparr
+            **With custom values:**
+            ```bash
+            helm install my-media-stack \
+              oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/${{ env.CHART_NAME }} \
+              --version ${{ steps.version.outputs.version }} \
+              -f custom-values.yaml
             ```
 
             **Direct from GitHub Release:**

@@ -6,9 +6,8 @@ description: Complete parameter reference for the PrepArr Helm chart
 The PrepArr Helm chart deploys a complete media automation stack. Install it from the Helm repository or from a local checkout.
 
 ```bash
-# From repository
-helm repo add preparr https://robbeverhelst.github.io/Preparr
-helm install media-stack preparr/preparr -f values.yaml
+# From OCI registry
+helm install media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version> -f values.yaml
 
 # From local checkout
 helm install media-stack ./helm/preparr -f values.yaml
@@ -222,13 +221,13 @@ sonarr:
 ### Install
 
 ```bash
-helm install media-stack preparr/preparr -f values.yaml
+helm install media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version> -f values.yaml
 ```
 
 ### Upgrade
 
 ```bash
-helm upgrade media-stack preparr/preparr -f values.yaml
+helm upgrade media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version> -f values.yaml
 ```
 
 ### Uninstall
@@ -245,8 +244,8 @@ kubectl delete namespace preparr
 helm lint ./helm/preparr
 
 # Dry run
-helm install test preparr/preparr --dry-run --debug
+helm install test oci://ghcr.io/robbeverhelst/charts/preparr --version <version> --dry-run --debug
 
-# Template output
-helm template test preparr/preparr > output.yaml
+# Template output (from local checkout)
+helm template test ./helm/preparr > output.yaml
 ```
