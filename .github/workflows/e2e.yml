@@ -46,9 +46,12 @@ jobs:
       - name: Clean previous Helm release
         run: |
           helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait --no-hooks 2>/dev/null || true
-          kubectl delete all --all -n ${{ env.NAMESPACE }} --wait 2>/dev/null || true
+          kubectl delete all --all -n ${{ env.NAMESPACE }} --grace-period=0 --force 2>/dev/null || true
           kubectl delete configmap --all -n ${{ env.NAMESPACE }} 2>/dev/null || true
           kubectl delete secret --all -n ${{ env.NAMESPACE }} 2>/dev/null || true
+          echo "Waiting for resources to be fully cleaned up..."
+          kubectl wait --for=delete pod --all -n ${{ env.NAMESPACE }} --timeout=60s 2>/dev/null || true
+          kubectl wait --for=delete svc --all -n ${{ env.NAMESPACE }} --timeout=30s 2>/dev/null || true
 
       - name: Deploy stack via Helm
         run: |
