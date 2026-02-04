@@ -186,6 +186,7 @@ prowlarr:
   adminPassword: adminpass
 
   auth:
+    username: admin
     existingSecret: ""
     secretKeys:
       adminPasswordKey: "admin-password"
@@ -288,6 +289,7 @@ sonarr:
 
   # Secret management
   auth:
+    username: admin
     existingSecret: ""
     secretKeys:
       adminPasswordKey: "admin-password"
@@ -431,6 +433,7 @@ radarr:
   adminPassword: adminpass
 
   auth:
+    username: admin
     existingSecret: ""
     secretKeys:
       adminPasswordKey: "admin-password"

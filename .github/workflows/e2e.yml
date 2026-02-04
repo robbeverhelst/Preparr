@@ -46,6 +46,9 @@ jobs:
       - name: Clean previous Helm release
         run: |
           helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait --no-hooks 2>/dev/null || true
+          kubectl delete all --all -n ${{ env.NAMESPACE }} --wait 2>/dev/null || true
+          kubectl delete configmap --all -n ${{ env.NAMESPACE }} 2>/dev/null || true
+          kubectl delete secret --all -n ${{ env.NAMESPACE }} 2>/dev/null || true
 
       - name: Deploy stack via Helm
         run: |

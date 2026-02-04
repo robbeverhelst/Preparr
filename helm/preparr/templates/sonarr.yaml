@@ -159,9 +159,6 @@ spec:
           {{- end }}
         - name: CONFIG_PATH
           value: "/config/sonarr-config.json"
-        {{- with .Values.sonarr.env }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
         {{- with .Values.sonarr.envFrom }}
         envFrom:
         {{- toYaml . | nindent 8 }}
@@ -191,9 +188,6 @@ spec:
           value: {{ .Values.sonarr.env.PGID | quote }}
         - name: TZ
           value: {{ .Values.sonarr.env.TZ | quote }}
-        {{- with .Values.sonarr.env }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
         {{- with .Values.sonarr.envFrom }}
         envFrom:
         {{- toYaml . | nindent 8 }}
@@ -299,9 +293,6 @@ spec:
           value: {{ .Values.preparr.health.port | quote }}
         - name: LOG_LEVEL
           value: {{ .Values.preparr.logLevel | quote }}
-        {{- with .Values.sonarr.env }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
         {{- with .Values.sonarr.envFrom }}
         envFrom:
         {{- toYaml . | nindent 8 }}
