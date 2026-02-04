@@ -51,11 +51,16 @@ export class BazarrIntegrationStep extends ConfigurationStep {
 
   protected getDesiredState(context: StepContext): BazarrIntegrationDesired {
     const bazarrConfig = context.config.app?.bazarr
+    const desired: BazarrIntegrationDesired = {}
 
-    return {
-      sonarr: bazarrConfig?.sonarr ? { ...bazarrConfig.sonarr } : undefined,
-      radarr: bazarrConfig?.radarr ? { ...bazarrConfig.radarr } : undefined,
+    if (bazarrConfig?.sonarr) {
+      desired.sonarr = { ...bazarrConfig.sonarr }
     }
+    if (bazarrConfig?.radarr) {
+      desired.radarr = { ...bazarrConfig.radarr }
+    }
+
+    return desired
   }
 
   compareAndPlan(

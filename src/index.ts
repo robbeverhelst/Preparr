@@ -31,7 +31,12 @@ class PrepArrNew {
       const servarrClient = new ServarrManager(this.config.servarr)
 
       const bazarrConfig = this.config.services?.bazarr || this.config.app?.bazarr
-      const bazarrClient = bazarrConfig?.url ? new BazarrManager(bazarrConfig) : undefined
+      const bazarrClient = bazarrConfig?.url
+        ? new BazarrManager({
+            url: bazarrConfig.url,
+            ...(bazarrConfig.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
+          })
+        : undefined
 
       const context = new ContextBuilder()
         .setConfig(this.config)
@@ -89,7 +94,12 @@ class PrepArrNew {
       await servarrClient.initializeSidecarMode()
 
       const bazarrConfig = this.config.services?.bazarr || this.config.app?.bazarr
-      const bazarrClient = bazarrConfig?.url ? new BazarrManager(bazarrConfig) : undefined
+      const bazarrClient = bazarrConfig?.url
+        ? new BazarrManager({
+            url: bazarrConfig.url,
+            ...(bazarrConfig.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
+          })
+        : undefined
 
       const context = new ContextBuilder()
         .setConfig(this.config)
