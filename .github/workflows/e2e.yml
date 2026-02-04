@@ -45,11 +45,11 @@ jobs:
 
       - name: Clean previous Helm release
         run: |
-          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait || true
+          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait --no-hooks || true
 
       - name: Deploy stack via Helm
         run: |
-          helm install ${{ env.RELEASE_NAME }} ./helm/preparr \
+          helm upgrade --install ${{ env.RELEASE_NAME }} ./helm/preparr \
             -f helm/preparr/values-e2e.yaml \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
@@ -114,4 +114,4 @@ jobs:
       - name: Cleanup Helm release
         if: always()
         run: |
-          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait || true
+          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait --no-hooks || true
