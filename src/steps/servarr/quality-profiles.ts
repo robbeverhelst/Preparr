@@ -10,7 +10,8 @@ import {
 export class QualityProfilesStep extends ConfigurationStep {
   readonly name = 'quality-profiles'
   readonly description = 'Configure Servarr quality profiles'
-  readonly dependencies: string[] = ['servarr-connectivity']
+  // Depends on custom-formats because quality profiles can reference custom format scores
+  readonly dependencies: string[] = ['servarr-connectivity', 'custom-formats']
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {

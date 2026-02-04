@@ -9,9 +9,14 @@ import { ServarrConfigFileStep } from '@/steps/infrastructure/servarr-config-fil
 import { UserCreationStep } from '@/steps/infrastructure/user-creation'
 import { QBittorrentConfigStep } from '@/steps/integrations/qbittorrent-config'
 import { ApplicationsStep } from '@/steps/servarr/applications'
+import { CustomFormatsStep } from '@/steps/servarr/custom-formats'
 import { DownloadClientsStep } from '@/steps/servarr/download-clients'
 import { IndexersStep } from '@/steps/servarr/indexers'
+import { MediaManagementStep } from '@/steps/servarr/media-management'
+import { NamingConfigStep } from '@/steps/servarr/naming-config'
+import { QualityDefinitionsStep } from '@/steps/servarr/quality-definitions'
 import { QualityProfilesStep } from '@/steps/servarr/quality-profiles'
+import { ReleaseProfilesStep } from '@/steps/servarr/release-profiles'
 import { RootFoldersStep } from '@/steps/servarr/root-folders'
 import { ConfigLoadingStep } from '@/steps/validation/config-loading'
 import { logger } from '@/utils/logger'
@@ -64,7 +69,12 @@ export class ConfigurationEngine {
       this.registry.register(new RootFoldersStep())
       this.registry.register(new IndexersStep())
       this.registry.register(new DownloadClientsStep())
+      this.registry.register(new CustomFormatsStep()) // Must run before quality-profiles
       this.registry.register(new QualityProfilesStep())
+      this.registry.register(new QualityDefinitionsStep())
+      this.registry.register(new NamingConfigStep())
+      this.registry.register(new MediaManagementStep())
+      this.registry.register(new ReleaseProfilesStep()) // Sonarr only
       this.registry.register(new ApplicationsStep())
       this.registry.register(new QBittorrentConfigStep())
 
