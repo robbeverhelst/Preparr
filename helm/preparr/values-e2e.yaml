@@ -98,17 +98,32 @@ prowlarr:
     watch: true
   config:
     apiKey: "e2e00000000000000000000000000000"
+    indexers: []
     applications:
       - name: "Sonarr"
-        prowlarrUrl: "http://prowlarr:9696"
-        baseUrl: "http://sonarr:8989"
-        apiKey: "e2e11111111111111111111111111111"
+        implementation: "Sonarr"
+        implementationName: "Sonarr"
+        configContract: "SonarrSettings"
         syncLevel: "fullSync"
+        fields:
+          - name: "prowlarrUrl"
+            value: "http://prowlarr:9696"
+          - name: "baseUrl"
+            value: "http://sonarr:8989"
+          - name: "apiKey"
+            value: "e2e11111111111111111111111111111"
       - name: "Radarr"
-        prowlarrUrl: "http://prowlarr:9696"
-        baseUrl: "http://radarr:7878"
-        apiKey: "e2e22222222222222222222222222222"
+        implementation: "Radarr"
+        implementationName: "Radarr"
+        configContract: "RadarrSettings"
         syncLevel: "fullSync"
+        fields:
+          - name: "prowlarrUrl"
+            value: "http://prowlarr:9696"
+          - name: "baseUrl"
+            value: "http://radarr:7878"
+          - name: "apiKey"
+            value: "e2e22222222222222222222222222222"
 
 sonarr:
   enabled: true
