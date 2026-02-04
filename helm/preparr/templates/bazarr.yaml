@@ -111,7 +111,8 @@ spec:
           mountPath: /config/bazarr-config.json
           subPath: bazarr-config.json
         readinessProbe:
-          tcpSocket:
+          httpGet:
+            path: /
             port: 6767
           initialDelaySeconds: 30
           periodSeconds: 10

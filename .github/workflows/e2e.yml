@@ -78,6 +78,9 @@ jobs:
           echo "Waiting for Radarr..."
           kubectl wait --for=condition=ready pod -l app=radarr -n ${{ env.NAMESPACE }} --timeout=180s
 
+          echo "Waiting for Bazarr..."
+          kubectl wait --for=condition=ready pod -l app=bazarr -n ${{ env.NAMESPACE }} --timeout=120s
+
           echo "All pods ready"
 
       - name: Run E2E tests

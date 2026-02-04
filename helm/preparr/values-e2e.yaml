@@ -269,7 +269,7 @@ lidarr:
   enabled: false
 
 bazarr:
-  enabled: false
+  enabled: true
   image:
     repository: linuxserver/bazarr
     tag: latest
