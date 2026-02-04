@@ -9,8 +9,11 @@ RUN apk add --no-cache git
 # Copy package files
 COPY package.json bun.lock ./
 
-# Install dependencies (including dev dependencies for tsarr git dependency build)
+# Install all dependencies (including dev) for tsarr build
 RUN bun install --frozen-lockfile
+
+# Install tsarr's own dev dependencies since it's a git dependency
+RUN cd node_modules/tsarr && bun install --frozen-lockfile
 
 # Build tsarr since it's a git dependency that needs compilation
 RUN cd node_modules/tsarr && bun run generate && bun run generate:types && bun run build:js && bun run build:types
