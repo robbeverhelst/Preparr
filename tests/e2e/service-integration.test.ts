@@ -130,43 +130,43 @@ describe('Service Integration', () => {
   })
 
   describe('PrepArr Health Endpoints', () => {
-    test('Sonarr PrepArr sidecar healthz endpoint returns healthy', async () => {
-      const result = await callPreparrHealth('sonarr', '/healthz')
+    test('Sonarr PrepArr sidecar liveness endpoint returns healthy', async () => {
+      const result = await callPreparrHealth('sonarr', '/health/live')
 
       expect(result.ok).toBe(true)
       expect(result.status).toBe(200)
     })
 
     test('Sonarr PrepArr sidecar ready endpoint returns ready', async () => {
-      const result = await callPreparrHealth('sonarr', '/ready')
+      const result = await callPreparrHealth('sonarr', '/health/ready')
 
       expect(result.ok).toBe(true)
       expect(result.status).toBe(200)
     })
 
-    test('Radarr PrepArr sidecar healthz endpoint returns healthy', async () => {
-      const result = await callPreparrHealth('radarr', '/healthz')
+    test('Radarr PrepArr sidecar liveness endpoint returns healthy', async () => {
+      const result = await callPreparrHealth('radarr', '/health/live')
 
       expect(result.ok).toBe(true)
       expect(result.status).toBe(200)
     })
 
     test('Radarr PrepArr sidecar ready endpoint returns ready', async () => {
-      const result = await callPreparrHealth('radarr', '/ready')
+      const result = await callPreparrHealth('radarr', '/health/ready')
 
       expect(result.ok).toBe(true)
       expect(result.status).toBe(200)
     })
 
-    test('Prowlarr PrepArr sidecar healthz endpoint returns healthy', async () => {
-      const result = await callPreparrHealth('prowlarr', '/healthz')
+    test('Prowlarr PrepArr sidecar liveness endpoint returns healthy', async () => {
+      const result = await callPreparrHealth('prowlarr', '/health/live')
 
       expect(result.ok).toBe(true)
       expect(result.status).toBe(200)
     })
 
     test('Prowlarr PrepArr sidecar ready endpoint returns ready', async () => {
-      const result = await callPreparrHealth('prowlarr', '/ready')
+      const result = await callPreparrHealth('prowlarr', '/health/ready')
 
       expect(result.ok).toBe(true)
       expect(result.status).toBe(200)

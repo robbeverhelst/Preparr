@@ -108,7 +108,7 @@ export async function callServarrApi<T = unknown>(
  */
 export async function callPreparrHealth(
   service: ServarrService,
-  endpoint: '/healthz' | '/ready' = '/healthz',
+  endpoint: '/health/live' | '/health/ready' = '/health/live',
 ): Promise<{ ok: boolean; status: number; data: unknown | null; error?: string }> {
   const url = `http://${service}.${NAMESPACE}.svc.cluster.local:${HEALTH_PORTS[service]}${endpoint}`
 

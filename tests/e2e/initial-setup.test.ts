@@ -156,21 +156,21 @@ describe('Initial Setup Flow', () => {
 
   describe('PrepArr Sidecar Health', () => {
     test('Sonarr PrepArr sidecar is healthy', async () => {
-      const result = await callPreparrHealth('sonarr', '/healthz')
+      const result = await callPreparrHealth('sonarr', '/health/live')
 
       expect(result.ok).toBe(true)
       expect(result.status).toBe(200)
     })
 
     test('Radarr PrepArr sidecar is healthy', async () => {
-      const result = await callPreparrHealth('radarr', '/healthz')
+      const result = await callPreparrHealth('radarr', '/health/live')
 
       expect(result.ok).toBe(true)
       expect(result.status).toBe(200)
     })
 
     test('Prowlarr PrepArr sidecar is healthy', async () => {
-      const result = await callPreparrHealth('prowlarr', '/healthz')
+      const result = await callPreparrHealth('prowlarr', '/health/live')
 
       expect(result.ok).toBe(true)
       expect(result.status).toBe(200)
