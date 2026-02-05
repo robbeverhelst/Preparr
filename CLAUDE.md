@@ -272,3 +272,4 @@ Types: feat, fix, docs, style, refactor, test, chore
 - NEVER create files unless they're absolutely necessary for achieving the goal
 - ALWAYS prefer editing an existing file to creating a new one
 - NEVER proactively create documentation files (*.md) or README files unless explicitly requested
+- ALWAYS verify the current Kubernetes context (`kubectl config current-context`) before running any kubectl/helm commands that apply, deploy, or delete resources. Confirm the context matches the intended cluster to avoid accidentally deploying to the wrong cluster.
