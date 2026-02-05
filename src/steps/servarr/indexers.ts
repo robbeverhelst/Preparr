@@ -1,21 +1,20 @@
 import type { Indexer } from '@/config/schema'
 import {
   type ChangeRecord,
-  ConfigurationStep,
+  ServarrStep,
   type StepContext,
   type StepResult,
   Warning,
 } from '@/core/step'
 
-export class IndexersStep extends ConfigurationStep {
+export class IndexersStep extends ServarrStep {
   readonly name = 'indexers'
   readonly description = 'Configure Servarr indexers'
   readonly dependencies: string[] = ['servarr-connectivity']
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    if (!context.servarrClient) return false
-    if (!context.servarrClient?.isReady()) {
+    if (!this.client.isReady()) {
       return false
     }
 
@@ -47,7 +46,7 @@ export class IndexersStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<Indexer[]> {
     try {
-      return await this.requireServarrClient(context).getIndexers()
+      return await this.client.getIndexers()
     } catch (error) {
       context.logger.warn('Failed to read current indexers', { error })
       return []
@@ -149,7 +148,7 @@ export class IndexersStep extends ConfigurationStep {
             fullIndexer: JSON.stringify(desiredIndexer, null, 2),
           })
 
-          await this.requireServarrClient(context).addIndexer(desiredIndexer)
+          await this.client.addIndexer(desiredIndexer)
           results.push({
             ...change,
             type: 'create',
@@ -161,7 +160,7 @@ export class IndexersStep extends ConfigurationStep {
             appProfileId: desiredIndexer.appProfileId,
           })
         } else if (change.type === 'delete') {
-          await this.requireServarrClient(context).removeIndexer(change.identifier)
+          await this.client.removeIndexer(change.identifier)
           results.push({
             ...change,
             type: 'delete',

@@ -1,13 +1,13 @@
 import type { BazarrProvider } from '@/config/schema'
 import {
+  BazarrStep,
   type ChangeRecord,
-  ConfigurationStep,
   type StepContext,
   type StepResult,
   type Warning,
 } from '@/core/step'
 
-export class BazarrProvidersStep extends ConfigurationStep {
+export class BazarrProvidersStep extends BazarrStep {
   readonly name = 'bazarr-providers'
   readonly description = 'Configure Bazarr subtitle providers'
   readonly dependencies: string[] = ['bazarr-connectivity']
@@ -18,17 +18,12 @@ export class BazarrProvidersStep extends ConfigurationStep {
   }
 
   validatePrerequisites(context: StepContext): boolean {
-    if (!context.bazarrClient) return false
     return this.getProvidersConfig(context).length > 0
   }
 
   async readCurrentState(context: StepContext): Promise<BazarrProvider[]> {
     try {
-      if (!context.bazarrClient) {
-        return []
-      }
-
-      return await context.bazarrClient.getProviders()
+      return await this.client.getProviders()
     } catch (error) {
       context.logger.debug('Failed to read Bazarr providers state', { error })
       return []
@@ -90,15 +85,6 @@ export class BazarrProvidersStep extends ConfigurationStep {
     const errors: Error[] = []
     const warnings: Warning[] = []
 
-    if (!context.bazarrClient) {
-      return {
-        success: false,
-        changes: [],
-        errors: [new Error('Bazarr client not available')],
-        warnings: [],
-      }
-    }
-
     try {
       if (changes.length > 0) {
         const desired = this.getDesiredState(context)
@@ -106,7 +92,7 @@ export class BazarrProvidersStep extends ConfigurationStep {
           providerCount: desired.length,
         })
 
-        await context.bazarrClient.configureProviders(desired)
+        await this.client.configureProviders(desired)
 
         context.logger.info('Bazarr subtitle providers configured successfully', {
           providers: desired.map((p) => p.name).join(', '),
@@ -137,7 +123,6 @@ export class BazarrProvidersStep extends ConfigurationStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      if (!context.bazarrClient) return false
       const current = await this.readCurrentState(context)
       const desired = this.getDesiredState(context)
 

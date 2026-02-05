@@ -1,6 +1,6 @@
 import {
+  BazarrStep,
   type ChangeRecord,
-  ConfigurationStep,
   type StepContext,
   type StepResult,
   type Warning,
@@ -16,7 +16,7 @@ interface BazarrIntegrationDesired {
   radarr?: { url: string; apiKey: string }
 }
 
-export class BazarrIntegrationStep extends ConfigurationStep {
+export class BazarrIntegrationStep extends BazarrStep {
   readonly name = 'bazarr-integration'
   readonly description = 'Configure Bazarr Sonarr/Radarr integration'
   readonly dependencies: string[] = ['bazarr-connectivity']
@@ -38,18 +38,13 @@ export class BazarrIntegrationStep extends ConfigurationStep {
   }
 
   validatePrerequisites(context: StepContext): boolean {
-    if (!context.bazarrClient) return false
     const desired = this.getIntegrationConfig(context)
     return !!desired.sonarr || !!desired.radarr
   }
 
   async readCurrentState(context: StepContext): Promise<BazarrIntegrationState> {
     try {
-      if (!context.bazarrClient) {
-        return { sonarrConfigured: false, radarrConfigured: false }
-      }
-
-      const settings = await context.bazarrClient.getSettings()
+      const settings = await this.client.getSettings()
       // In Bazarr, the enabled flag is under general.use_sonarr / general.use_radarr
       const generalSettings = settings.general as Record<string, unknown> | undefined
 
@@ -98,15 +93,6 @@ export class BazarrIntegrationStep extends ConfigurationStep {
     const errors: Error[] = []
     const warnings: Warning[] = []
 
-    if (!context.bazarrClient) {
-      return {
-        success: false,
-        changes: [],
-        errors: [new Error('Bazarr client not available')],
-        warnings: [],
-      }
-    }
-
     const desired = this.getDesiredState(context)
 
     try {
@@ -114,20 +100,14 @@ export class BazarrIntegrationStep extends ConfigurationStep {
         context.logger.info('Configuring Bazarr Sonarr integration...', {
           url: desired.sonarr.url,
         })
-        await context.bazarrClient.configureSonarrIntegration(
-          desired.sonarr.url,
-          desired.sonarr.apiKey,
-        )
+        await this.client.configureSonarrIntegration(desired.sonarr.url, desired.sonarr.apiKey)
       }
 
       if (desired.radarr) {
         context.logger.info('Configuring Bazarr Radarr integration...', {
           url: desired.radarr.url,
         })
-        await context.bazarrClient.configureRadarrIntegration(
-          desired.radarr.url,
-          desired.radarr.apiKey,
-        )
+        await this.client.configureRadarrIntegration(desired.radarr.url, desired.radarr.apiKey)
       }
 
       context.logger.info('Bazarr integrations configured successfully')
@@ -153,8 +133,7 @@ export class BazarrIntegrationStep extends ConfigurationStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      if (!context.bazarrClient) return false
-      const settings = await context.bazarrClient.getSettings()
+      const settings = await this.client.getSettings()
       const desired = this.getDesiredState(context)
 
       // In Bazarr, the enabled flag is under general.use_sonarr / general.use_radarr

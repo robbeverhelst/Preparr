@@ -1,12 +1,12 @@
 import {
+  BazarrStep,
   type ChangeRecord,
-  ConfigurationStep,
   type StepContext,
   type StepResult,
   type Warning,
 } from '@/core/step'
 
-export class BazarrConnectivityStep extends ConfigurationStep {
+export class BazarrConnectivityStep extends BazarrStep {
   readonly name = 'bazarr-connectivity'
   readonly description = 'Validate Bazarr connectivity and API access'
   readonly dependencies: string[] = []
@@ -15,19 +15,15 @@ export class BazarrConnectivityStep extends ConfigurationStep {
   validatePrerequisites(context: StepContext): boolean {
     // Only run in sidecar mode when Bazarr is configured
     if (context.executionMode === 'init') return false
-    return !!context.bazarrClient && context.executionMode === 'sidecar'
+    return context.executionMode === 'sidecar'
   }
 
   async readCurrentState(
     context: StepContext,
   ): Promise<{ connected: boolean; apiKeyValid?: boolean }> {
     try {
-      if (!context.bazarrClient) {
-        return { connected: false }
-      }
-
-      const connected = await context.bazarrClient.testConnection()
-      const status = connected ? await context.bazarrClient.getSystemStatus() : null
+      const connected = await this.client.testConnection()
+      const status = connected ? await this.client.getSystemStatus() : null
 
       return {
         connected,
@@ -76,22 +72,13 @@ export class BazarrConnectivityStep extends ConfigurationStep {
     const errors: Error[] = []
     const warnings: Warning[] = []
 
-    if (!context.bazarrClient) {
-      return {
-        success: false,
-        changes: [],
-        errors: [new Error('Bazarr client not available')],
-        warnings: [],
-      }
-    }
-
     try {
       if (changes.length > 0) {
         context.logger.info('Testing Bazarr connectivity...', {
           changeCount: changes.length,
         })
 
-        const connected = await context.bazarrClient.testConnection()
+        const connected = await this.client.testConnection()
         if (!connected) {
           throw new Error('Bazarr is not responding to API requests')
         }
@@ -117,10 +104,9 @@ export class BazarrConnectivityStep extends ConfigurationStep {
     }
   }
 
-  async verifySuccess(context: StepContext): Promise<boolean> {
+  async verifySuccess(_context: StepContext): Promise<boolean> {
     try {
-      if (!context.bazarrClient) return false
-      return await context.bazarrClient.testConnection()
+      return await this.client.testConnection()
     } catch {
       return false
     }

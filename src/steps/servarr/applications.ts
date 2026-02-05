@@ -1,13 +1,13 @@
 import type { Application } from '@/config/schema'
 import {
   type ChangeRecord,
-  ConfigurationStep,
+  ServarrStep,
   type StepContext,
   type StepResult,
   Warning,
 } from '@/core/step'
 
-export class ApplicationsStep extends ConfigurationStep {
+export class ApplicationsStep extends ServarrStep {
   readonly name = 'applications'
   readonly description = 'Configure Servarr applications (Prowlarr)'
   readonly dependencies: string[] = ['servarr-connectivity']
@@ -20,7 +20,7 @@ export class ApplicationsStep extends ConfigurationStep {
     }
 
     // Check if Servarr is ready and API key is available
-    return !!context.servarrClient?.isReady()
+    return this.client.isReady()
   }
 
   async readCurrentState(context: StepContext): Promise<Application[]> {
@@ -124,7 +124,7 @@ export class ApplicationsStep extends ConfigurationStep {
           const application = desiredApplications.find((a) => a.name === change.identifier)
 
           if (application) {
-            await this.requireServarrClient(context).addApplication(application)
+            await this.client.addApplication(application)
             results.push({
               ...change,
               type: 'create',
@@ -145,11 +145,11 @@ export class ApplicationsStep extends ConfigurationStep {
             typeof change.details?.currentId === 'number' ? change.details.currentId : undefined
 
           if (currentId) {
-            await this.requireServarrClient(context).deleteApplication(currentId)
+            await this.client.deleteApplication(currentId)
           }
 
           if (application) {
-            await this.requireServarrClient(context).addApplication(application)
+            await this.client.addApplication(application)
             results.push({
               ...change,
               type: 'update',
@@ -171,7 +171,7 @@ export class ApplicationsStep extends ConfigurationStep {
           const application = currentApplications.find((a) => a.name === change.identifier)
 
           if (application?.id) {
-            await this.requireServarrClient(context).deleteApplication(application.id)
+            await this.client.deleteApplication(application.id)
             results.push({
               ...change,
               type: 'delete',

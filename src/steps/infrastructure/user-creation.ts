@@ -1,21 +1,20 @@
 import {
   type ChangeRecord,
-  ConfigurationStep,
+  ServarrStep,
   type StepContext,
   type StepResult,
   type Warning,
 } from '@/core/step'
 
-export class UserCreationStep extends ConfigurationStep {
+export class UserCreationStep extends ServarrStep {
   readonly name = 'user-creation'
   readonly description = 'Create initial admin user for Servarr'
   readonly dependencies: string[] = ['servarr-connectivity']
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    if (!context.servarrClient) return false
     // Only run in sidecar mode when Servarr is ready
-    return context.executionMode === 'sidecar' && !!context.servarrClient?.isReady()
+    return context.executionMode === 'sidecar' && this.client.isReady()
   }
 
   readCurrentState(context: StepContext): Promise<{ userExists: boolean; username?: string }> {
@@ -70,7 +69,7 @@ export class UserCreationStep extends ConfigurationStep {
           const username = change.details.username as string
 
           // Create the initial user
-          await this.requireServarrClient(context).createInitialUser()
+          await this.client.createInitialUser()
 
           results.push({
             ...change,
@@ -102,7 +101,7 @@ export class UserCreationStep extends ConfigurationStep {
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
       // Test connection to verify user was created successfully
-      return await this.requireServarrClient(context).testConnection()
+      return await this.client.testConnection()
     } catch (error) {
       context.logger.debug('User creation verification failed', { error })
       return false

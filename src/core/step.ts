@@ -135,18 +135,6 @@ export abstract class ConfigurationStep {
     }
   }
 
-  /**
-   * Safely access the Servarr client from context, narrowing the type.
-   * Call this in methods that run after validatePrerequisites has confirmed
-   * the client exists, instead of using the non-null assertion operator (!).
-   */
-  protected requireServarrClient(context: StepContext): ServarrManager {
-    if (!context.servarrClient) {
-      throw new Error(`${this.name}: Servarr client is required but not available`)
-    }
-    return context.servarrClient
-  }
-
   abstract validatePrerequisites(context: StepContext): boolean | Promise<boolean>
   abstract readCurrentState(context: StepContext): Promise<unknown>
   abstract compareAndPlan(
@@ -157,4 +145,50 @@ export abstract class ConfigurationStep {
   abstract executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult>
   abstract verifySuccess(context: StepContext): boolean | Promise<boolean>
   protected abstract getDesiredState(context: StepContext): unknown
+}
+
+/**
+ * Base class for steps that require a ServarrManager client.
+ * Auto-skips when servarrClient is not available (e.g. Bazarr deployments).
+ * Subclasses access the client via `this.client`.
+ */
+export abstract class ServarrStep extends ConfigurationStep {
+  protected client!: ServarrManager
+
+  override execute(context: StepContext): Promise<StepResult> {
+    if (!context.servarrClient) {
+      return Promise.resolve({
+        success: true,
+        changes: [],
+        errors: [],
+        warnings: [],
+        skipped: true,
+      })
+    }
+    this.client = context.servarrClient
+    return super.execute(context)
+  }
+}
+
+/**
+ * Base class for steps that require a BazarrManager client.
+ * Auto-skips when bazarrClient is not available.
+ * Subclasses access the client via `this.client`.
+ */
+export abstract class BazarrStep extends ConfigurationStep {
+  protected client!: BazarrManager
+
+  override execute(context: StepContext): Promise<StepResult> {
+    if (!context.bazarrClient) {
+      return Promise.resolve({
+        success: true,
+        changes: [],
+        errors: [],
+        warnings: [],
+        skipped: true,
+      })
+    }
+    this.client = context.bazarrClient
+    return super.execute(context)
+  }
 }

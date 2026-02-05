@@ -1,12 +1,7 @@
 import type { NamingConfig } from '@/config/schema'
-import {
-  type ChangeRecord,
-  ConfigurationStep,
-  type StepContext,
-  type StepResult,
-} from '@/core/step'
+import { type ChangeRecord, ServarrStep, type StepContext, type StepResult } from '@/core/step'
 
-export class NamingConfigStep extends ConfigurationStep {
+export class NamingConfigStep extends ServarrStep {
   readonly name = 'naming-config'
   readonly description = 'Configure Servarr file naming conventions'
   readonly dependencies: string[] = ['servarr-connectivity']
@@ -14,12 +9,12 @@ export class NamingConfigStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Check if Servarr is ready
-    if (!context.servarrClient?.isReady()) {
+    if (!this.client.isReady()) {
       return false
     }
 
     // Check if naming config is supported
-    const capabilities = this.requireServarrClient(context).getCapabilities()
+    const capabilities = this.client.getCapabilities()
     if (!capabilities.hasNamingConfig) {
       context.logger.debug('Naming config not supported for this Servarr type')
       return false
@@ -38,7 +33,7 @@ export class NamingConfigStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<NamingConfig | null> {
     try {
-      return await this.requireServarrClient(context).getNamingConfig()
+      return await this.client.getNamingConfig()
     } catch (error) {
       context.logger.warn('Failed to read current naming config', { error })
       return null
@@ -107,7 +102,7 @@ export class NamingConfigStep extends ConfigurationStep {
     for (const change of changes) {
       try {
         if (change.type === 'update' && desired) {
-          await this.requireServarrClient(context).updateNamingConfig(desired)
+          await this.client.updateNamingConfig(desired)
           results.push({ ...change, type: 'update' })
           context.logger.info('Naming config updated successfully', {
             changedFields: change.details?.changedFields,

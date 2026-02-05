@@ -1,22 +1,21 @@
 import type { QualityProfile } from '@/config/schema'
 import {
   type ChangeRecord,
-  ConfigurationStep,
+  ServarrStep,
   type StepContext,
   type StepResult,
   type Warning,
 } from '@/core/step'
 
-export class QualityProfilesStep extends ConfigurationStep {
+export class QualityProfilesStep extends ServarrStep {
   readonly name = 'quality-profiles'
   readonly description = 'Configure Servarr quality profiles'
   // Depends on custom-formats because quality profiles can reference custom format scores
   readonly dependencies: string[] = ['servarr-connectivity', 'custom-formats']
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
-  validatePrerequisites(context: StepContext): boolean {
-    if (!context.servarrClient) return false
-    return !!context.servarrClient?.isReady()
+  validatePrerequisites(_context: StepContext): boolean {
+    return this.client.isReady()
   }
 
   readCurrentState(context: StepContext): Promise<QualityProfile[]> {

@@ -1,13 +1,13 @@
 import type { ReleaseProfile } from '@/config/schema'
 import {
   type ChangeRecord,
-  ConfigurationStep,
+  ServarrStep,
   type StepContext,
   type StepResult,
   type Warning,
 } from '@/core/step'
 
-export class ReleaseProfilesStep extends ConfigurationStep {
+export class ReleaseProfilesStep extends ServarrStep {
   readonly name = 'release-profiles'
   readonly description = 'Configure Sonarr release profiles'
   readonly dependencies: string[] = ['servarr-connectivity']
@@ -15,12 +15,12 @@ export class ReleaseProfilesStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Check if Servarr is ready
-    if (!context.servarrClient?.isReady()) {
+    if (!this.client.isReady()) {
       return false
     }
 
     // Only supported for Sonarr
-    const capabilities = this.requireServarrClient(context).getCapabilities()
+    const capabilities = this.client.getCapabilities()
     if (!capabilities.hasReleaseProfiles) {
       context.logger.debug('Release profiles not supported for this Servarr type (Sonarr only)')
       return false
@@ -39,7 +39,7 @@ export class ReleaseProfilesStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<ReleaseProfile[]> {
     try {
-      return await this.requireServarrClient(context).getReleaseProfiles()
+      return await this.client.getReleaseProfiles()
     } catch (error) {
       context.logger.warn('Failed to read current release profiles', { error })
       return []
@@ -164,7 +164,7 @@ export class ReleaseProfilesStep extends ConfigurationStep {
             throw new Error(`Could not find release profile ${change.identifier} in desired state`)
           }
 
-          await this.requireServarrClient(context).addReleaseProfile(desiredProfile)
+          await this.client.addReleaseProfile(desiredProfile)
           results.push({ ...change, type: 'create' })
           context.logger.info('Release profile added successfully', { name: desiredProfile.name })
         } else if (change.type === 'update') {
@@ -175,10 +175,7 @@ export class ReleaseProfilesStep extends ConfigurationStep {
             throw new Error(`Could not find release profile ${change.identifier} for update`)
           }
 
-          await this.requireServarrClient(context).updateReleaseProfile(
-            existingProfile.id,
-            desiredProfile,
-          )
+          await this.client.updateReleaseProfile(existingProfile.id, desiredProfile)
           results.push({ ...change, type: 'update' })
           context.logger.info('Release profile updated successfully', { name: desiredProfile.name })
         } else if (change.type === 'delete') {
@@ -187,7 +184,7 @@ export class ReleaseProfilesStep extends ConfigurationStep {
             throw new Error(`No ID found for release profile ${change.identifier}`)
           }
 
-          await this.requireServarrClient(context).deleteReleaseProfile(id)
+          await this.client.deleteReleaseProfile(id)
           results.push({ ...change, type: 'delete' })
           context.logger.info('Release profile deleted successfully', { name: change.identifier })
         }

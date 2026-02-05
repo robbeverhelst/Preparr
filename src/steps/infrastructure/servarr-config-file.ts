@@ -1,12 +1,12 @@
 import {
   type ChangeRecord,
-  ConfigurationStep,
+  ServarrStep,
   type StepContext,
   type StepResult,
   type Warning,
 } from '@/core/step'
 
-export class ServarrConfigFileStep extends ConfigurationStep {
+export class ServarrConfigFileStep extends ServarrStep {
   readonly name = 'servarr-config-file'
   readonly description = 'Write Servarr configuration file (config.xml)'
   readonly dependencies: string[] = ['postgres-users', 'config-loading']
@@ -14,11 +14,7 @@ export class ServarrConfigFileStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Only run in init mode for Servarr applications (not qBittorrent or Bazarr)
-    return (
-      context.executionMode === 'init' &&
-      !!context.servarrClient &&
-      context.servarrType !== 'qbittorrent'
-    )
+    return context.executionMode === 'init' && context.servarrType !== 'qbittorrent'
   }
 
   async readCurrentState(
@@ -28,7 +24,7 @@ export class ServarrConfigFileStep extends ConfigurationStep {
       // Check if config.xml exists and has an API key
       // Get API key from loaded configuration if available
       const apiKey = context.config.app?.apiKey
-      await this.requireServarrClient(context).writeConfigurationOnly(apiKey)
+      await this.client.writeConfigurationOnly(apiKey)
       return {
         configExists: true,
         hasApiKey: !!apiKey || !!context.apiKey,
@@ -91,7 +87,7 @@ export class ServarrConfigFileStep extends ConfigurationStep {
         if (change.type === 'create' || change.type === 'update') {
           // Write the configuration file with API key from loaded config
           const apiKey = context.config.app?.apiKey
-          await this.requireServarrClient(context).writeConfigurationOnly(apiKey)
+          await this.client.writeConfigurationOnly(apiKey)
 
           results.push({
             ...change,
@@ -126,7 +122,7 @@ export class ServarrConfigFileStep extends ConfigurationStep {
     try {
       // Try to read the config file to verify it exists and is valid
       const apiKey = context.config.app?.apiKey
-      await this.requireServarrClient(context).writeConfigurationOnly(apiKey)
+      await this.client.writeConfigurationOnly(apiKey)
       // If writeConfigurationOnly doesn't throw and returns a boolean, the config is valid
       return true
     } catch (error) {

@@ -1,19 +1,18 @@
 import {
   type ChangeRecord,
-  ConfigurationStep,
+  ServarrStep,
   type StepContext,
   type StepResult,
   Warning,
 } from '@/core/step'
 
-export class ServarrConnectivityStep extends ConfigurationStep {
+export class ServarrConnectivityStep extends ServarrStep {
   readonly name = 'servarr-connectivity'
   readonly description = 'Validate Servarr connectivity and API access'
   readonly dependencies: string[] = []
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    if (!context.servarrClient) return false
     if (context.executionMode === 'init') return false
     return context.executionMode === 'sidecar'
   }
@@ -22,13 +21,12 @@ export class ServarrConnectivityStep extends ConfigurationStep {
     context: StepContext,
   ): Promise<{ connected: boolean; type?: string; version?: string }> {
     try {
-      const client = this.requireServarrClient(context)
-      if (!client.isReady()) {
+      if (!this.client.isReady()) {
         return { connected: false }
       }
 
-      const connected = await client.testConnection()
-      const type = client.getType()
+      const connected = await this.client.testConnection()
+      const type = this.client.getType()
 
       return { connected, type }
     } catch (error) {
@@ -86,7 +84,7 @@ export class ServarrConnectivityStep extends ConfigurationStep {
       try {
         if (change.type === 'create') {
           // Wait for Servarr to be ready and test connection
-          const connected = await this.requireServarrClient(context).testConnection()
+          const connected = await this.client.testConnection()
           if (connected) {
             results.push({
               ...change,
@@ -128,7 +126,7 @@ export class ServarrConnectivityStep extends ConfigurationStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      return await this.requireServarrClient(context).testConnection()
+      return await this.client.testConnection()
     } catch (error) {
       context.logger.debug('Servarr verification failed', { error })
       return false
