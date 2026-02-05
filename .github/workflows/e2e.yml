@@ -39,10 +39,14 @@ jobs:
       - name: Build PrepArr
         run: bun run build
 
-      - name: Build Docker image
+      - name: Build and push Docker image
         run: |
-          docker build -t ghcr.io/robbeverhelst/preparr:latest .
-          echo "Docker image built successfully"
+          IMAGE_TAG="sha-$(git rev-parse --short HEAD)"
+          docker build -t ghcr.io/robbeverhelst/preparr:${IMAGE_TAG} .
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/robbeverhelst/preparr:${IMAGE_TAG}
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "Docker image built and pushed: ghcr.io/robbeverhelst/preparr:${IMAGE_TAG}"
 
       - name: Ensure namespace exists
         run: |
@@ -62,6 +66,7 @@ jobs:
         run: |
           helm upgrade --install ${{ env.RELEASE_NAME }} ./helm/preparr \
             -f helm/preparr/values-e2e.yaml \
+            --set preparr.image.tag=${{ env.IMAGE_TAG }} \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
             --timeout 25m
