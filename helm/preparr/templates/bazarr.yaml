@@ -138,11 +138,13 @@ spec:
           - -c
           - |
             echo "Waiting for Bazarr API to be ready..."
-            for i in $(seq 1 60); do
+            i=0
+            while [ $i -lt 60 ]; do
               if curl -s http://localhost:6767/ > /dev/null 2>&1; then
                 echo "Bazarr API is ready!"
                 break
               fi
+              i=$((i + 1))
               echo "Attempt $i/60: Bazarr not ready yet, waiting..."
               sleep 2
             done
