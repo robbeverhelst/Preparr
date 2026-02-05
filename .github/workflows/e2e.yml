@@ -63,9 +63,12 @@ jobs:
 
       - name: Clean up stale resources
         run: |
-          kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
-          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait --no-hooks 2>/dev/null || true
-          kubectl delete configmap,secret,svc,deploy,statefulset,pvc --all -n ${{ env.NAMESPACE }} --wait 2>/dev/null || true
+          echo "Cleaning up any stale Helm releases in ${{ env.NAMESPACE }}..."
+          for release in $(helm list -n ${{ env.NAMESPACE }} -q 2>/dev/null); do
+            echo "Uninstalling stale release: $release"
+            helm uninstall "$release" -n ${{ env.NAMESPACE }} --wait --no-hooks || true
+          done
+          kubectl delete configmap,svc,deploy,statefulset,pvc --all -n ${{ env.NAMESPACE }} --wait 2>/dev/null || true
           echo "Namespace cleaned"
 
       - name: Deploy stack via Helm
