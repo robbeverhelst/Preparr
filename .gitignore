@@ -75,3 +75,8 @@ IMPLEMENTATION_PLAN_v2.md
 *.tgz
 rendered.yaml
 output.yaml
+
+# Docs
+docs/dist/
+docs/.astro/
+docs/node_modules/
