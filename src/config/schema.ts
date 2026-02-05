@@ -82,8 +82,6 @@ export const BazarrSubtitleDefaultsSchema = z.object({
 
 export const BazarrConfigSchema = z
   .object({
-    url: z.string().url().optional(),
-    apiKey: z.string().optional(),
     sonarr: z
       .object({
         url: z.string().url(),

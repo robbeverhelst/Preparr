@@ -26,17 +26,16 @@ class PrepArrNew {
   }
 
   private createBazarrClient(): BazarrManager | undefined {
+    const bazarrConfig = this.config.services?.bazarr
+
     if (this.isBazarrDeployment) {
       // Standalone Bazarr deployment - PrepArr sidecar alongside Bazarr container
-      const bazarrConfig = this.config.services?.bazarr
-      const apiKey = bazarrConfig?.apiKey || this.config.app?.bazarr?.apiKey
       return new BazarrManager({
         url: bazarrConfig?.url || 'http://localhost:6767',
-        ...(apiKey ? { apiKey } : {}),
+        ...(bazarrConfig?.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
       })
     }
     // Remote service mode - Servarr deployment that also configures a remote Bazarr
-    const bazarrConfig = this.config.services?.bazarr
     if (!bazarrConfig?.url) return undefined
     return new BazarrManager({
       url: bazarrConfig.url,

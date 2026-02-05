@@ -23,8 +23,6 @@
   },
   "app": {
     "bazarr": {
-      "url": "http://bazarr:6767",
-      "apiKey": "your-bazarr-api-key-here",
       "sonarr": {
         "url": "http://sonarr:8989",
         "apiKey": "your-sonarr-api-key"

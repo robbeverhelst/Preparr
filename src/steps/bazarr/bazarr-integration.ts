@@ -93,21 +93,27 @@ export class BazarrIntegrationStep extends BazarrStep {
     const errors: Error[] = []
     const warnings: Warning[] = []
 
+    if (changes.length === 0) {
+      return { success: true, changes, errors, warnings }
+    }
+
     const desired = this.getDesiredState(context)
 
     try {
-      if (desired.sonarr) {
-        context.logger.info('Configuring Bazarr Sonarr integration...', {
-          url: desired.sonarr.url,
-        })
-        await this.client.configureSonarrIntegration(desired.sonarr.url, desired.sonarr.apiKey)
-      }
+      for (const change of changes) {
+        if (change.identifier === 'sonarr' && desired.sonarr) {
+          context.logger.info('Configuring Bazarr Sonarr integration...', {
+            url: desired.sonarr.url,
+          })
+          await this.client.configureSonarrIntegration(desired.sonarr.url, desired.sonarr.apiKey)
+        }
 
-      if (desired.radarr) {
-        context.logger.info('Configuring Bazarr Radarr integration...', {
-          url: desired.radarr.url,
-        })
-        await this.client.configureRadarrIntegration(desired.radarr.url, desired.radarr.apiKey)
+        if (change.identifier === 'radarr' && desired.radarr) {
+          context.logger.info('Configuring Bazarr Radarr integration...', {
+            url: desired.radarr.url,
+          })
+          await this.client.configureRadarrIntegration(desired.radarr.url, desired.radarr.apiKey)
+        }
       }
 
       context.logger.info('Bazarr integrations configured successfully')

@@ -104,10 +104,7 @@ export class BazarrConfigFileStep extends ConfigurationStep {
   }
 
   private async writeBazarrConfig(context: StepContext): Promise<void> {
-    const apiKey =
-      context.config.services?.bazarr?.apiKey ||
-      context.config.app?.bazarr?.apiKey ||
-      context.config.app?.apiKey
+    const apiKey = context.config.services?.bazarr?.apiKey || context.config.app?.apiKey
     if (!apiKey) {
       throw new Error('API key is required to write Bazarr config.yaml')
     }
