@@ -20,7 +20,7 @@ export class DownloadClientsStep extends ConfigurationStep {
       return true
     }
 
-    return context.servarrClient!.isReady()
+    return !!context.servarrClient?.isReady()
   }
 
   async readCurrentState(context: StepContext): Promise<DownloadClient[]> {

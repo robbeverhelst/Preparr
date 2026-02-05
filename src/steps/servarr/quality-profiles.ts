@@ -16,7 +16,7 @@ export class QualityProfilesStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     if (!context.servarrClient) return false
-    return context.servarrClient!.isReady()
+    return !!context.servarrClient?.isReady()
   }
 
   readCurrentState(context: StepContext): Promise<QualityProfile[]> {

@@ -15,7 +15,7 @@ export class ReleaseProfilesStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Check if Servarr is ready
-    if (!context.servarrClient!.isReady()) {
+    if (!context.servarrClient?.isReady()) {
       return false
     }
 

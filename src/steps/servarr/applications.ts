@@ -20,7 +20,7 @@ export class ApplicationsStep extends ConfigurationStep {
     }
 
     // Check if Servarr is ready and API key is available
-    return context.servarrClient!.isReady()
+    return !!context.servarrClient?.isReady()
   }
 
   async readCurrentState(context: StepContext): Promise<Application[]> {

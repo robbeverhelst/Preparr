@@ -15,7 +15,7 @@ export class UserCreationStep extends ConfigurationStep {
   validatePrerequisites(context: StepContext): boolean {
     if (!context.servarrClient) return false
     // Only run in sidecar mode when Servarr is ready
-    return context.executionMode === 'sidecar' && context.servarrClient!.isReady()
+    return context.executionMode === 'sidecar' && !!context.servarrClient?.isReady()
   }
 
   readCurrentState(context: StepContext): Promise<{ userExists: boolean; username?: string }> {

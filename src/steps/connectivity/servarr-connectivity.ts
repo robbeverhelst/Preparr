@@ -22,7 +22,7 @@ export class ServarrConnectivityStep extends ConfigurationStep {
     context: StepContext,
   ): Promise<{ connected: boolean; type?: string; version?: string }> {
     try {
-      if (!context.servarrClient!.isReady()) {
+      if (!context.servarrClient?.isReady()) {
         return { connected: false }
       }
 

@@ -15,7 +15,7 @@ export class IndexersStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     if (!context.servarrClient) return false
-    if (!context.servarrClient!.isReady()) {
+    if (!context.servarrClient?.isReady()) {
       return false
     }
 

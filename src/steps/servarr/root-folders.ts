@@ -19,7 +19,7 @@ export class RootFoldersStep extends ConfigurationStep {
     if (context.servarrType === 'prowlarr') return false
 
     // Check if Servarr is ready and API key is available
-    return context.servarrClient!.isReady()
+    return !!context.servarrClient?.isReady()
   }
 
   async readCurrentState(context: StepContext): Promise<RootFolder[]> {
