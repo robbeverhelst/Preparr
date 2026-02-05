@@ -360,6 +360,41 @@ export const AppConfigSchema = z.object({
   // Quality Definitions (size limits)
   qualityDefinitions: z.array(QualityDefinitionSchema).default([]),
   bazarr: BazarrConfigSchema,
+  // Bazarr-specific configuration (integrations, languages, providers)
+  integrations: z
+    .object({
+      sonarr: z
+        .object({
+          enabled: z.boolean().optional(),
+          url: z.string().optional(),
+          apiKey: z.string().optional(),
+        })
+        .optional(),
+      radarr: z
+        .object({
+          enabled: z.boolean().optional(),
+          url: z.string().optional(),
+          apiKey: z.string().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+  languages: z
+    .array(
+      z.object({
+        code: z.string(),
+        name: z.string(),
+      }),
+    )
+    .optional(),
+  providers: z
+    .array(
+      z.object({
+        name: z.string(),
+        enabled: z.boolean().optional(),
+      }),
+    )
+    .optional(),
 })
 
 export const ConfigSchema = z.object({

@@ -103,6 +103,47 @@ spec:
           mountPath: /config/bazarr-config.json
           subPath: bazarr-config.json
       containers:
+      - name: preparr-sidecar
+        image: {{ include "preparr.image" . }}
+        imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
+        env:
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgresql.auth.password | quote }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.auth.database | quote }}
+        - name: SERVARR_URL
+          value: "http://localhost:{{ .Values.bazarr.service.webui.port }}"
+        - name: SERVARR_TYPE
+          value: "bazarr"
+        - name: SERVARR_API_KEY
+          value: {{ .Values.bazarr.apiKey | quote }}
+        - name: CONFIG_PATH
+          value: "/config/bazarr-config.json"
+        - name: CONFIG_WATCH
+          value: "true"
+        - name: CONFIG_RECONCILE_INTERVAL
+          value: "60"
+        - name: HEALTH_PORT
+          value: {{ .Values.preparr.health.port | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.preparr.logLevel | quote }}
+        command: ["bun", "run", "dist/index.js"]
+        ports:
+        - name: health
+          containerPort: {{ .Values.preparr.health.port }}
+          protocol: TCP
+        volumeMounts:
+        - name: bazarr-config-volume
+          mountPath: /config
+        - name: bazarr-config-file
+          mountPath: /config/bazarr-config.json
+          subPath: bazarr-config.json
       - name: bazarr
         image: "{{ .Values.bazarr.image.repository }}:{{ .Values.bazarr.image.tag }}"
         imagePullPolicy: {{ .Values.bazarr.image.pullPolicy | default "IfNotPresent" }}
