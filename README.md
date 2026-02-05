@@ -5,27 +5,21 @@
 [![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Infrastructure as Code for Servarr** - Complete automation from fresh PostgreSQL to fully configured Servarr and Bazarr stacks
+> Automate the setup and configuration of Sonarr, Radarr, Prowlarr, Bazarr, and qBittorrent — from empty PostgreSQL databases to fully working, connected services.
 
-PrepArr eliminates manual Servarr setup by managing your entire media stack configuration as code. Deploy once, configure through JSON files, never touch a web UI again.
+PrepArr is a Docker sidecar that manages your entire media stack as code. It handles database creation, config file generation, API key setup, download clients, indexers, quality profiles, and subtitle providers — all from JSON files. No setup wizards, no manual clicking, no config drift.
 
-## 🎯 What PrepArr Does
+### Supported Services
 
-**Before PrepArr:**
-- Manual database setup for each Servarr app
-- Clicking through setup wizards for API keys, users, settings
-- Configuring download clients, indexers, quality profiles by hand
-- No way to version control or replicate configurations
-- Config drift when containers restart
+| Service | Status | What it does |
+|---------|--------|--------------|
+| **Sonarr** | ✅ Fully supported | TV show management |
+| **Radarr** | ✅ Fully supported | Movie management |
+| **Prowlarr** | ✅ Fully supported | Indexer management + sync to Sonarr/Radarr |
+| **Bazarr** | ✅ Fully supported | Subtitle management for Sonarr/Radarr |
+| **qBittorrent** | ✅ Config management | Download client configuration |
 
-**After PrepArr:**
-- Automated PostgreSQL database initialization
-- Generated config.xml/config.yaml with API keys and database connections
-- Complete configuration management through JSON files
-- GitOps-ready: version control your entire media stack
-- Continuous reconciliation keeps everything in sync
-
-**⚠️ Requirements:** PostgreSQL backend only (SQLite not supported)
+**⚠️ Requires PostgreSQL** (SQLite not supported)
 
 ## 🏗️ Architecture
 
@@ -200,26 +194,6 @@ Each service gets its own init + sidecar containers managing separate config fil
 - **Drift Prevention** - Sidecar ensures config stays as specified
 - **GitOps Ready** - Update configs via git, automatic deployment
 - **Multi-Service** - Coordinate complex Prowlarr + Sonarr + Radarr + Bazarr setups
-
-## 🎯 Supported Services
-
-| Service | Init Support | Sidecar Support | Notes |
-|---------|--------------|-----------------|--------|
-| **Sonarr** | ✅ | ✅ | TV shows, full automation |
-| **Radarr** | ✅ | ✅ | Movies, full automation |
-| **Prowlarr** | ✅ | ✅ | Indexers + app sync |
-| **Bazarr** | ✅ | ✅ | Subtitles, languages, providers |
-| **qBittorrent** | ✅ | ⚠️ | Config file management |
-| **Lidarr** | 🚧 | 🚧 | Coming soon |
-| **Readarr** | 🚧 | 🚧 | Coming soon |
-
-**Integration Features:**
-- Automatic qBittorrent web UI configuration
-- Prowlarr ↔ Sonarr/Radarr application syncing
-- Bazarr ↔ Sonarr/Radarr subtitle integration
-- Bazarr language and subtitle provider management
-- PostgreSQL database and user management
-- Health monitoring for Kubernetes deployments
 
 ## 📦 Deployment Options
 
