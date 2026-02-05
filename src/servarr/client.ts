@@ -107,7 +107,8 @@ export class ServarrManager {
 
   constructor(config: ServarrConfig, configPath?: string) {
     this.config = config
-    const defaultPath = config.type === 'bazarr' ? '/config/config/config.yaml' : '/config/config.xml'
+    const defaultPath =
+      config.type === 'bazarr' ? '/config/config/config.yaml' : '/config/config.xml'
     this.configPath = configPath || process.env.SERVARR_CONFIG_PATH || defaultPath
     this.capabilities = this.getClientCapabilities()
   }
