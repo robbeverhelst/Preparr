@@ -21,10 +21,36 @@ export class PostgresUsersStep extends ConfigurationStep {
     return context.executionMode === 'init'
   }
 
+  private getDesiredUsers(context: StepContext): string[] {
+    const users: string[] = []
+    // Servarr user when we have a servarr client (not bazarr standalone)
+    if (context.servarrClient) {
+      users.push(context.servarrType)
+    }
+    // Bazarr user (standalone or remote service mode)
+    if (context.bazarrClient) {
+      users.push('bazarr')
+    }
+    return users
+  }
+
+  private getDatabasesForUser(user: string, context: StepContext): string[] {
+    if (user === 'bazarr') {
+      return ['bazarr']
+    }
+    return [`${context.servarrType}_main`, `${context.servarrType}_log`]
+  }
+
   async readCurrentState(context: StepContext): Promise<{ users: string[] }> {
     try {
-      const userExists = await context.postgresClient.userExists(context.servarrType)
-      return { users: userExists ? [context.servarrType] : [] }
+      const desired = this.getDesiredUsers(context)
+      const users: string[] = []
+      for (const user of desired) {
+        if (await context.postgresClient.userExists(user)) {
+          users.push(user)
+        }
+      }
+      return { users }
     } catch (error) {
       context.logger.debug('Failed to check existing users', { error })
       return { users: [] }
@@ -33,7 +59,7 @@ export class PostgresUsersStep extends ConfigurationStep {
 
   protected getDesiredState(context: StepContext): { users: string[] } {
     return {
-      users: [context.servarrType],
+      users: this.getDesiredUsers(context),
     }
   }
 
@@ -59,11 +85,7 @@ export class PostgresUsersStep extends ConfigurationStep {
     }
 
     for (const username of desired.users) {
-      // Bazarr uses a single database, not the _main/_log pattern
-      const databases =
-        context.servarrType === 'bazarr'
-          ? ['bazarr']
-          : [`${context.servarrType}_main`, `${context.servarrType}_log`]
+      const databases = this.getDatabasesForUser(username, context)
       changes.push({
         type: 'update',
         resource: 'postgres-permissions',
@@ -139,8 +161,11 @@ export class PostgresUsersStep extends ConfigurationStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      const userExists = await context.postgresClient.userExists(context.servarrType)
-      return userExists
+      const desired = this.getDesiredUsers(context)
+      for (const user of desired) {
+        if (!(await context.postgresClient.userExists(user))) return false
+      }
+      return true
     } catch (error) {
       context.logger.debug('PostgreSQL user verification failed', { error })
       return false

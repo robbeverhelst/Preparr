@@ -14,12 +14,7 @@ export class BazarrLanguagesStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   private getLanguagesConfig(context: StepContext): BazarrLanguage[] {
-    // Check nested format (app.bazarr.languages) first, then flat format (app.languages)
-    const nested = context.config.app?.bazarr?.languages
-    if (nested && nested.length > 0) return nested
-    const flat = context.config.app?.languages as Array<{ code: string; name: string }> | undefined
-    if (flat && flat.length > 0) return flat.map((l) => ({ ...l, enabled: true }))
-    return []
+    return context.config.app?.bazarr?.languages ?? []
   }
 
   validatePrerequisites(context: StepContext): boolean {

@@ -16,7 +16,8 @@ export class BazarrConfigFileStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'init'
 
   validatePrerequisites(context: StepContext): boolean {
-    return context.executionMode === 'init' && context.servarrType === 'bazarr'
+    // Only run in init mode for standalone Bazarr deployments
+    return context.executionMode === 'init' && !!context.bazarrClient && !context.servarrClient
   }
 
   async readCurrentState(
@@ -103,7 +104,10 @@ export class BazarrConfigFileStep extends ConfigurationStep {
   }
 
   private async writeBazarrConfig(context: StepContext): Promise<void> {
-    const apiKey = context.config.app?.apiKey || context.config.servarr?.apiKey
+    const apiKey =
+      context.config.services?.bazarr?.apiKey ||
+      context.config.app?.bazarr?.apiKey ||
+      context.config.app?.apiKey
     if (!apiKey) {
       throw new Error('API key is required to write Bazarr config.yaml')
     }

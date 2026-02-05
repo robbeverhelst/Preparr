@@ -13,10 +13,9 @@ export class UserCreationStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    // Skip for Bazarr - it handles users differently
-    if (context.servarrType === 'bazarr') return false
+    if (!context.servarrClient) return false
     // Only run in sidecar mode when Servarr is ready
-    return context.executionMode === 'sidecar' && context.servarrClient.isReady()
+    return context.executionMode === 'sidecar' && context.servarrClient!.isReady()
   }
 
   readCurrentState(context: StepContext): Promise<{ userExists: boolean; username?: string }> {
@@ -71,7 +70,7 @@ export class UserCreationStep extends ConfigurationStep {
           const username = change.details.username as string
 
           // Create the initial user
-          await context.servarrClient.createInitialUser()
+          await context.servarrClient!.createInitialUser()
 
           results.push({
             ...change,
@@ -103,7 +102,7 @@ export class UserCreationStep extends ConfigurationStep {
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
       // Test connection to verify user was created successfully
-      return await context.servarrClient.testConnection()
+      return await context.servarrClient!.testConnection()
     } catch (error) {
       context.logger.debug('User creation verification failed', { error })
       return false

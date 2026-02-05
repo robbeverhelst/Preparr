@@ -15,12 +15,8 @@ export class QualityProfilesStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    // Skip for Bazarr as it doesn't have quality profiles
-    if (context.servarrType === 'bazarr') {
-      return false
-    }
-    // Check if Servarr is ready and API key is available
-    return context.servarrClient.isReady()
+    if (!context.servarrClient) return false
+    return context.servarrClient!.isReady()
   }
 
   readCurrentState(context: StepContext): Promise<QualityProfile[]> {

@@ -14,12 +14,8 @@ export class IndexersStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    // Skip for Bazarr as it doesn't have indexers
-    if (context.servarrType === 'bazarr') {
-      return false
-    }
-    // Check if Servarr is ready and API key is available
-    if (!context.servarrClient.isReady()) {
+    if (!context.servarrClient) return false
+    if (!context.servarrClient!.isReady()) {
       return false
     }
 
@@ -51,7 +47,7 @@ export class IndexersStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<Indexer[]> {
     try {
-      return await context.servarrClient.getIndexers()
+      return await context.servarrClient!.getIndexers()
     } catch (error) {
       context.logger.warn('Failed to read current indexers', { error })
       return []
@@ -153,7 +149,7 @@ export class IndexersStep extends ConfigurationStep {
             fullIndexer: JSON.stringify(desiredIndexer, null, 2),
           })
 
-          await context.servarrClient.addIndexer(desiredIndexer)
+          await context.servarrClient!.addIndexer(desiredIndexer)
           results.push({
             ...change,
             type: 'create',
@@ -165,7 +161,7 @@ export class IndexersStep extends ConfigurationStep {
             appProfileId: desiredIndexer.appProfileId,
           })
         } else if (change.type === 'delete') {
-          await context.servarrClient.removeIndexer(change.identifier)
+          await context.servarrClient!.removeIndexer(change.identifier)
           results.push({
             ...change,
             type: 'delete',

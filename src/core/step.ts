@@ -10,7 +10,7 @@ export interface StepContext {
   servarrType: string
   apiKey?: string | undefined
   postgresClient: PostgresClient
-  servarrClient: ServarrManager
+  servarrClient?: ServarrManager | undefined
   qbittorrentClient?: QBittorrentManager | undefined
   bazarrClient?: BazarrManager | undefined
   logger: typeof logger

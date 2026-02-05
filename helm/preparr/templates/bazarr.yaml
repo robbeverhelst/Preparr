@@ -91,12 +91,10 @@ spec:
           value: {{ .Values.postgresql.auth.database | quote }}
         - name: SERVARR_TYPE
           value: "bazarr"
-        - name: SERVARR_URL
-          value: "http://bazarr:{{ .Values.bazarr.service.webui.port }}"
-        - name: SERVARR_API_KEY
+        - name: BAZARR_URL
+          value: "http://localhost:6767"
+        - name: BAZARR_API_KEY
           value: {{ .Values.bazarr.apiKey | quote }}
-        - name: SERVARR_ADMIN_PASSWORD
-          value: "not-used-for-bazarr"
         - name: CONFIG_PATH
           value: "/config/bazarr-config.json"
         - name: LOG_LEVEL
@@ -123,11 +121,11 @@ spec:
           value: {{ .Values.postgresql.auth.password | quote }}
         - name: POSTGRES_DB
           value: {{ .Values.postgresql.auth.database | quote }}
-        - name: SERVARR_URL
-          value: "http://localhost:{{ .Values.bazarr.service.webui.port }}"
         - name: SERVARR_TYPE
           value: "bazarr"
-        - name: SERVARR_API_KEY
+        - name: BAZARR_URL
+          value: "http://localhost:6767"
+        - name: BAZARR_API_KEY
           value: {{ .Values.bazarr.apiKey | quote }}
         - name: CONFIG_PATH
           value: "/config/bazarr-config.json"

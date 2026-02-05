@@ -20,7 +20,7 @@ export class ApplicationsStep extends ConfigurationStep {
     }
 
     // Check if Servarr is ready and API key is available
-    return context.servarrClient.isReady()
+    return context.servarrClient!.isReady()
   }
 
   async readCurrentState(context: StepContext): Promise<Application[]> {
@@ -124,7 +124,7 @@ export class ApplicationsStep extends ConfigurationStep {
           const application = desiredApplications.find((a) => a.name === change.identifier)
 
           if (application) {
-            await context.servarrClient.addApplication(application)
+            await context.servarrClient!.addApplication(application)
             results.push({
               ...change,
               type: 'create',
@@ -145,11 +145,11 @@ export class ApplicationsStep extends ConfigurationStep {
             typeof change.details?.currentId === 'number' ? change.details.currentId : undefined
 
           if (currentId) {
-            await context.servarrClient.deleteApplication(currentId)
+            await context.servarrClient!.deleteApplication(currentId)
           }
 
           if (application) {
-            await context.servarrClient.addApplication(application)
+            await context.servarrClient!.addApplication(application)
             results.push({
               ...change,
               type: 'update',
@@ -171,7 +171,7 @@ export class ApplicationsStep extends ConfigurationStep {
           const application = currentApplications.find((a) => a.name === change.identifier)
 
           if (application?.id) {
-            await context.servarrClient.deleteApplication(application.id)
+            await context.servarrClient!.deleteApplication(application.id)
             results.push({
               ...change,
               type: 'delete',

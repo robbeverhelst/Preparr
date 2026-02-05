@@ -14,18 +14,17 @@ export class RootFoldersStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    // Skip for Prowlarr and Bazarr as they don't have root folders
-    if (context.servarrType === 'prowlarr' || context.servarrType === 'bazarr') {
-      return false
-    }
+    if (!context.servarrClient) return false
+    // Skip for Prowlarr as it doesn't have root folders
+    if (context.servarrType === 'prowlarr') return false
 
     // Check if Servarr is ready and API key is available
-    return context.servarrClient.isReady()
+    return context.servarrClient!.isReady()
   }
 
   async readCurrentState(context: StepContext): Promise<RootFolder[]> {
     try {
-      return await context.servarrClient.getRootFolders()
+      return await context.servarrClient!.getRootFolders()
     } catch (error) {
       context.logger.warn('Failed to read current root folders', { error })
       return []
@@ -102,7 +101,7 @@ export class RootFoldersStep extends ConfigurationStep {
             unmappedFolders: [],
           }
 
-          await context.servarrClient.addRootFolder(folder)
+          await context.servarrClient!.addRootFolder(folder)
           results.push({
             ...change,
             type: 'create',
@@ -112,7 +111,7 @@ export class RootFoldersStep extends ConfigurationStep {
             path: folder.path,
           })
         } else if (change.type === 'delete') {
-          await context.servarrClient.removeRootFolder(change.identifier)
+          await context.servarrClient!.removeRootFolder(change.identifier)
           results.push({
             ...change,
             type: 'delete',

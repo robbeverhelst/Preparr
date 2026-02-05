@@ -14,12 +14,12 @@ export class MediaManagementStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Check if Servarr is ready
-    if (!context.servarrClient.isReady()) {
+    if (!context.servarrClient!.isReady()) {
       return false
     }
 
     // Check if media management config is supported
-    const capabilities = context.servarrClient.getCapabilities()
+    const capabilities = context.servarrClient!.getCapabilities()
     if (!capabilities.hasMediaManagement) {
       context.logger.debug('Media management config not supported for this Servarr type')
       return false
@@ -38,7 +38,7 @@ export class MediaManagementStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<MediaManagementConfig | null> {
     try {
-      return await context.servarrClient.getMediaManagementConfig()
+      return await context.servarrClient!.getMediaManagementConfig()
     } catch (error) {
       context.logger.warn('Failed to read current media management config', { error })
       return null
@@ -109,7 +109,7 @@ export class MediaManagementStep extends ConfigurationStep {
     for (const change of changes) {
       try {
         if (change.type === 'update' && desired) {
-          await context.servarrClient.updateMediaManagementConfig(desired)
+          await context.servarrClient!.updateMediaManagementConfig(desired)
           results.push({ ...change, type: 'update' })
           context.logger.info('Media management config updated successfully', {
             changedFields: change.details?.changedFields,

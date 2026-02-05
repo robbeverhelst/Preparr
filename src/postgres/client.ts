@@ -108,6 +108,12 @@ export class PostgresClient {
       throw new Error('Admin database connection not established')
     }
 
+    const exists = await this.databaseExists(dbName)
+    if (exists) {
+      logger.debug('Database already exists', { database: dbName })
+      return
+    }
+
     try {
       await this.withRetry(
         async () => {
@@ -117,12 +123,6 @@ export class PostgresClient {
       )
       logger.info('Database created successfully', { database: dbName })
     } catch (error) {
-      // Check if error is "already exists" which is expected in concurrent scenarios
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      if (errorMessage.includes('already exists')) {
-        logger.debug('Database already exists', { database: dbName })
-        return
-      }
       logger.error('Failed to create database', { database: dbName, error })
       throw error
     }
@@ -153,6 +153,18 @@ export class PostgresClient {
       throw new Error('Admin database connection not established')
     }
 
+    const exists = await this.userExists(username)
+    if (exists) {
+      logger.debug('User already exists', { username })
+      try {
+        await this.adminDb?.unsafe(`ALTER USER ${username} WITH ENCRYPTED PASSWORD '${password}'`)
+        logger.info('User password updated', { username })
+      } catch (updateError) {
+        logger.error('Failed to update user password', { username, error: updateError })
+      }
+      return
+    }
+
     try {
       await this.withRetry(
         async () => {
@@ -165,23 +177,6 @@ export class PostgresClient {
 
       logger.info('User created successfully', { username })
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
-
-      // Check if error is "already exists" - this is expected in concurrent scenarios
-      if (errorMessage.includes('already exists') || errorMessage.includes('duplicate key')) {
-        logger.debug('User already exists', { username })
-
-        // Try to update password in case it changed
-        try {
-          await this.adminDb?.unsafe(`ALTER USER ${username} WITH ENCRYPTED PASSWORD '${password}'`)
-          logger.info('User password updated', { username })
-        } catch (updateError) {
-          logger.error('Failed to update user password', { username, error: updateError })
-          // Don't throw - password update failure isn't critical if user exists
-        }
-        return
-      }
-
       logger.error('Failed to create user', { username, error })
       throw error
     }
@@ -215,10 +210,6 @@ export class PostgresClient {
     try {
       await this.withRetry(
         async () => {
-          // Add a small random delay to reduce thundering herd effect in concurrent scenarios
-          const jitter = Math.random() * 100
-          await new Promise((resolve) => setTimeout(resolve, jitter))
-
           await this.adminDb?.unsafe(`GRANT ALL PRIVILEGES ON DATABASE ${database} TO ${username}`)
           const dbConnection = new SQL(this.getConnectionString(database))
           await dbConnection.unsafe(`GRANT ALL ON SCHEMA public TO ${username}`)

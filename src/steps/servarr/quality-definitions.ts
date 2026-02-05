@@ -14,12 +14,12 @@ export class QualityDefinitionsStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Check if Servarr is ready
-    if (!context.servarrClient.isReady()) {
+    if (!context.servarrClient!.isReady()) {
       return false
     }
 
     // Check if quality definitions are supported
-    const capabilities = context.servarrClient.getCapabilities()
+    const capabilities = context.servarrClient!.getCapabilities()
     if (!capabilities.hasQualityDefinitions) {
       context.logger.debug('Quality definitions not supported for this Servarr type')
       return false
@@ -38,7 +38,7 @@ export class QualityDefinitionsStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<QualityDefinition[]> {
     try {
-      return await context.servarrClient.getQualityDefinitions()
+      return await context.servarrClient!.getQualityDefinitions()
     } catch (error) {
       context.logger.warn('Failed to read current quality definitions', { error })
       return []
@@ -124,7 +124,7 @@ export class QualityDefinitionsStep extends ConfigurationStep {
             )
           }
 
-          await context.servarrClient.updateQualityDefinition(change.identifier, {
+          await context.servarrClient!.updateQualityDefinition(change.identifier, {
             minSize: desiredDef.minSize,
             maxSize: desiredDef.maxSize,
             preferredSize: desiredDef.preferredSize,

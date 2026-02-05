@@ -10,26 +10,62 @@ export class BazarrManager {
     this.config = config
   }
 
-  private getHeaders(): Record<string, string> {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  /**
+   * Build the API URL with apikey as query parameter.
+   * Bazarr requires apikey as a query param for POST requests and supports
+   * it for GET requests as well (more reliable than headers).
+   */
+  private buildUrl(path: string): string {
+    const base = `${this.config.url}/api${path}`
     if (this.config.apiKey) {
-      headers['X-API-KEY'] = this.config.apiKey
+      const separator = base.includes('?') ? '&' : '?'
+      return `${base}${separator}apikey=${this.config.apiKey}`
     }
-    return headers
+    return base
   }
 
-  private async apiCall(method: string, path: string, body?: unknown): Promise<Response> {
-    const url = `${this.config.url}/api${path}`
+  private async apiGet(path: string): Promise<Response> {
+    return await fetch(this.buildUrl(path), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  /**
+   * Post form data to the Bazarr settings API.
+   * Bazarr's POST /api/system/settings expects form-encoded data with
+   * hyphen-separated keys like "settings-sonarr-ip" that map to nested
+   * config sections. Booleans must be lowercase 'true'/'false'.
+   */
+  private async postSettingsForm(data: Record<string, string | string[]>): Promise<Response> {
+    const url = this.buildUrl('/system/settings')
+    const formData = new URLSearchParams()
+
+    for (const [key, value] of Object.entries(data)) {
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          formData.append(key, v)
+        }
+      } else {
+        formData.append(key, value)
+      }
+    }
+
+    logger.debug('Posting settings form data to Bazarr', {
+      url,
+      keys: Object.keys(data),
+    })
+
     return await fetch(url, {
-      method,
-      headers: this.getHeaders(),
-      body: body ? JSON.stringify(body) : undefined,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString(),
     })
   }
 
   async testConnection(): Promise<boolean> {
     try {
-      const response = await this.apiCall('GET', '/system/status')
+      const response = await this.apiGet('/system/status')
       return response.ok || response.status === 401
     } catch (error) {
       logger.debug('Bazarr connection test failed', { error })
@@ -39,10 +75,10 @@ export class BazarrManager {
 
   async ping(): Promise<boolean> {
     try {
-      const response = await this.apiCall('GET', '/system/status')
+      const response = await this.apiGet('/system/status')
       if (!response.ok) return false
-      const data = (await response.json()) as { status?: string }
-      return data.status !== undefined
+      const body = (await response.json()) as { data?: { bazarr_version?: string } }
+      return body.data?.bazarr_version !== undefined
     } catch (error) {
       logger.debug('Bazarr ping failed', { error })
       return false
@@ -51,7 +87,7 @@ export class BazarrManager {
 
   async getSystemStatus(): Promise<unknown> {
     try {
-      const response = await this.apiCall('GET', '/system/status')
+      const response = await this.apiGet('/system/status')
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       return await response.json()
     } catch (error) {
@@ -62,23 +98,40 @@ export class BazarrManager {
 
   async getSettings(): Promise<Record<string, unknown>> {
     try {
-      const response = await this.apiCall('GET', '/system/settings')
+      const response = await this.apiGet('/system/settings')
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      return (await response.json()) as Record<string, unknown>
+      const settings = (await response.json()) as Record<string, unknown>
+      logger.debug('Retrieved Bazarr settings', {
+        sections: Object.keys(settings),
+      })
+      return settings
     } catch (error) {
       logger.error('Failed to get Bazarr settings', { error })
       throw error
     }
   }
 
-  async updateSettings(settings: Record<string, unknown>): Promise<void> {
+  /**
+   * Parse a service URL into host, port, base_url, and ssl components
+   * that match Bazarr's settings structure.
+   */
+  private parseServiceUrl(serviceUrl: string): {
+    host: string
+    port: string
+    basePath: string
+    ssl: boolean
+  } {
     try {
-      const response = await this.apiCall('POST', '/system/settings', settings)
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      logger.info('Bazarr settings updated successfully')
-    } catch (error) {
-      logger.error('Failed to update Bazarr settings', { error })
-      throw error
+      const parsed = new URL(serviceUrl)
+      return {
+        host: parsed.hostname,
+        port: parsed.port || (parsed.protocol === 'https:' ? '443' : '80'),
+        basePath: parsed.pathname === '/' ? '/' : parsed.pathname,
+        ssl: parsed.protocol === 'https:',
+      }
+    } catch {
+      // If URL parsing fails, treat the whole string as a hostname
+      return { host: serviceUrl, port: '8989', basePath: '/', ssl: false }
     }
   }
 
@@ -86,18 +139,23 @@ export class BazarrManager {
     logger.info('Configuring Bazarr Sonarr integration...', { url })
 
     try {
-      const settings = await this.getSettings()
+      const { host, port, basePath, ssl } = this.parseServiceUrl(url)
 
-      // Bazarr stores Sonarr settings under settings.sonarr
-      const sonarrSettings = {
-        ...(settings.sonarr as Record<string, unknown>),
-        ip: url,
-        apikey: apiKey,
-        enabled: true,
+      const response = await this.postSettingsForm({
+        'settings-general-use_sonarr': 'true',
+        'settings-sonarr-ip': host,
+        'settings-sonarr-port': port,
+        'settings-sonarr-base_url': basePath,
+        'settings-sonarr-ssl': ssl ? 'true' : 'false',
+        'settings-sonarr-apikey': apiKey,
+      })
+
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`HTTP ${response.status}: ${body}`)
       }
 
-      await this.updateSettings({ ...settings, sonarr: sonarrSettings })
-      logger.info('Bazarr Sonarr integration configured successfully')
+      logger.info('Bazarr Sonarr integration configured successfully', { host, port })
     } catch (error) {
       logger.error('Failed to configure Bazarr Sonarr integration', { error })
       throw error
@@ -108,18 +166,23 @@ export class BazarrManager {
     logger.info('Configuring Bazarr Radarr integration...', { url })
 
     try {
-      const settings = await this.getSettings()
+      const { host, port, basePath, ssl } = this.parseServiceUrl(url)
 
-      // Bazarr stores Radarr settings under settings.radarr
-      const radarrSettings = {
-        ...(settings.radarr as Record<string, unknown>),
-        ip: url,
-        apikey: apiKey,
-        enabled: true,
+      const response = await this.postSettingsForm({
+        'settings-general-use_radarr': 'true',
+        'settings-radarr-ip': host,
+        'settings-radarr-port': port,
+        'settings-radarr-base_url': basePath,
+        'settings-radarr-ssl': ssl ? 'true' : 'false',
+        'settings-radarr-apikey': apiKey,
+      })
+
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`HTTP ${response.status}: ${body}`)
       }
 
-      await this.updateSettings({ ...settings, radarr: radarrSettings })
-      logger.info('Bazarr Radarr integration configured successfully')
+      logger.info('Bazarr Radarr integration configured successfully', { host, port })
     } catch (error) {
       logger.error('Failed to configure Bazarr Radarr integration', { error })
       throw error
@@ -128,14 +191,17 @@ export class BazarrManager {
 
   async getLanguages(): Promise<BazarrLanguage[]> {
     try {
-      const response = await this.apiCall('GET', '/languages')
+      const response = await this.apiGet('/system/languages')
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const data = (await response.json()) as { language?: Array<{ code: string; name: string }> }
-      if (!data.language) return []
-      return data.language.map((lang) => ({
-        code: lang.code,
-        name: lang.name,
-        enabled: true,
+      const raw = (await response.json()) as Array<Record<string, unknown>>
+
+      // Bazarr returns a flat array: [{name, code2, code3, enabled}, ...]
+      if (!Array.isArray(raw)) return []
+
+      return raw.map((lang) => ({
+        code: (lang.code2 as string) || '',
+        name: (lang.name as string) || '',
+        enabled: lang.enabled === true,
       }))
     } catch (error) {
       logger.error('Failed to get Bazarr languages', { error })
@@ -147,13 +213,21 @@ export class BazarrManager {
     logger.info('Configuring Bazarr languages...', { count: languages.length })
 
     try {
-      const settings = await this.getSettings()
+      // Bazarr uses "languages-enabled" form field as a list of language codes
+      const languageCodes = languages.map((lang) => lang.code)
 
-      // Convert BazarrLanguage[] to language setting format
-      const languageSetting = languages.map((lang) => lang.code)
+      const response = await this.postSettingsForm({
+        'languages-enabled': languageCodes,
+      })
 
-      await this.updateSettings({ ...settings, language: languageSetting })
-      logger.info('Bazarr languages configured successfully')
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`HTTP ${response.status}: ${body}`)
+      }
+
+      logger.info('Bazarr languages configured successfully', {
+        languages: languageCodes.join(', '),
+      })
     } catch (error) {
       logger.error('Failed to configure Bazarr languages', { error })
       throw error
@@ -162,12 +236,16 @@ export class BazarrManager {
 
   async getProviders(): Promise<BazarrProvider[]> {
     try {
-      const response = await this.apiCall('GET', '/providers')
+      const response = await this.apiGet('/providers')
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const data = (await response.json()) as { provider?: Array<{ name: string }> }
-      if (!data.provider) return []
-      return data.provider.map((prov) => ({
-        name: prov.name,
+      const raw = (await response.json()) as { data?: Array<Record<string, unknown>> }
+
+      // Bazarr returns providers wrapped in { data: [...] }
+      const providers = raw.data || []
+      if (!Array.isArray(providers)) return []
+
+      return providers.map((prov) => ({
+        name: (prov.name as string) || '',
         enabled: true,
         settings: {},
       }))
@@ -181,21 +259,21 @@ export class BazarrManager {
     logger.info('Configuring Bazarr subtitle providers...', { count: providers.length })
 
     try {
-      const settings = await this.getSettings()
+      // Bazarr uses "settings-general-enabled_providers" for the provider list
+      const enabledProviders = providers.filter((p) => p.enabled).map((p) => p.name)
 
-      // Update providers in settings
-      // Bazarr stores provider settings under settings.providers.{provider_name}
-      const providersSettings = { ...((settings.providers as Record<string, unknown>) || {}) }
+      const response = await this.postSettingsForm({
+        'settings-general-enabled_providers': enabledProviders,
+      })
 
-      for (const provider of providers) {
-        providersSettings[provider.name] = {
-          enabled: provider.enabled,
-          ...provider.settings,
-        }
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`HTTP ${response.status}: ${body}`)
       }
 
-      await this.updateSettings({ ...settings, providers: providersSettings })
-      logger.info('Bazarr subtitle providers configured successfully')
+      logger.info('Bazarr subtitle providers configured successfully', {
+        providers: enabledProviders.join(', '),
+      })
     } catch (error) {
       logger.error('Failed to configure Bazarr subtitle providers', { error })
       throw error
@@ -206,19 +284,16 @@ export class BazarrManager {
     logger.info('Configuring Bazarr subtitle defaults...')
 
     try {
-      const settings = await this.getSettings()
+      const response = await this.postSettingsForm({
+        'settings-subtitles-hearing_impaired': defaults.seriesType || 'false',
+        'settings-subtitles-upgrade_subs': defaults.searchOnUpgrade ? 'true' : 'false',
+      })
 
-      // Subtitle defaults are stored in various settings fields
-      const updatedSettings = {
-        ...settings,
-        search_on_download: defaults.searchOnDownload,
-        search_on_upgrade: defaults.searchOnUpgrade,
-        // Type preferences (these may need adjustment based on actual Bazarr API)
-        subtitle_default_series: defaults.seriesType,
-        subtitle_default_movie: defaults.movieType,
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`HTTP ${response.status}: ${body}`)
       }
 
-      await this.updateSettings(updatedSettings)
       logger.info('Bazarr subtitle defaults configured successfully')
     } catch (error) {
       logger.error('Failed to configure Bazarr subtitle defaults', { error })

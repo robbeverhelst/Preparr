@@ -14,15 +14,7 @@ export class BazarrProvidersStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   private getProvidersConfig(context: StepContext): BazarrProvider[] {
-    // Check nested format (app.bazarr.providers) first, then flat format (app.providers)
-    const nested = context.config.app?.bazarr?.providers
-    if (nested && nested.length > 0) return nested
-    const flat = context.config.app?.providers as
-      | Array<{ name: string; enabled?: boolean }>
-      | undefined
-    if (flat && flat.length > 0)
-      return flat.map((p) => ({ name: p.name, enabled: p.enabled ?? true, settings: {} }))
-    return []
+    return context.config.app?.bazarr?.providers ?? []
   }
 
   validatePrerequisites(context: StepContext): boolean {

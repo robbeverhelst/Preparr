@@ -13,8 +13,7 @@ export class ServarrConnectivityStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   validatePrerequisites(context: StepContext): boolean {
-    // Skip for Bazarr - it has its own connectivity step
-    if (context.servarrType === 'bazarr') return false
+    if (!context.servarrClient) return false
     if (context.executionMode === 'init') return false
     return context.executionMode === 'sidecar'
   }
@@ -23,12 +22,12 @@ export class ServarrConnectivityStep extends ConfigurationStep {
     context: StepContext,
   ): Promise<{ connected: boolean; type?: string; version?: string }> {
     try {
-      if (!context.servarrClient.isReady()) {
+      if (!context.servarrClient!.isReady()) {
         return { connected: false }
       }
 
-      const connected = await context.servarrClient.testConnection()
-      const type = context.servarrClient.getType()
+      const connected = await context.servarrClient!.testConnection()
+      const type = context.servarrClient!.getType()
 
       return { connected, type }
     } catch (error) {
@@ -86,7 +85,7 @@ export class ServarrConnectivityStep extends ConfigurationStep {
       try {
         if (change.type === 'create') {
           // Wait for Servarr to be ready and test connection
-          const connected = await context.servarrClient.testConnection()
+          const connected = await context.servarrClient!.testConnection()
           if (connected) {
             results.push({
               ...change,
@@ -128,7 +127,7 @@ export class ServarrConnectivityStep extends ConfigurationStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      return await context.servarrClient.testConnection()
+      return await context.servarrClient!.testConnection()
     } catch (error) {
       context.logger.debug('Servarr verification failed', { error })
       return false

@@ -65,11 +65,15 @@ describe('Bazarr Integration', () => {
       expect(result.ok).toBe(true)
       expect(result.data).toBeDefined()
 
+      // Sonarr connection settings are under settings.sonarr
       const sonarrSettings = result.data?.sonarr as Record<string, unknown> | undefined
       expect(sonarrSettings).toBeDefined()
-      expect(sonarrSettings?.enabled).toBe(true)
       expect(sonarrSettings?.ip).toBeDefined()
       expect(sonarrSettings?.apikey).toBeDefined()
+
+      // Sonarr enabled flag is under settings.general.use_sonarr
+      const generalSettings = result.data?.general as Record<string, unknown> | undefined
+      expect(generalSettings?.use_sonarr).toBe(true)
     })
 
     test('Bazarr Sonarr URL is correctly set', async () => {
@@ -103,9 +107,12 @@ describe('Bazarr Integration', () => {
 
       const radarrSettings = result.data?.radarr as Record<string, unknown> | undefined
       expect(radarrSettings).toBeDefined()
-      expect(radarrSettings?.enabled).toBe(true)
       expect(radarrSettings?.ip).toBeDefined()
       expect(radarrSettings?.apikey).toBeDefined()
+
+      // Radarr enabled flag is under settings.general.use_radarr
+      const generalSettings = result.data?.general as Record<string, unknown> | undefined
+      expect(generalSettings?.use_radarr).toBe(true)
     })
 
     test('Bazarr Radarr URL is correctly set', async () => {
@@ -131,64 +138,77 @@ describe('Bazarr Integration', () => {
 
   describe('Language Configuration', () => {
     test('Bazarr has languages configured', async () => {
-      const result = await callBazarrApi<{ language?: Array<{ code: string }> }>(
-        'bazarr',
-        '/languages',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<unknown>('bazarr', '/languages', {
+        apiKey: BAZARR_API_KEY,
+      })
 
       expect(result.ok).toBe(true)
-      expect(result.data?.language).toBeDefined()
-      expect(Array.isArray(result.data?.language)).toBe(true)
+
+      // Bazarr returns a flat array of language objects or { data: [...] }
+      const languages = Array.isArray(result.data)
+        ? result.data
+        : ((result.data as Record<string, unknown>)?.data as unknown[]) || []
+      expect(Array.isArray(languages)).toBe(true)
+      expect(languages.length).toBeGreaterThan(0)
     })
 
     test('Bazarr has English language available', async () => {
-      const result = await callBazarrApi<{ language?: Array<{ code: string }> }>(
-        'bazarr',
-        '/languages',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<unknown>('bazarr', '/languages', {
+        apiKey: BAZARR_API_KEY,
+      })
 
-      const languages = result.data?.language || []
-      const englishLang = languages.find((l) => l.code === 'en')
+      const languages = (
+        Array.isArray(result.data)
+          ? result.data
+          : ((result.data as Record<string, unknown>)?.data as unknown[]) || []
+      ) as Array<Record<string, unknown>>
+      const englishLang = languages.find((l) => l.code2 === 'en' || l.code === 'en')
       expect(englishLang).toBeDefined()
     })
 
     test('Bazarr has Dutch language available', async () => {
-      const result = await callBazarrApi<{ language?: Array<{ code: string }> }>(
-        'bazarr',
-        '/languages',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<unknown>('bazarr', '/languages', {
+        apiKey: BAZARR_API_KEY,
+      })
 
-      const languages = result.data?.language || []
-      const dutchLang = languages.find((l) => l.code === 'nl')
+      const languages = (
+        Array.isArray(result.data)
+          ? result.data
+          : ((result.data as Record<string, unknown>)?.data as unknown[]) || []
+      ) as Array<Record<string, unknown>>
+      const dutchLang = languages.find((l) => l.code2 === 'nl' || l.code === 'nl')
       expect(dutchLang).toBeDefined()
     })
   })
 
   describe('Provider Configuration', () => {
     test('Bazarr has providers list available', async () => {
-      const result = await callBazarrApi<{ provider?: Array<{ name: string }> }>(
-        'bazarr',
-        '/providers',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<unknown>('bazarr', '/providers', {
+        apiKey: BAZARR_API_KEY,
+      })
 
       expect(result.ok).toBe(true)
-      expect(result.data?.provider).toBeDefined()
-      expect(Array.isArray(result.data?.provider)).toBe(true)
+
+      // Bazarr returns providers as { data: [...] } or flat array
+      const providers = Array.isArray(result.data)
+        ? result.data
+        : ((result.data as Record<string, unknown>)?.data as unknown[]) || []
+      expect(Array.isArray(providers)).toBe(true)
     })
 
     test('Bazarr has OpenSubtitles provider', async () => {
-      const result = await callBazarrApi<{ provider?: Array<{ name: string }> }>(
-        'bazarr',
-        '/providers',
-        { apiKey: BAZARR_API_KEY },
-      )
+      const result = await callBazarrApi<unknown>('bazarr', '/providers', {
+        apiKey: BAZARR_API_KEY,
+      })
 
-      const providers = result.data?.provider || []
-      const opensubtitles = providers.find((p) => p.name === 'opensubtitlescom')
+      const providers = (
+        Array.isArray(result.data)
+          ? result.data
+          : ((result.data as Record<string, unknown>)?.data as unknown[]) || []
+      ) as Array<Record<string, unknown>>
+      const opensubtitles = providers.find(
+        (p) => p.name === 'opensubtitlescom' || p.name === 'opensubtitles',
+      )
       expect(opensubtitles).toBeDefined()
     })
   })

@@ -23,30 +23,15 @@ export class BazarrIntegrationStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
   private getIntegrationConfig(context: StepContext): BazarrIntegrationDesired {
-    // Check nested format (app.bazarr.sonarr/radarr) first, then flat format (app.integrations.sonarr/radarr)
     const bazarrConfig = context.config.app?.bazarr
     const desired: BazarrIntegrationDesired = {}
 
     if (bazarrConfig?.sonarr) {
       desired.sonarr = { ...bazarrConfig.sonarr }
-    } else {
-      const integrations = context.config.app?.integrations as
-        | Record<string, { enabled?: boolean; url?: string; apiKey?: string }>
-        | undefined
-      if (integrations?.sonarr?.enabled && integrations.sonarr.url && integrations.sonarr.apiKey) {
-        desired.sonarr = { url: integrations.sonarr.url, apiKey: integrations.sonarr.apiKey }
-      }
     }
 
     if (bazarrConfig?.radarr) {
       desired.radarr = { ...bazarrConfig.radarr }
-    } else {
-      const integrations = context.config.app?.integrations as
-        | Record<string, { enabled?: boolean; url?: string; apiKey?: string }>
-        | undefined
-      if (integrations?.radarr?.enabled && integrations.radarr.url && integrations.radarr.apiKey) {
-        desired.radarr = { url: integrations.radarr.url, apiKey: integrations.radarr.apiKey }
-      }
     }
 
     return desired
@@ -65,12 +50,12 @@ export class BazarrIntegrationStep extends ConfigurationStep {
       }
 
       const settings = await context.bazarrClient.getSettings()
-      const sonarrSettings = settings.sonarr as Record<string, unknown> | undefined
-      const radarrSettings = settings.radarr as Record<string, unknown> | undefined
+      // In Bazarr, the enabled flag is under general.use_sonarr / general.use_radarr
+      const generalSettings = settings.general as Record<string, unknown> | undefined
 
       return {
-        sonarrConfigured: sonarrSettings?.enabled === true,
-        radarrConfigured: radarrSettings?.enabled === true,
+        sonarrConfigured: generalSettings?.use_sonarr === true,
+        radarrConfigured: generalSettings?.use_radarr === true,
       }
     } catch (error) {
       context.logger.debug('Failed to read Bazarr integration state', { error })
@@ -172,14 +157,15 @@ export class BazarrIntegrationStep extends ConfigurationStep {
       const settings = await context.bazarrClient.getSettings()
       const desired = this.getDesiredState(context)
 
+      // In Bazarr, the enabled flag is under general.use_sonarr / general.use_radarr
+      const generalSettings = settings.general as Record<string, unknown> | undefined
+
       if (desired.sonarr) {
-        const sonarrSettings = settings.sonarr as Record<string, unknown> | undefined
-        if (!sonarrSettings?.enabled) return false
+        if (!generalSettings?.use_sonarr) return false
       }
 
       if (desired.radarr) {
-        const radarrSettings = settings.radarr as Record<string, unknown> | undefined
-        if (!radarrSettings?.enabled) return false
+        if (!generalSettings?.use_radarr) return false
       }
 
       return true

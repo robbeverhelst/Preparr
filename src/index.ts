@@ -21,22 +21,27 @@ class PrepArrNew {
     this.health = new HealthServer(this.config.health.port)
   }
 
+  private get isBazarrDeployment(): boolean {
+    return this.config.servarr.type === 'bazarr'
+  }
+
   private createBazarrClient(): BazarrManager | undefined {
-    if (this.config.servarr.type === 'bazarr') {
-      // This IS a Bazarr deployment - use servarr config for URL and API key
+    if (this.isBazarrDeployment) {
+      // Standalone Bazarr deployment - PrepArr sidecar alongside Bazarr container
+      const bazarrConfig = this.config.services?.bazarr
+      const apiKey = bazarrConfig?.apiKey || this.config.app?.bazarr?.apiKey
       return new BazarrManager({
-        url: this.config.servarr.url || 'http://localhost:6767',
-        ...(this.config.servarr.apiKey ? { apiKey: this.config.servarr.apiKey } : {}),
+        url: bazarrConfig?.url || 'http://localhost:6767',
+        ...(apiKey ? { apiKey } : {}),
       })
     }
-    // Non-Bazarr deployment that might reference an external Bazarr
-    const bazarrConfig = this.config.services?.bazarr || this.config.app?.bazarr
-    return bazarrConfig?.url
-      ? new BazarrManager({
-          url: bazarrConfig.url,
-          ...(bazarrConfig.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
-        })
-      : undefined
+    // Remote service mode - Servarr deployment that also configures a remote Bazarr
+    const bazarrConfig = this.config.services?.bazarr
+    if (!bazarrConfig?.url) return undefined
+    return new BazarrManager({
+      url: bazarrConfig.url,
+      ...(bazarrConfig.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
+    })
   }
 
   async initializeInfrastructure(): Promise<void> {
@@ -46,7 +51,9 @@ class PrepArrNew {
     })
 
     try {
-      const servarrClient = new ServarrManager(this.config.servarr)
+      const servarrClient = this.isBazarrDeployment
+        ? undefined
+        : new ServarrManager(this.config.servarr)
       const bazarrClient = this.createBazarrClient()
 
       const context = new ContextBuilder()
@@ -101,15 +108,14 @@ class PrepArrNew {
     this.health.start()
 
     try {
-      const servarrClient = new ServarrManager(this.config.servarr)
-
-      // Bazarr uses BazarrManager, not ServarrManager for API communication
-      if (this.config.servarr.type !== 'bazarr') {
+      let servarrClient: ServarrManager | undefined
+      if (!this.isBazarrDeployment) {
+        servarrClient = new ServarrManager(this.config.servarr)
         await servarrClient.initializeSidecarMode()
       }
 
       const bazarrClient = this.createBazarrClient()
-      if (this.config.servarr.type === 'bazarr' && bazarrClient) {
+      if (bazarrClient) {
         await bazarrClient.initialize()
       }
 

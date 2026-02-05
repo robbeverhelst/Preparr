@@ -294,18 +294,18 @@ bazarr:
     enabled: false
   config:
     apiKey: "e2e33333333333333333333333333333"
-    languages:
-      - code: "en"
-        name: "English"
-    providers:
-      - name: "opensubtitles"
-        enabled: true
-    integrations:
+    bazarr:
+      languages:
+        - code: "en"
+          name: "English"
+        - code: "nl"
+          name: "Dutch"
+      providers:
+        - name: "opensubtitlescom"
+          enabled: true
       sonarr:
-        enabled: true
         url: "http://sonarr:8989"
         apiKey: "e2e11111111111111111111111111111"
       radarr:
-        enabled: true
         url: "http://radarr:7878"
         apiKey: "e2e22222222222222222222222222222"

@@ -14,12 +14,12 @@ export class NamingConfigStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Check if Servarr is ready
-    if (!context.servarrClient.isReady()) {
+    if (!context.servarrClient!.isReady()) {
       return false
     }
 
     // Check if naming config is supported
-    const capabilities = context.servarrClient.getCapabilities()
+    const capabilities = context.servarrClient!.getCapabilities()
     if (!capabilities.hasNamingConfig) {
       context.logger.debug('Naming config not supported for this Servarr type')
       return false
@@ -38,7 +38,7 @@ export class NamingConfigStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<NamingConfig | null> {
     try {
-      return await context.servarrClient.getNamingConfig()
+      return await context.servarrClient!.getNamingConfig()
     } catch (error) {
       context.logger.warn('Failed to read current naming config', { error })
       return null
@@ -107,7 +107,7 @@ export class NamingConfigStep extends ConfigurationStep {
     for (const change of changes) {
       try {
         if (change.type === 'update' && desired) {
-          await context.servarrClient.updateNamingConfig(desired)
+          await context.servarrClient!.updateNamingConfig(desired)
           results.push({ ...change, type: 'update' })
           context.logger.info('Naming config updated successfully', {
             changedFields: change.details?.changedFields,

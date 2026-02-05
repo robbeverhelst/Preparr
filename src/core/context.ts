@@ -37,7 +37,7 @@ export class ContextBuilder {
     return this
   }
 
-  setServarrClient(client: ServarrManager): this {
+  setServarrClient(client?: ServarrManager): this {
     this.context.servarrClient = client
     return this
   }
@@ -76,8 +76,8 @@ export class ContextBuilder {
     if (!this.context.postgresClient) {
       throw new Error('PostgreSQL client is required')
     }
-    if (!this.context.servarrClient) {
-      throw new Error('Servarr client is required')
+    if (!this.context.servarrClient && !this.context.bazarrClient) {
+      throw new Error('At least one of Servarr client or Bazarr client is required')
     }
     if (!this.context.servarrType) {
       throw new Error('Servarr type is required')

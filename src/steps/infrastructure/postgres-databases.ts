@@ -22,15 +22,22 @@ export class PostgresDatabasesStep extends ConfigurationStep {
     return context.executionMode === 'init'
   }
 
-  private getDatabaseNames(servarrType: string): string[] {
-    // Bazarr uses a single database, not the _main/_log pattern
-    if (servarrType === 'bazarr') return ['bazarr']
-    return [`${servarrType}_main`, `${servarrType}_log`]
+  private getDatabaseNames(context: StepContext): string[] {
+    const databases: string[] = []
+    // Servarr databases when we have a servarr client (not bazarr standalone)
+    if (context.servarrClient) {
+      databases.push(`${context.servarrType}_main`, `${context.servarrType}_log`)
+    }
+    // Bazarr uses a single database (standalone or remote service mode)
+    if (context.bazarrClient) {
+      databases.push('bazarr')
+    }
+    return databases
   }
 
   async readCurrentState(context: StepContext): Promise<{ databases: string[] }> {
     try {
-      const desired = this.getDatabaseNames(context.servarrType)
+      const desired = this.getDatabaseNames(context)
       const databases: string[] = []
 
       for (const db of desired) {
@@ -48,7 +55,7 @@ export class PostgresDatabasesStep extends ConfigurationStep {
 
   protected getDesiredState(context: StepContext): { databases: string[] } {
     return {
-      databases: this.getDatabaseNames(context.servarrType),
+      databases: this.getDatabaseNames(context),
     }
   }
 
@@ -118,7 +125,7 @@ export class PostgresDatabasesStep extends ConfigurationStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      const desired = this.getDatabaseNames(context.servarrType)
+      const desired = this.getDatabaseNames(context)
       for (const db of desired) {
         if (!(await context.postgresClient.databaseExists(db))) return false
       }

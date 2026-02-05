@@ -107,24 +107,22 @@ export class ServarrManager {
 
   constructor(config: ServarrConfig, configPath?: string) {
     this.config = config
-    const defaultPath =
-      config.type === 'bazarr' ? '/config/config/config.yaml' : '/config/config.xml'
-    this.configPath = configPath || process.env.SERVARR_CONFIG_PATH || defaultPath
+    this.configPath = configPath || process.env.SERVARR_CONFIG_PATH || '/config/config.xml'
     this.capabilities = this.getClientCapabilities()
   }
 
   private getClientCapabilities(): ClientCapabilities {
     const type = this.config.type
     return {
-      hasRootFolders: type !== 'prowlarr' && type !== 'qbittorrent' && type !== 'bazarr',
-      hasDownloadClients: type !== 'qbittorrent' && type !== 'bazarr',
+      hasRootFolders: type !== 'prowlarr' && type !== 'qbittorrent',
+      hasDownloadClients: type !== 'qbittorrent',
       hasApplications: type === 'prowlarr',
-      hasQualityProfiles: type !== 'prowlarr' && type !== 'qbittorrent' && type !== 'bazarr',
+      hasQualityProfiles: type !== 'prowlarr' && type !== 'qbittorrent',
       hasCustomFormats: type === 'sonarr' || type === 'radarr',
       hasReleaseProfiles: type === 'sonarr',
-      hasNamingConfig: type !== 'prowlarr' && type !== 'qbittorrent' && type !== 'bazarr',
-      hasMediaManagement: type !== 'prowlarr' && type !== 'qbittorrent' && type !== 'bazarr',
-      hasQualityDefinitions: type !== 'prowlarr' && type !== 'qbittorrent' && type !== 'bazarr',
+      hasNamingConfig: type !== 'prowlarr' && type !== 'qbittorrent',
+      hasMediaManagement: type !== 'prowlarr' && type !== 'qbittorrent',
+      hasQualityDefinitions: type !== 'prowlarr' && type !== 'qbittorrent',
     }
   }
 
@@ -271,7 +269,7 @@ export class ServarrManager {
         apiKey: this.config.apiKey || '',
       }
 
-      const servarrTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr', 'bazarr']
+      const servarrTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr']
 
       for (const type of servarrTypes) {
         try {
@@ -348,8 +346,6 @@ export class ServarrManager {
       const url = (this.config.url || '').toLowerCase()
 
       for (const type of servarrTypes) {
-        // Skip 'bazarr' in URL detection since it's not a standard Servarr app
-        if (type === 'bazarr') continue
         if (url.includes(type)) {
           logger.info('Detected Servarr type from URL', { detectedType: type })
           return type
@@ -387,22 +383,13 @@ export class ServarrManager {
       if (await configFile.exists()) {
         const content = await configFile.text()
 
-        if (this.config.type === 'bazarr') {
-          // Bazarr uses config.yaml with auth.apikey
-          const apiKeyMatch = content.match(/apikey:\s*(.+)/)
-          if (apiKeyMatch?.[1]) {
-            return apiKeyMatch[1].trim()
-          }
-        } else {
-          // Other Servarr apps use config.xml with <ApiKey>
-          const apiKeyMatch = content.match(/<ApiKey>([^<]+)<\/ApiKey>/)
-          if (apiKeyMatch?.[1]) {
-            return apiKeyMatch[1]
-          }
+        const apiKeyMatch = content.match(/<ApiKey>([^<]+)<\/ApiKey>/)
+        if (apiKeyMatch?.[1]) {
+          return apiKeyMatch[1]
         }
       }
     } catch (error) {
-      logger.debug('Could not read existing config file', { error, path: this.configPath })
+      logger.debug('Could not read existing config.xml', { error, path: this.configPath })
     }
     return null
   }
@@ -432,8 +419,6 @@ export class ServarrManager {
         return new ReadarrClient(clientConfig)
       case 'prowlarr':
         return new ProwlarrClient(clientConfig)
-      case 'bazarr':
-        throw new Error('Bazarr should use BazarrManager, not ServarrManager')
       case 'auto':
         throw new Error('Type must be detected before creating client')
       default:
@@ -522,7 +507,7 @@ export class ServarrManager {
     if (this.config.type === 'auto') {
       await this.waitForStartup()
       const detectedType = await this.detectServarrType()
-      const validTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr', 'bazarr'] as const
+      const validTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr'] as const
 
       if (!validTypes.includes(detectedType as (typeof validTypes)[number])) {
         throw new Error(`Unsupported Servarr type detected: ${detectedType}`)
