@@ -111,6 +111,7 @@ jobs:
           echo "Collecting PrepArr sidecar logs..."
           for app in sonarr radarr prowlarr bazarr; do
             kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-init --tail=500 > ./e2e-logs/${app}-preparr-init.log 2>&1 || true
+            kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-sidecar --tail=500 > ./e2e-logs/${app}-preparr-sidecar.log 2>&1 || true
             kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c $app --tail=200 > ./e2e-logs/${app}-app.log 2>&1 || true
           done
 

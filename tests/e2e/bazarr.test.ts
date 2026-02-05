@@ -4,7 +4,13 @@
  */
 
 import { beforeAll, describe, expect, test } from 'bun:test'
-import { callBazarrApi, getInitContainerExitCode, waitForBazarrApi } from './utils'
+import {
+  callBazarrApi,
+  getInitContainerExitCode,
+  HEALTH_PORTS,
+  NAMESPACE,
+  waitForBazarrApi,
+} from './utils'
 
 const BAZARR_API_KEY = 'e2e33333333333333333333333333333'
 
@@ -215,7 +221,9 @@ describe('Bazarr Integration', () => {
 
   describe('PrepArr Health', () => {
     test('PrepArr health check passes for Bazarr', async () => {
-      const result = await fetch('http://localhost:9002/health')
+      const result = await fetch(
+        `http://bazarr.${NAMESPACE}.svc.cluster.local:${HEALTH_PORTS.bazarr}/health`,
+      )
       expect(result.ok).toBe(true)
 
       const health = (await result.json()) as Record<string, unknown>

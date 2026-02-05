@@ -28,7 +28,7 @@ export const HEALTH_PORTS = {
   sonarr: 9001,
   radarr: 9001,
   prowlarr: 9001,
-  bazarr: 9002,
+  bazarr: 9001,
 } as const
 
 export type ServiceName = keyof typeof PORTS
@@ -214,7 +214,7 @@ export async function callBazarrApi<T = unknown>(
   options?: { apiKey?: string } & RequestInit,
 ): Promise<{ ok: boolean; status: number; data: T | null; error?: string }> {
   const { apiKey = API_KEYS.bazarr, ...requestOptions } = options || {}
-  const url = `${getServiceUrl('bazarr')}${path}`
+  const url = `${getServiceUrl('bazarr')}/api${path}`
 
   try {
     const response = await fetch(url, {
