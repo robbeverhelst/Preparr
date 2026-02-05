@@ -133,7 +133,21 @@ spec:
           value: {{ .Values.preparr.health.port | quote }}
         - name: LOG_LEVEL
           value: {{ .Values.preparr.logLevel | quote }}
-        command: ["bun", "run", "dist/index.js"]
+        command:
+          - sh
+          - -c
+          - |
+            echo "Waiting for Bazarr API to be ready..."
+            for i in $(seq 1 60); do
+              if curl -s http://localhost:6767/ > /dev/null 2>&1; then
+                echo "Bazarr API is ready!"
+                break
+              fi
+              echo "Attempt $i/60: Bazarr not ready yet, waiting..."
+              sleep 2
+            done
+            echo "Starting PrepArr sidecar..."
+            exec bun run dist/index.js
         ports:
         - name: health
           containerPort: {{ .Values.preparr.health.port }}
