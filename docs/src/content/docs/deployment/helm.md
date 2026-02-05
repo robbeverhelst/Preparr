@@ -14,18 +14,11 @@ The Helm chart deploys a complete media automation stack including PostgreSQL, q
 ## Quick Start
 
 ```bash
-# Add the Helm repository
-helm repo add preparr https://robbeverhelst.github.io/Preparr
-helm repo update
-
 # Install with default values
-helm install my-media-stack preparr/preparr
+helm install my-media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version>
 
 # Or install with custom values
-helm install my-media-stack preparr/preparr -f custom-values.yaml
-
-# View all available versions
-helm search repo preparr --versions
+helm install my-media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version> -f custom-values.yaml
 ```
 
 The chart is also available on [ArtifactHub](https://artifacthub.io/packages/helm/preparr/preparr).
@@ -164,7 +157,7 @@ prowlarr:
 
 ```bash
 # Upgrade with new values
-helm upgrade media-stack preparr/preparr -f values.yaml
+helm upgrade media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version> -f values.yaml
 
 # Uninstall
 helm uninstall media-stack

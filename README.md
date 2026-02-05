@@ -226,15 +226,11 @@ Each service gets its own init + sidecar containers managing separate config fil
 ### Helm Chart (Recommended)
 
 ```bash
-# Add the Helm repository
-helm repo add preparr https://robbeverhelst.github.io/Preparr
-helm repo update
-
 # Install the complete stack
-helm install my-media-stack preparr/preparr
+helm install my-media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version>
 
 # Or with custom values
-helm install my-media-stack preparr/preparr -f custom-values.yaml
+helm install my-media-stack oci://ghcr.io/robbeverhelst/charts/preparr --version <version> -f custom-values.yaml
 ```
 
 Find the chart on [ArtifactHub](https://artifacthub.io/packages/helm/preparr/preparr) or see the [Helm chart documentation](helm/preparr/README.md).
