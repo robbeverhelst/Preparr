@@ -8,7 +8,7 @@ global:
 preparr:
   image:
     repository: ghcr.io/robbeverhelst/preparr
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
     tag: "latest"
   health:
     port: 9001
