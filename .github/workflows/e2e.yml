@@ -75,6 +75,7 @@ jobs:
             --set preparr.image.tag=${{ env.IMAGE_TAG }} \
             --set global.namespace=${{ env.NAMESPACE }} \
             --namespace ${{ env.NAMESPACE }} \
+            --create-namespace \
             --wait \
             --timeout 25m
           echo "Helm deployment completed. Current pod status:"
