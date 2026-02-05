@@ -116,8 +116,10 @@ export class BazarrConfigFileStep extends ConfigurationStep {
     const postgresPort = context.config.postgres.port
     const postgresPassword = context.config.postgres.password
 
+    const yamlQuote = (v: string) => `'${v.replace(/'/g, "''")}'`
+
     const configYaml = `auth:
-  apikey: ${apiKey}
+  apikey: ${yamlQuote(apiKey)}
   password: ''
   type: null
   username: ''
@@ -127,11 +129,11 @@ general:
   base_url: /
 postgresql:
   enabled: true
-  host: ${postgresHost}
+  host: ${yamlQuote(postgresHost)}
   port: ${postgresPort}
   database: bazarr
   username: bazarr
-  password: ${postgresPassword}
+  password: ${yamlQuote(postgresPassword)}
 `
 
     // Ensure directory exists

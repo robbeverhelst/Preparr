@@ -31,7 +31,7 @@ export class DownloadClientsStep extends ConfigurationStep {
     }
     try {
       context.logger.info('Reading current download clients...')
-      const result = await context.servarrClient!.getDownloadClients()
+      const result = await this.requireServarrClient(context).getDownloadClients()
       context.logger.info('Current download clients read', { count: result.length })
       return result
     } catch (error) {
@@ -222,11 +222,11 @@ export class DownloadClientsStep extends ConfigurationStep {
             context.logger.info('About to call addDownloadClient', {
               clientName: client.name,
               hasServarrClient: !!context.servarrClient,
-              servarrClientType: context.servarrClient!.constructor?.name,
+              servarrClientType: this.requireServarrClient(context).constructor?.name,
             })
 
             try {
-              await context.servarrClient!.addDownloadClient(client)
+              await this.requireServarrClient(context).addDownloadClient(client)
               results.push({
                 ...change,
                 type: 'create',
@@ -264,8 +264,8 @@ export class DownloadClientsStep extends ConfigurationStep {
             try {
               // For updates, we need to remove the old client and add the new one
               // since Servarr doesn't have a direct update API for download clients
-              await context.servarrClient!.removeDownloadClient(change.identifier)
-              await context.servarrClient!.addDownloadClient(client)
+              await this.requireServarrClient(context).removeDownloadClient(change.identifier)
+              await this.requireServarrClient(context).addDownloadClient(client)
 
               results.push({
                 ...change,
@@ -292,7 +292,7 @@ export class DownloadClientsStep extends ConfigurationStep {
             )
           }
         } else if (change.type === 'delete') {
-          await context.servarrClient!.removeDownloadClient(change.identifier)
+          await this.requireServarrClient(context).removeDownloadClient(change.identifier)
           results.push({
             ...change,
             type: 'delete',

@@ -52,7 +52,7 @@ export class BazarrManager {
     }
 
     logger.debug('Posting settings form data to Bazarr', {
-      url,
+      path: '/system/settings',
       keys: Object.keys(data),
     })
 
@@ -322,11 +322,19 @@ export class BazarrManager {
   async waitForStartup(maxRetries = 30, retryDelay = 2000): Promise<void> {
     logger.info('Waiting for Bazarr to start...', { url: this.config.url })
 
-    await withRetry(() => this.testConnection(), {
-      maxAttempts: maxRetries,
-      delayMs: retryDelay,
-      operation: 'bazarr-startup',
-    })
+    await withRetry(
+      async () => {
+        const connected = await this.testConnection()
+        if (!connected) {
+          throw new Error('Bazarr is not responding')
+        }
+      },
+      {
+        maxAttempts: maxRetries,
+        delayMs: retryDelay,
+        operation: 'bazarr-startup',
+      },
+    )
 
     logger.info('Bazarr is ready')
   }

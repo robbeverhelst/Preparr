@@ -602,11 +602,18 @@ lidarr:
 # Bazarr configuration (subtitle management)
 bazarr:
   enabled: false
+  replicaCount: 1
+
   image:
     repository: linuxserver/bazarr
     tag: latest
 
   apiKey: "your-bazarr-api-key"
+
+  auth:
+    existingSecret: ""
+    secretKeys:
+      apiKeyKey: api-key
 
   service:
     type: NodePort
@@ -619,6 +626,12 @@ bazarr:
     PUID: "1000"
     PGID: "1000"
 
+  securityContext: {}
+  podSecurityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
   resources:
     requests:
       memory: "128Mi"
@@ -627,28 +640,28 @@ bazarr:
       memory: "512Mi"
       cpu: "500m"
 
-  configStorage:
-    enabled: false
-    size: 5Gi
-    accessModes:
-      - ReadWriteOnce
+  reconciliation:
+    watch: true
+    interval: 60
+
+  extraVolumes: []
+  extraVolumeMounts: []
+  envFrom: []
 
   config:
     apiKey: "your-bazarr-api-key"
-    languages:
-      - code: "en"
-        name: "English"
-      - code: "es"
-        name: "Spanish"
-    providers:
-      - name: "opensubtitles"
-        enabled: true
-    integrations:
+    bazarr:
+      languages:
+        - code: "en"
+          name: "English"
+        - code: "es"
+          name: "Spanish"
+      providers:
+        - name: "opensubtitles"
+          enabled: true
       sonarr:
-        enabled: true
         url: "http://sonarr:8989"
         apiKey: "your-sonarr-api-key"
       radarr:
-        enabled: true
         url: "http://radarr:7878"
         apiKey: "your-radarr-api-key"

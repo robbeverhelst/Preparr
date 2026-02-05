@@ -47,7 +47,7 @@ export class IndexersStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<Indexer[]> {
     try {
-      return await context.servarrClient!.getIndexers()
+      return await this.requireServarrClient(context).getIndexers()
     } catch (error) {
       context.logger.warn('Failed to read current indexers', { error })
       return []
@@ -149,7 +149,7 @@ export class IndexersStep extends ConfigurationStep {
             fullIndexer: JSON.stringify(desiredIndexer, null, 2),
           })
 
-          await context.servarrClient!.addIndexer(desiredIndexer)
+          await this.requireServarrClient(context).addIndexer(desiredIndexer)
           results.push({
             ...change,
             type: 'create',
@@ -161,7 +161,7 @@ export class IndexersStep extends ConfigurationStep {
             appProfileId: desiredIndexer.appProfileId,
           })
         } else if (change.type === 'delete') {
-          await context.servarrClient!.removeIndexer(change.identifier)
+          await this.requireServarrClient(context).removeIndexer(change.identifier)
           results.push({
             ...change,
             type: 'delete',

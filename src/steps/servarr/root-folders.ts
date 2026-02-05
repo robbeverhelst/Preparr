@@ -24,7 +24,7 @@ export class RootFoldersStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<RootFolder[]> {
     try {
-      return await context.servarrClient!.getRootFolders()
+      return await this.requireServarrClient(context).getRootFolders()
     } catch (error) {
       context.logger.warn('Failed to read current root folders', { error })
       return []
@@ -101,7 +101,7 @@ export class RootFoldersStep extends ConfigurationStep {
             unmappedFolders: [],
           }
 
-          await context.servarrClient!.addRootFolder(folder)
+          await this.requireServarrClient(context).addRootFolder(folder)
           results.push({
             ...change,
             type: 'create',
@@ -111,7 +111,7 @@ export class RootFoldersStep extends ConfigurationStep {
             path: folder.path,
           })
         } else if (change.type === 'delete') {
-          await context.servarrClient!.removeRootFolder(change.identifier)
+          await this.requireServarrClient(context).removeRootFolder(change.identifier)
           results.push({
             ...change,
             type: 'delete',

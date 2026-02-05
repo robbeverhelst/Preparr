@@ -70,7 +70,7 @@ export class UserCreationStep extends ConfigurationStep {
           const username = change.details.username as string
 
           // Create the initial user
-          await context.servarrClient!.createInitialUser()
+          await this.requireServarrClient(context).createInitialUser()
 
           results.push({
             ...change,
@@ -102,7 +102,7 @@ export class UserCreationStep extends ConfigurationStep {
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
       // Test connection to verify user was created successfully
-      return await context.servarrClient!.testConnection()
+      return await this.requireServarrClient(context).testConnection()
     } catch (error) {
       context.logger.debug('User creation verification failed', { error })
       return false

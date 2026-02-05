@@ -42,23 +42,31 @@ export class BazarrLanguagesStep extends ConfigurationStep {
   compareAndPlan(current: BazarrLanguage[], desired: BazarrLanguage[]): ChangeRecord[] {
     const changes: ChangeRecord[] = []
 
-    const currentCodes = new Set(current.map((l) => l.code))
+    const currentByCode = new Map(current.map((l) => [l.code, l]))
     const desiredCodes = new Set(desired.map((l) => l.code))
 
-    // Check for new languages to add
+    // Check for new languages to add or existing ones needing update
     for (const lang of desired) {
-      if (!currentCodes.has(lang.code)) {
+      const existing = currentByCode.get(lang.code)
+      if (!existing) {
         changes.push({
           type: 'create',
           resource: 'bazarr-language',
           identifier: lang.code,
           details: { name: lang.name },
         })
+      } else if (existing.enabled !== (lang.enabled ?? true)) {
+        changes.push({
+          type: 'update',
+          resource: 'bazarr-language',
+          identifier: lang.code,
+          details: { name: lang.name, enabled: lang.enabled ?? true },
+        })
       }
     }
 
     // Check for languages to remove
-    for (const code of currentCodes) {
+    for (const [code] of currentByCode) {
       if (!desiredCodes.has(code)) {
         changes.push({
           type: 'delete',

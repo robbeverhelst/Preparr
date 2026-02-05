@@ -124,7 +124,7 @@ export class ApplicationsStep extends ConfigurationStep {
           const application = desiredApplications.find((a) => a.name === change.identifier)
 
           if (application) {
-            await context.servarrClient!.addApplication(application)
+            await this.requireServarrClient(context).addApplication(application)
             results.push({
               ...change,
               type: 'create',
@@ -145,11 +145,11 @@ export class ApplicationsStep extends ConfigurationStep {
             typeof change.details?.currentId === 'number' ? change.details.currentId : undefined
 
           if (currentId) {
-            await context.servarrClient!.deleteApplication(currentId)
+            await this.requireServarrClient(context).deleteApplication(currentId)
           }
 
           if (application) {
-            await context.servarrClient!.addApplication(application)
+            await this.requireServarrClient(context).addApplication(application)
             results.push({
               ...change,
               type: 'update',
@@ -171,7 +171,7 @@ export class ApplicationsStep extends ConfigurationStep {
           const application = currentApplications.find((a) => a.name === change.identifier)
 
           if (application?.id) {
-            await context.servarrClient!.deleteApplication(application.id)
+            await this.requireServarrClient(context).deleteApplication(application.id)
             results.push({
               ...change,
               type: 'delete',

@@ -20,7 +20,7 @@ export class CustomFormatsStep extends ConfigurationStep {
     }
 
     // Only supported for Radarr and Sonarr
-    const capabilities = context.servarrClient!.getCapabilities()
+    const capabilities = this.requireServarrClient(context).getCapabilities()
     if (!capabilities.hasCustomFormats) {
       context.logger.debug('Custom formats not supported for this Servarr type')
       return false
@@ -39,7 +39,7 @@ export class CustomFormatsStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<CustomFormat[]> {
     try {
-      return await context.servarrClient!.getCustomFormats()
+      return await this.requireServarrClient(context).getCustomFormats()
     } catch (error) {
       context.logger.warn('Failed to read current custom formats', { error })
       return []
@@ -151,7 +151,7 @@ export class CustomFormatsStep extends ConfigurationStep {
             throw new Error(`Could not find custom format ${change.identifier} in desired state`)
           }
 
-          await context.servarrClient!.addCustomFormat(desiredFormat)
+          await this.requireServarrClient(context).addCustomFormat(desiredFormat)
           results.push({ ...change, type: 'create' })
           context.logger.info('Custom format added successfully', { name: desiredFormat.name })
         } else if (change.type === 'update') {
@@ -162,7 +162,10 @@ export class CustomFormatsStep extends ConfigurationStep {
             throw new Error(`Could not find custom format ${change.identifier} for update`)
           }
 
-          await context.servarrClient!.updateCustomFormat(existingFormat.id, desiredFormat)
+          await this.requireServarrClient(context).updateCustomFormat(
+            existingFormat.id,
+            desiredFormat,
+          )
           results.push({ ...change, type: 'update' })
           context.logger.info('Custom format updated successfully', { name: desiredFormat.name })
         } else if (change.type === 'delete') {
@@ -171,7 +174,7 @@ export class CustomFormatsStep extends ConfigurationStep {
             throw new Error(`No ID found for custom format ${change.identifier}`)
           }
 
-          await context.servarrClient!.deleteCustomFormat(id)
+          await this.requireServarrClient(context).deleteCustomFormat(id)
           results.push({ ...change, type: 'delete' })
           context.logger.info('Custom format deleted successfully', { name: change.identifier })
         }

@@ -275,6 +275,10 @@ bazarr:
     tag: latest
     pullPolicy: IfNotPresent
   apiKey: "e2e33333333333333333333333333333"
+  auth:
+    existingSecret: ""
+    secretKeys:
+      apiKeyKey: api-key
   service:
     type: ClusterIP
     webui:
@@ -283,6 +287,7 @@ bazarr:
     TZ: UTC
     PUID: "1000"
     PGID: "1000"
+  securityContext: {}
   resources:
     requests:
       memory: "128Mi"
@@ -290,8 +295,9 @@ bazarr:
     limits:
       memory: "256Mi"
       cpu: "250m"
-  configStorage:
-    enabled: false
+  reconciliation:
+    watch: true
+    interval: 60
   config:
     apiKey: "e2e33333333333333333333333333333"
     bazarr:
