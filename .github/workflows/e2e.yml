@@ -61,6 +61,13 @@ jobs:
           docker push ghcr.io/robbeverhelst/preparr:${{ env.IMAGE_TAG }}
           echo "Docker image built and pushed: ghcr.io/robbeverhelst/preparr:${{ env.IMAGE_TAG }}"
 
+      - name: Clean up stale resources
+        run: |
+          kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait --no-hooks 2>/dev/null || true
+          kubectl delete configmap,secret,svc,deploy,statefulset,pvc --all -n ${{ env.NAMESPACE }} --wait 2>/dev/null || true
+          echo "Namespace cleaned"
+
       - name: Deploy stack via Helm
         run: |
           helm upgrade --install ${{ env.RELEASE_NAME }} ./helm/preparr \
