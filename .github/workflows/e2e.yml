@@ -7,6 +7,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: e2e-tests
+  cancel-in-progress: true
+
 jobs:
   e2e:
     runs-on: arc-preparr
