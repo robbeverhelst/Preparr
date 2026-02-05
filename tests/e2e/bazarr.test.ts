@@ -182,34 +182,31 @@ describe('Bazarr Integration', () => {
   })
 
   describe('Provider Configuration', () => {
-    test('Bazarr has providers list available', async () => {
-      const result = await callBazarrApi<unknown>('bazarr', '/providers', {
+    test('Bazarr has providers configured', async () => {
+      const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
         apiKey: BAZARR_API_KEY,
       })
 
       expect(result.ok).toBe(true)
 
-      // Bazarr returns providers as { data: [...] } or flat array
-      const providers = Array.isArray(result.data)
-        ? result.data
-        : ((result.data as Record<string, unknown>)?.data as unknown[]) || []
-      expect(Array.isArray(providers)).toBe(true)
+      const generalSettings = result.data?.general as Record<string, unknown> | undefined
+      const enabledProviders = generalSettings?.enabled_providers as string[] | undefined
+      expect(Array.isArray(enabledProviders)).toBe(true)
+      expect(enabledProviders!.length).toBeGreaterThan(0)
     })
 
-    test('Bazarr has OpenSubtitles provider', async () => {
-      const result = await callBazarrApi<unknown>('bazarr', '/providers', {
+    test('Bazarr has OpenSubtitles provider enabled', async () => {
+      const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
         apiKey: BAZARR_API_KEY,
       })
 
-      const providers = (
-        Array.isArray(result.data)
-          ? result.data
-          : ((result.data as Record<string, unknown>)?.data as unknown[]) || []
-      ) as Array<Record<string, unknown>>
-      const opensubtitles = providers.find(
-        (p) => p.name === 'opensubtitlescom' || p.name === 'opensubtitles',
+      const generalSettings = result.data?.general as Record<string, unknown> | undefined
+      const enabledProviders = generalSettings?.enabled_providers as string[] | undefined
+      expect(enabledProviders).toBeDefined()
+      const hasOpenSubtitles = enabledProviders!.some(
+        (p) => p === 'opensubtitlescom' || p === 'opensubtitles',
       )
-      expect(opensubtitles).toBeDefined()
+      expect(hasOpenSubtitles).toBe(true)
     })
   })
 
