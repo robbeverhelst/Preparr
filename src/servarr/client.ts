@@ -107,7 +107,8 @@ export class ServarrManager {
 
   constructor(config: ServarrConfig, configPath?: string) {
     this.config = config
-    this.configPath = configPath || process.env.SERVARR_CONFIG_PATH || '/config/config.xml'
+    const defaultPath = config.type === 'bazarr' ? '/config/config/config.yaml' : '/config/config.xml'
+    this.configPath = configPath || process.env.SERVARR_CONFIG_PATH || defaultPath
     this.capabilities = this.getClientCapabilities()
   }
 
@@ -384,13 +385,23 @@ export class ServarrManager {
       const configFile = file(this.configPath)
       if (await configFile.exists()) {
         const content = await configFile.text()
-        const apiKeyMatch = content.match(/<ApiKey>([^<]+)<\/ApiKey>/)
-        if (apiKeyMatch?.[1]) {
-          return apiKeyMatch[1]
+
+        if (this.config.type === 'bazarr') {
+          // Bazarr uses config.yaml with auth.apikey
+          const apiKeyMatch = content.match(/apikey:\s*(.+)/)
+          if (apiKeyMatch?.[1]) {
+            return apiKeyMatch[1].trim()
+          }
+        } else {
+          // Other Servarr apps use config.xml with <ApiKey>
+          const apiKeyMatch = content.match(/<ApiKey>([^<]+)<\/ApiKey>/)
+          if (apiKeyMatch?.[1]) {
+            return apiKeyMatch[1]
+          }
         }
       }
     } catch (error) {
-      logger.debug('Could not read existing config.xml', { error })
+      logger.debug('Could not read existing config file', { error, path: this.configPath })
     }
     return null
   }

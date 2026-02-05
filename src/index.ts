@@ -21,6 +21,24 @@ class PrepArrNew {
     this.health = new HealthServer(this.config.health.port)
   }
 
+  private createBazarrClient(): BazarrManager | undefined {
+    if (this.config.servarr.type === 'bazarr') {
+      // This IS a Bazarr deployment - use servarr config for URL and API key
+      return new BazarrManager({
+        url: this.config.servarr.url || 'http://localhost:6767',
+        ...(this.config.servarr.apiKey ? { apiKey: this.config.servarr.apiKey } : {}),
+      })
+    }
+    // Non-Bazarr deployment that might reference an external Bazarr
+    const bazarrConfig = this.config.services?.bazarr || this.config.app?.bazarr
+    return bazarrConfig?.url
+      ? new BazarrManager({
+          url: bazarrConfig.url,
+          ...(bazarrConfig.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
+        })
+      : undefined
+  }
+
   async initializeInfrastructure(): Promise<void> {
     logger.info('PrepArr starting infrastructure initialization (new architecture)...', {
       servarrType: this.config.servarr.type,
@@ -29,14 +47,7 @@ class PrepArrNew {
 
     try {
       const servarrClient = new ServarrManager(this.config.servarr)
-
-      const bazarrConfig = this.config.services?.bazarr || this.config.app?.bazarr
-      const bazarrClient = bazarrConfig?.url
-        ? new BazarrManager({
-            url: bazarrConfig.url,
-            ...(bazarrConfig.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
-          })
-        : undefined
+      const bazarrClient = this.createBazarrClient()
 
       const context = new ContextBuilder()
         .setConfig(this.config)
@@ -91,15 +102,16 @@ class PrepArrNew {
 
     try {
       const servarrClient = new ServarrManager(this.config.servarr)
-      await servarrClient.initializeSidecarMode()
 
-      const bazarrConfig = this.config.services?.bazarr || this.config.app?.bazarr
-      const bazarrClient = bazarrConfig?.url
-        ? new BazarrManager({
-            url: bazarrConfig.url,
-            ...(bazarrConfig.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
-          })
-        : undefined
+      // Bazarr uses BazarrManager, not ServarrManager for API communication
+      if (this.config.servarr.type !== 'bazarr') {
+        await servarrClient.initializeSidecarMode()
+      }
+
+      const bazarrClient = this.createBazarrClient()
+      if (this.config.servarr.type === 'bazarr' && bazarrClient) {
+        await bazarrClient.initialize()
+      }
 
       const context = new ContextBuilder()
         .setConfig(this.config)

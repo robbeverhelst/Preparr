@@ -13,11 +13,21 @@ export class BazarrProvidersStep extends ConfigurationStep {
   readonly dependencies: string[] = ['bazarr-connectivity']
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
+  private getProvidersConfig(context: StepContext): BazarrProvider[] {
+    // Check nested format (app.bazarr.providers) first, then flat format (app.providers)
+    const nested = context.config.app?.bazarr?.providers
+    if (nested && nested.length > 0) return nested
+    const flat = context.config.app?.providers as
+      | Array<{ name: string; enabled?: boolean }>
+      | undefined
+    if (flat && flat.length > 0)
+      return flat.map((p) => ({ name: p.name, enabled: p.enabled ?? true, settings: {} }))
+    return []
+  }
+
   validatePrerequisites(context: StepContext): boolean {
-    // Only run if Bazarr is configured and has providers to configure
     if (!context.bazarrClient) return false
-    const bazarrConfig = context.config.app?.bazarr
-    return bazarrConfig?.providers !== undefined && bazarrConfig.providers.length > 0
+    return this.getProvidersConfig(context).length > 0
   }
 
   async readCurrentState(context: StepContext): Promise<BazarrProvider[]> {
@@ -34,8 +44,7 @@ export class BazarrProvidersStep extends ConfigurationStep {
   }
 
   protected getDesiredState(context: StepContext): BazarrProvider[] {
-    const bazarrConfig = context.config.app?.bazarr
-    return bazarrConfig?.providers || []
+    return this.getProvidersConfig(context)
   }
 
   compareAndPlan(current: BazarrProvider[], desired: BazarrProvider[]): ChangeRecord[] {

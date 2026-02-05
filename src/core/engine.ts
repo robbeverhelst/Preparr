@@ -10,6 +10,7 @@ import { ServarrConnectivityStep } from '@/steps/connectivity/servarr-connectivi
 import { PostgresDatabasesStep } from '@/steps/infrastructure/postgres-databases'
 import { PostgresUsersStep } from '@/steps/infrastructure/postgres-users'
 import { QBittorrentInitStep } from '@/steps/infrastructure/qbittorrent-init'
+import { BazarrConfigFileStep } from '@/steps/infrastructure/bazarr-config-file'
 import { ServarrConfigFileStep } from '@/steps/infrastructure/servarr-config-file'
 import { UserCreationStep } from '@/steps/infrastructure/user-creation'
 import { QBittorrentConfigStep } from '@/steps/integrations/qbittorrent-config'
@@ -69,6 +70,7 @@ export class ConfigurationEngine {
       this.registry.register(new PostgresDatabasesStep())
       this.registry.register(new PostgresUsersStep())
       this.registry.register(new ServarrConfigFileStep())
+      this.registry.register(new BazarrConfigFileStep())
       this.registry.register(new UserCreationStep())
       this.registry.register(new QBittorrentInitStep())
       this.registry.register(new ConfigLoadingStep())

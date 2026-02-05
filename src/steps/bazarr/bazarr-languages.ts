@@ -13,11 +13,18 @@ export class BazarrLanguagesStep extends ConfigurationStep {
   readonly dependencies: string[] = ['bazarr-connectivity']
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
+  private getLanguagesConfig(context: StepContext): BazarrLanguage[] {
+    // Check nested format (app.bazarr.languages) first, then flat format (app.languages)
+    const nested = context.config.app?.bazarr?.languages
+    if (nested && nested.length > 0) return nested
+    const flat = context.config.app?.languages as Array<{ code: string; name: string }> | undefined
+    if (flat && flat.length > 0) return flat.map((l) => ({ ...l, enabled: true }))
+    return []
+  }
+
   validatePrerequisites(context: StepContext): boolean {
-    // Only run if Bazarr is configured and has languages to configure
     if (!context.bazarrClient) return false
-    const bazarrConfig = context.config.app?.bazarr
-    return bazarrConfig?.languages !== undefined && bazarrConfig.languages.length > 0
+    return this.getLanguagesConfig(context).length > 0
   }
 
   async readCurrentState(context: StepContext): Promise<BazarrLanguage[]> {
@@ -34,8 +41,7 @@ export class BazarrLanguagesStep extends ConfigurationStep {
   }
 
   protected getDesiredState(context: StepContext): BazarrLanguage[] {
-    const bazarrConfig = context.config.app?.bazarr
-    return bazarrConfig?.languages || []
+    return this.getLanguagesConfig(context)
   }
 
   compareAndPlan(current: BazarrLanguage[], desired: BazarrLanguage[]): ChangeRecord[] {

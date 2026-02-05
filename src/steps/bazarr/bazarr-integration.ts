@@ -22,11 +22,40 @@ export class BazarrIntegrationStep extends ConfigurationStep {
   readonly dependencies: string[] = ['bazarr-connectivity']
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
-  validatePrerequisites(context: StepContext): boolean {
-    // Only run if Bazarr is configured and has integration config
-    if (!context.bazarrClient) return false
+  private getIntegrationConfig(context: StepContext): BazarrIntegrationDesired {
+    // Check nested format (app.bazarr.sonarr/radarr) first, then flat format (app.integrations.sonarr/radarr)
     const bazarrConfig = context.config.app?.bazarr
-    return !!bazarrConfig?.sonarr || !!bazarrConfig?.radarr
+    const desired: BazarrIntegrationDesired = {}
+
+    if (bazarrConfig?.sonarr) {
+      desired.sonarr = { ...bazarrConfig.sonarr }
+    } else {
+      const integrations = context.config.app?.integrations as
+        | Record<string, { enabled?: boolean; url?: string; apiKey?: string }>
+        | undefined
+      if (integrations?.sonarr?.enabled && integrations.sonarr.url && integrations.sonarr.apiKey) {
+        desired.sonarr = { url: integrations.sonarr.url, apiKey: integrations.sonarr.apiKey }
+      }
+    }
+
+    if (bazarrConfig?.radarr) {
+      desired.radarr = { ...bazarrConfig.radarr }
+    } else {
+      const integrations = context.config.app?.integrations as
+        | Record<string, { enabled?: boolean; url?: string; apiKey?: string }>
+        | undefined
+      if (integrations?.radarr?.enabled && integrations.radarr.url && integrations.radarr.apiKey) {
+        desired.radarr = { url: integrations.radarr.url, apiKey: integrations.radarr.apiKey }
+      }
+    }
+
+    return desired
+  }
+
+  validatePrerequisites(context: StepContext): boolean {
+    if (!context.bazarrClient) return false
+    const desired = this.getIntegrationConfig(context)
+    return !!desired.sonarr || !!desired.radarr
   }
 
   async readCurrentState(context: StepContext): Promise<BazarrIntegrationState> {
@@ -50,17 +79,7 @@ export class BazarrIntegrationStep extends ConfigurationStep {
   }
 
   protected getDesiredState(context: StepContext): BazarrIntegrationDesired {
-    const bazarrConfig = context.config.app?.bazarr
-    const desired: BazarrIntegrationDesired = {}
-
-    if (bazarrConfig?.sonarr) {
-      desired.sonarr = { ...bazarrConfig.sonarr }
-    }
-    if (bazarrConfig?.radarr) {
-      desired.radarr = { ...bazarrConfig.radarr }
-    }
-
-    return desired
+    return this.getIntegrationConfig(context)
   }
 
   compareAndPlan(
