@@ -1,3 +1,11 @@
+# [0.16.0](https://github.com/robbeverhelst/Preparr/compare/v0.15.0...v0.16.0) (2026-02-05)
+
+
+### Features
+
+* **bazarr:** Add Bazarr support to PrepArr ([#48](https://github.com/robbeverhelst/Preparr/issues/48)) ([d21bf3e](https://github.com/robbeverhelst/Preparr/commit/d21bf3eb0db80a78e5ff3c3d1b4a91627053ae7a)), closes [#47](https://github.com/robbeverhelst/Preparr/issues/47)
+* migrate Helm chart distribution to OCI registry ([#51](https://github.com/robbeverhelst/Preparr/issues/51)) ([a42e6d4](https://github.com/robbeverhelst/Preparr/commit/a42e6d4a9aa41766858f586adef95d25f6d9055b))
+
 # [0.15.0](https://github.com/robbeverhelst/Preparr/compare/v0.14.0...v0.15.0) (2026-02-04)
 
 
