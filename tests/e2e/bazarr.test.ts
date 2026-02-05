@@ -138,45 +138,45 @@ describe('Bazarr Integration', () => {
 
   describe('Language Configuration', () => {
     test('Bazarr has languages configured', async () => {
-      const result = await callBazarrApi<unknown>('bazarr', '/languages', {
-        apiKey: BAZARR_API_KEY,
-      })
+      const result = await callBazarrApi<Array<Record<string, unknown>>>(
+        'bazarr',
+        '/system/languages',
+        { apiKey: BAZARR_API_KEY },
+      )
 
       expect(result.ok).toBe(true)
+      expect(Array.isArray(result.data)).toBe(true)
 
-      // Bazarr returns a flat array of language objects or { data: [...] }
-      const languages = Array.isArray(result.data)
-        ? result.data
-        : ((result.data as Record<string, unknown>)?.data as unknown[]) || []
-      expect(Array.isArray(languages)).toBe(true)
-      expect(languages.length).toBeGreaterThan(0)
+      // Filter to only enabled languages
+      const enabledLanguages = (result.data ?? []).filter((l) => l.enabled === true)
+      expect(enabledLanguages.length).toBeGreaterThan(0)
     })
 
-    test('Bazarr has English language available', async () => {
-      const result = await callBazarrApi<unknown>('bazarr', '/languages', {
-        apiKey: BAZARR_API_KEY,
-      })
+    test('Bazarr has English language enabled', async () => {
+      const result = await callBazarrApi<Array<Record<string, unknown>>>(
+        'bazarr',
+        '/system/languages',
+        { apiKey: BAZARR_API_KEY },
+      )
 
-      const languages = (
-        Array.isArray(result.data)
-          ? result.data
-          : ((result.data as Record<string, unknown>)?.data as unknown[]) || []
-      ) as Array<Record<string, unknown>>
-      const englishLang = languages.find((l) => l.code2 === 'en' || l.code === 'en')
+      const languages = result.data ?? []
+      const englishLang = languages.find(
+        (l) => (l.code2 === 'en' || l.code3 === 'eng') && l.enabled === true,
+      )
       expect(englishLang).toBeDefined()
     })
 
-    test('Bazarr has Dutch language available', async () => {
-      const result = await callBazarrApi<unknown>('bazarr', '/languages', {
-        apiKey: BAZARR_API_KEY,
-      })
+    test('Bazarr has Dutch language enabled', async () => {
+      const result = await callBazarrApi<Array<Record<string, unknown>>>(
+        'bazarr',
+        '/system/languages',
+        { apiKey: BAZARR_API_KEY },
+      )
 
-      const languages = (
-        Array.isArray(result.data)
-          ? result.data
-          : ((result.data as Record<string, unknown>)?.data as unknown[]) || []
-      ) as Array<Record<string, unknown>>
-      const dutchLang = languages.find((l) => l.code2 === 'nl' || l.code === 'nl')
+      const languages = result.data ?? []
+      const dutchLang = languages.find(
+        (l) => (l.code2 === 'nl' || l.code3 === 'nld') && l.enabled === true,
+      )
       expect(dutchLang).toBeDefined()
     })
   })
