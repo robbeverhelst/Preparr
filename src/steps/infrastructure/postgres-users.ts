@@ -59,13 +59,18 @@ export class PostgresUsersStep extends ConfigurationStep {
     }
 
     for (const username of desired.users) {
+      // Bazarr uses a single database, not the _main/_log pattern
+      const databases =
+        context.servarrType === 'bazarr'
+          ? ['bazarr']
+          : [`${context.servarrType}_main`, `${context.servarrType}_log`]
       changes.push({
         type: 'update',
         resource: 'postgres-permissions',
         identifier: `${username}-permissions`,
         details: {
           username,
-          databases: [`${context.servarrType}_main`, `${context.servarrType}_log`],
+          databases,
         },
       })
     }

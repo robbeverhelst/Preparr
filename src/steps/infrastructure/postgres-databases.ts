@@ -22,17 +22,22 @@ export class PostgresDatabasesStep extends ConfigurationStep {
     return context.executionMode === 'init'
   }
 
+  private getDatabaseNames(servarrType: string): string[] {
+    // Bazarr uses a single database, not the _main/_log pattern
+    if (servarrType === 'bazarr') return ['bazarr']
+    return [`${servarrType}_main`, `${servarrType}_log`]
+  }
+
   async readCurrentState(context: StepContext): Promise<{ databases: string[] }> {
     try {
-      const mainDb = `${context.servarrType}_main`
-      const logDb = `${context.servarrType}_log`
-
-      const mainExists = await context.postgresClient.databaseExists(mainDb)
-      const logExists = await context.postgresClient.databaseExists(logDb)
-
+      const desired = this.getDatabaseNames(context.servarrType)
       const databases: string[] = []
-      if (mainExists) databases.push(mainDb)
-      if (logExists) databases.push(logDb)
+
+      for (const db of desired) {
+        if (await context.postgresClient.databaseExists(db)) {
+          databases.push(db)
+        }
+      }
 
       return { databases }
     } catch (error) {
@@ -43,7 +48,7 @@ export class PostgresDatabasesStep extends ConfigurationStep {
 
   protected getDesiredState(context: StepContext): { databases: string[] } {
     return {
-      databases: [`${context.servarrType}_main`, `${context.servarrType}_log`],
+      databases: this.getDatabaseNames(context.servarrType),
     }
   }
 
@@ -113,13 +118,11 @@ export class PostgresDatabasesStep extends ConfigurationStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      const mainDb = `${context.servarrType}_main`
-      const logDb = `${context.servarrType}_log`
-
-      const mainExists = await context.postgresClient.databaseExists(mainDb)
-      const logExists = await context.postgresClient.databaseExists(logDb)
-
-      return mainExists && logExists
+      const desired = this.getDatabaseNames(context.servarrType)
+      for (const db of desired) {
+        if (!(await context.postgresClient.databaseExists(db))) return false
+      }
+      return true
     } catch (error) {
       context.logger.debug('PostgreSQL database verification failed', { error })
       return false
