@@ -14,9 +14,9 @@ Complete reference for all PrepArr configuration options, environment variables,
 | `POSTGRES_PASSWORD` | ✅ | - | PostgreSQL password |
 | `POSTGRES_DB` | ❌ | `servarr` | PostgreSQL database name |
 | `SERVARR_URL` | ✅ | - | Full URL to Servarr application |
-| `SERVARR_TYPE` | ✅ | - | Service type: `sonarr`, `radarr`, `prowlarr`, `lidarr`, `readarr`, `qbittorrent`, `auto` |
+| `SERVARR_TYPE` | ✅ | - | Service type: `sonarr`, `radarr`, `prowlarr`, `lidarr`, `readarr`, `qbittorrent`, `bazarr`, `auto` |
 | `SERVARR_ADMIN_USER` | ❌ | `admin` | Admin username for Servarr |
-| `SERVARR_ADMIN_PASSWORD` | ✅* | - | Admin password (*required for init containers) |
+| `SERVARR_ADMIN_PASSWORD` | ✅* | - | Admin password (*required for Servarr types, not bazarr/qbittorrent) |
 | `CONFIG_PATH` | ✅ | - | Path to JSON configuration file |
 
 ### Application Behavior
@@ -38,6 +38,8 @@ Complete reference for all PrepArr configuration options, environment variables,
 | `QBITTORRENT_PASSWORD` | ❌ | - | qBittorrent Web UI password |
 | `PROWLARR_URL` | ❌ | - | Prowlarr base URL |
 | `PROWLARR_API_KEY` | ❌ | - | Prowlarr API key |
+| `BAZARR_URL` | ❌ | - | Bazarr base URL |
+| `BAZARR_API_KEY` | ❌ | - | Bazarr API key |
 
 ## JSON Configuration Schema
 
@@ -48,11 +50,12 @@ Complete reference for all PrepArr configuration options, environment variables,
   apiKey?: string                    // Servarr API key (32-char hex)
   prowlarrSync?: boolean            // Enable Prowlarr indexer management (default: false)
   rootFolders?: RootFolder[]        // Media root folders
-  qualityProfiles?: QualityProfile[] // Quality/format profiles  
+  qualityProfiles?: QualityProfile[] // Quality/format profiles
   indexers?: Indexer[]              // Indexer configurations
   downloadClients?: DownloadClient[] // Download client configurations
   applications?: Application[]       // Prowlarr application sync configs
   qbittorrent?: QBittorrentConfig   // qBittorrent-specific settings
+  bazarr?: BazarrConfig             // Bazarr subtitle manager settings
 }
 ```
 
@@ -344,6 +347,87 @@ qBittorrent-specific settings:
 }
 ```
 
+### Bazarr Configuration
+
+Bazarr is a subtitle management application. PrepArr supports two deployment modes:
+
+1. **Standalone mode** (`SERVARR_TYPE=bazarr`): PrepArr runs as a sidecar alongside Bazarr, managing its `config.yaml`, languages, providers, and Sonarr/Radarr integrations.
+2. **Remote service mode**: A Sonarr/Radarr PrepArr instance also configures a remote Bazarr via `BAZARR_URL` and `BAZARR_API_KEY`.
+
+Bazarr configuration lives under the `bazarr` key in the app config:
+
+```typescript
+{
+  bazarr?: {
+    languages?: BazarrLanguage[]       // Languages to enable for subtitles
+    providers?: BazarrProvider[]       // Subtitle provider configurations
+    subtitleDefaults?: SubtitleDefaults // Default subtitle preferences
+    sonarr?: {                         // Sonarr integration
+      url: string                      // Sonarr URL (e.g., "http://sonarr:8989")
+      apiKey: string                   // Sonarr API key
+    }
+    radarr?: {                         // Radarr integration
+      url: string                      // Radarr URL (e.g., "http://radarr:7878")
+      apiKey: string                   // Radarr API key
+    }
+  }
+}
+
+type BazarrLanguage = {
+  code: string        // ISO 639-1 language code (e.g., "en", "nl")
+  name: string        // Language name (e.g., "English", "Dutch")
+  enabled?: boolean   // Whether to enable this language (default: true)
+}
+
+type BazarrProvider = {
+  name: string        // Provider name (e.g., "opensubtitlescom")
+  enabled?: boolean   // Whether to enable this provider (default: true)
+  settings?: Record<string, string | number | boolean> // Provider-specific settings
+}
+
+type SubtitleDefaults = {
+  seriesType?: string       // Series subtitle type (default: "hearing_impaired_preferred")
+  movieType?: string        // Movie subtitle type (default: "hearing_impaired_preferred")
+  searchOnUpgrade?: boolean // Search for subtitles on upgrade (default: true)
+  searchOnDownload?: boolean // Search for subtitles on download (default: true)
+}
+```
+
+**Example**:
+```json
+{
+  "bazarr": {
+    "languages": [
+      { "code": "en", "name": "English" },
+      { "code": "nl", "name": "Dutch" }
+    ],
+    "providers": [
+      { "name": "opensubtitlescom", "enabled": true }
+    ],
+    "sonarr": {
+      "url": "http://sonarr:8989",
+      "apiKey": "your-sonarr-api-key"
+    },
+    "radarr": {
+      "url": "http://radarr:7878",
+      "apiKey": "your-radarr-api-key"
+    }
+  }
+}
+```
+
+**Standalone Bazarr environment variables**:
+```bash
+SERVARR_TYPE=bazarr
+BAZARR_URL=http://localhost:6767
+BAZARR_API_KEY=your-bazarr-api-key
+POSTGRES_HOST=postgres
+POSTGRES_PASSWORD=postgres123
+CONFIG_PATH=/config/bazarr-config.json
+```
+
+Note: When `SERVARR_TYPE=bazarr`, PrepArr writes Bazarr's `config.yaml` during init (including PostgreSQL connection settings and the API key), then configures languages, providers, and Sonarr/Radarr integrations via the Bazarr API in sidecar mode.
+
 ## Configuration Examples
 
 ### Sonarr with Prowlarr Sync
@@ -473,6 +557,31 @@ qBittorrent-specific settings:
       "priority": 2
     }
   ]
+}
+```
+
+### Bazarr with Sonarr/Radarr Integration
+
+```json
+{
+  "apiKey": "e2e33333333333333333333333333333",
+  "bazarr": {
+    "languages": [
+      { "code": "en", "name": "English" },
+      { "code": "nl", "name": "Dutch" }
+    ],
+    "providers": [
+      { "name": "opensubtitlescom", "enabled": true }
+    ],
+    "sonarr": {
+      "url": "http://sonarr:8989",
+      "apiKey": "2bac5d00dca43258313c734821a15c4c"
+    },
+    "radarr": {
+      "url": "http://radarr:7878",
+      "apiKey": "97d741a13af015bf750f857a7e097f20"
+    }
+  }
 }
 ```
 
