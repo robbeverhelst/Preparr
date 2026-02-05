@@ -138,6 +138,22 @@ spec:
         - name: health
           containerPort: {{ .Values.preparr.health.port }}
           protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.preparr.health.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.preparr.health.port }}
+          initialDelaySeconds: 45
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
         volumeMounts:
         - name: bazarr-config-volume
           mountPath: /config
@@ -168,6 +184,13 @@ spec:
         - name: bazarr-config-file
           mountPath: /config/bazarr-config.json
           subPath: bazarr-config.json
+        startupProbe:
+          httpGet:
+            path: /
+            port: 6767
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 30
         readinessProbe:
           httpGet:
             path: /
