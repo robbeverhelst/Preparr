@@ -1,12 +1,12 @@
 import {
   type ChangeRecord,
-  ConfigurationStep,
+  ServarrStep,
   type StepContext,
   type StepResult,
   Warning,
 } from '@/core/step'
 
-export class ServarrConnectivityStep extends ConfigurationStep {
+export class ServarrConnectivityStep extends ServarrStep {
   readonly name = 'servarr-connectivity'
   readonly description = 'Validate Servarr connectivity and API access'
   readonly dependencies: string[] = []
@@ -21,12 +21,12 @@ export class ServarrConnectivityStep extends ConfigurationStep {
     context: StepContext,
   ): Promise<{ connected: boolean; type?: string; version?: string }> {
     try {
-      if (!context.servarrClient.isReady()) {
+      if (!this.client.isReady()) {
         return { connected: false }
       }
 
-      const connected = await context.servarrClient.testConnection()
-      const type = context.servarrClient.getType()
+      const connected = await this.client.testConnection()
+      const type = this.client.getType()
 
       return { connected, type }
     } catch (error) {
@@ -84,7 +84,7 @@ export class ServarrConnectivityStep extends ConfigurationStep {
       try {
         if (change.type === 'create') {
           // Wait for Servarr to be ready and test connection
-          const connected = await context.servarrClient.testConnection()
+          const connected = await this.client.testConnection()
           if (connected) {
             results.push({
               ...change,
@@ -126,7 +126,7 @@ export class ServarrConnectivityStep extends ConfigurationStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      return await context.servarrClient.testConnection()
+      return await this.client.testConnection()
     } catch (error) {
       context.logger.debug('Servarr verification failed', { error })
       return false

@@ -10,6 +10,7 @@ export const API_KEYS = {
   sonarr: 'e2e11111111111111111111111111111',
   radarr: 'e2e22222222222222222222222222222',
   prowlarr: 'e2e00000000000000000000000000000',
+  bazarr: 'e2e33333333333333333333333333333',
 } as const
 
 // Service ports matching values-e2e.yaml
@@ -17,6 +18,7 @@ export const PORTS = {
   sonarr: 8989,
   radarr: 7878,
   prowlarr: 9696,
+  bazarr: 6767,
   qbittorrent: 8080,
   postgres: 5432,
 } as const
@@ -26,10 +28,12 @@ export const HEALTH_PORTS = {
   sonarr: 9001,
   radarr: 9001,
   prowlarr: 9001,
+  bazarr: 9001,
 } as const
 
 export type ServiceName = keyof typeof PORTS
 export type ServarrService = 'sonarr' | 'radarr' | 'prowlarr'
+export type BazarrService = 'bazarr'
 
 interface KubectlResult {
   exitCode: number
@@ -202,6 +206,48 @@ export async function waitForDeployment(
 }
 
 /**
+ * Call a Bazarr API endpoint
+ */
+export async function callBazarrApi<T = unknown>(
+  _service: BazarrService,
+  path: string,
+  options?: { apiKey?: string } & RequestInit,
+): Promise<{ ok: boolean; status: number; data: T | null; error?: string }> {
+  const { apiKey = API_KEYS.bazarr, ...requestOptions } = options || {}
+  const url = `${getServiceUrl('bazarr')}/api${path}`
+
+  try {
+    const response = await fetch(url, {
+      ...requestOptions,
+      headers: {
+        'X-API-KEY': apiKey,
+        'Content-Type': 'application/json',
+        ...requestOptions?.headers,
+      },
+    })
+
+    let data: T | null = null
+    const contentType = response.headers.get('content-type')
+    if (contentType?.includes('application/json')) {
+      data = (await response.json()) as T
+    }
+
+    return {
+      ok: response.ok,
+      status: response.status,
+      data,
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      data: null,
+      error: error instanceof Error ? error.message : String(error),
+    }
+  }
+}
+
+/**
  * Wait for Servarr API to be accessible
  */
 export async function waitForServarrApi(
@@ -215,6 +261,24 @@ export async function waitForServarrApi(
   await waitForCondition(
     async () => {
       const result = await callServarrApi(service, `/api/${apiVersion}/system/status`)
+      return result.ok
+    },
+    { timeoutMs, description: `${service} API to be accessible` },
+  )
+}
+
+/**
+ * Wait for Bazarr API to be accessible
+ */
+export async function waitForBazarrApi(
+  service: BazarrService,
+  options: { timeoutMs?: number } = {},
+): Promise<void> {
+  const { timeoutMs = 120000 } = options
+
+  await waitForCondition(
+    async () => {
+      const result = await callBazarrApi(service, '/system/status')
       return result.ok
     },
     { timeoutMs, description: `${service} API to be accessible` },

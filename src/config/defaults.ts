@@ -19,6 +19,7 @@ export const defaultConfig: Partial<Config> = {
   services: {
     qbittorrent: undefined,
     prowlarr: undefined,
+    bazarr: undefined,
   },
   health: {
     port: 8080,
@@ -54,6 +55,9 @@ export const envMapping = {
 
   PROWLARR_URL: 'services.prowlarr.url',
   PROWLARR_API_KEY: 'services.prowlarr.apiKey',
+
+  BAZARR_URL: 'services.bazarr.url',
+  BAZARR_API_KEY: 'services.bazarr.apiKey',
 
   APP_API_KEY: 'app.apiKey',
   APP_PROWLARR_SYNC: 'app.prowlarrSync',
@@ -94,6 +98,9 @@ export const cliMapping = {
 
   'prowlarr-url': 'services.prowlarr.url',
   'prowlarr-api-key': 'services.prowlarr.apiKey',
+
+  'bazarr-url': 'services.bazarr.url',
+  'bazarr-api-key': 'services.bazarr.apiKey',
 
   'app-api-key': 'app.apiKey',
   'app-prowlarr-sync': 'app.prowlarrSync',

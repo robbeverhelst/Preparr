@@ -94,12 +94,20 @@ export function validateRequiredFields(config: Partial<Config>): string[] {
     errors.push('postgres.password is required')
   }
 
-  if (!config.servarr?.adminPassword) {
-    errors.push('servarr.adminPassword is required')
+  if (
+    !config.servarr?.adminPassword &&
+    config.servarr?.type !== 'qbittorrent' &&
+    config.servarr?.type !== 'bazarr'
+  ) {
+    errors.push('servarr.adminPassword is required when type is not qbittorrent or bazarr')
   }
 
-  if (!config.servarr?.url && config.servarr?.type !== 'qbittorrent') {
-    errors.push('servarr.url is required when type is not qbittorrent')
+  if (
+    !config.servarr?.url &&
+    config.servarr?.type !== 'qbittorrent' &&
+    config.servarr?.type !== 'bazarr'
+  ) {
+    errors.push('servarr.url is required when type is not qbittorrent or bazarr')
   }
 
   return errors
@@ -222,7 +230,9 @@ export function mergeConfigsWithEnvOverride(
     envConfig.services?.qbittorrent?.password !== undefined ||
     envConfig.services?.qbittorrent?.url !== undefined ||
     envConfig.services?.prowlarr?.apiKey !== undefined ||
-    envConfig.services?.prowlarr?.url !== undefined
+    envConfig.services?.prowlarr?.url !== undefined ||
+    envConfig.services?.bazarr?.apiKey !== undefined ||
+    envConfig.services?.bazarr?.url !== undefined
 
   if (serviceOverrides) {
     result.services = { ...(result.services || {}) } as unknown as Config['services']
@@ -257,6 +267,18 @@ export function mergeConfigsWithEnvOverride(
       ...(result.services?.prowlarr || {}),
       url: envConfig.services.prowlarr.url,
     } as unknown as NonNullable<Config['services']>['prowlarr']
+  }
+  if (envConfig.services?.bazarr?.apiKey !== undefined) {
+    ;(result.services as NonNullable<Config['services']>).bazarr = {
+      ...(result.services?.bazarr || {}),
+      apiKey: envConfig.services.bazarr.apiKey,
+    } as unknown as NonNullable<Config['services']>['bazarr']
+  }
+  if (envConfig.services?.bazarr?.url !== undefined) {
+    ;(result.services as NonNullable<Config['services']>).bazarr = {
+      ...(result.services?.bazarr || {}),
+      url: envConfig.services.bazarr.url,
+    } as unknown as NonNullable<Config['services']>['bazarr']
   }
 
   // Apply other environment overrides

@@ -13,9 +13,9 @@ description: Complete reference for all PrepArr environment variables
 | `POSTGRES_PASSWORD` | Yes | - | PostgreSQL password |
 | `POSTGRES_DB` | No | `servarr` | PostgreSQL database name |
 | `SERVARR_URL` | Yes | - | Full URL to Servarr application (e.g., `http://sonarr:8989`) |
-| `SERVARR_TYPE` | Yes | - | Service type: `sonarr`, `radarr`, `prowlarr`, `lidarr`, `readarr`, `qbittorrent`, `auto` |
+| `SERVARR_TYPE` | Yes | - | Service type: `sonarr`, `radarr`, `prowlarr`, `lidarr`, `readarr`, `qbittorrent`, `bazarr`, `auto` |
 | `SERVARR_ADMIN_USER` | No | `admin` | Admin username for Servarr |
-| `SERVARR_ADMIN_PASSWORD` | Yes* | - | Admin password (*required for init containers) |
+| `SERVARR_ADMIN_PASSWORD` | Yes* | - | Admin password (*required for Servarr types, not bazarr/qbittorrent) |
 | `CONFIG_PATH` | Yes | - | Path to JSON/YAML configuration file |
 
 ## Application Behavior
@@ -37,9 +37,12 @@ description: Complete reference for all PrepArr environment variables
 | `QBITTORRENT_PASSWORD` | No | - | qBittorrent Web UI password |
 | `PROWLARR_URL` | No | - | Prowlarr base URL |
 | `PROWLARR_API_KEY` | No | - | Prowlarr API key |
+| `BAZARR_URL` | No | - | Bazarr base URL |
+| `BAZARR_API_KEY` | No | - | Bazarr API key |
 
 ## Notes
 
 - All environment variables can also be set via [CLI flags](/Preparr/reference/cli/) using kebab-case (e.g., `--postgres-host`)
-- `SERVARR_ADMIN_PASSWORD` is only required for init containers that need to create the admin user
+- `SERVARR_ADMIN_PASSWORD` is only required for Servarr types (sonarr, radarr, prowlarr, etc.), not for bazarr or qbittorrent
 - `SERVARR_TYPE=auto` attempts to detect the service type from the URL
+- When `SERVARR_TYPE=bazarr`, PrepArr manages Bazarr's `config.yaml` (not `config.xml`) and uses `BAZARR_URL`/`BAZARR_API_KEY` for API access

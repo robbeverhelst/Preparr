@@ -250,6 +250,40 @@ Standalone qBittorrent configuration with download categories and preferences.
 - Categories are created automatically in qBittorrent
 - `connection.port` sets the BitTorrent listening port
 
+## bazarr-config.json
+
+Subtitle management with Sonarr and Radarr integration.
+
+```json
+{
+  "apiKey": "your-bazarr-api-key-here",
+  "bazarr": {
+    "languages": [
+      { "code": "en", "name": "English" },
+      { "code": "nl", "name": "Dutch" }
+    ],
+    "providers": [
+      { "name": "opensubtitlescom", "enabled": true }
+    ],
+    "sonarr": {
+      "url": "http://sonarr:8989",
+      "apiKey": "sonarr-api-key"
+    },
+    "radarr": {
+      "url": "http://radarr:7878",
+      "apiKey": "radarr-api-key"
+    }
+  }
+}
+```
+
+**Key points:**
+- Used when `SERVARR_TYPE=bazarr` to configure Bazarr as a standalone service
+- `languages` defines which subtitle languages to enable
+- `providers` configures subtitle download sources (e.g., OpenSubtitles)
+- `sonarr` and `radarr` sections link Bazarr to your existing Servarr instances
+- PrepArr writes Bazarr's `config.yaml` during init (including PostgreSQL settings)
+
 ## Using These Examples
 
 1. Copy the example that matches your setup

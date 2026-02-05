@@ -7,14 +7,17 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  NAMESPACE: preparr-test
-  RELEASE_NAME: preparr-e2e
+concurrency:
+  group: e2e-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   e2e:
     runs-on: arc-preparr
     timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout
@@ -33,33 +36,42 @@ jobs:
         with:
           version: v3.16.0
 
+      - name: Set deployment variables
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUM="${{ github.event.pull_request.number }}"
+            echo "IMAGE_TAG=pr-${PR_NUM}" >> $GITHUB_ENV
+            echo "RELEASE_NAME=preparr-pr-${PR_NUM}" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=sha-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+            echo "RELEASE_NAME=preparr-e2e" >> $GITHUB_ENV
+          fi
+          echo "NAMESPACE=preparr-test" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: bun install
 
       - name: Build PrepArr
         run: bun run build
 
-      - name: Ensure namespace exists
+      - name: Build and push Docker image
         run: |
-          kubectl create namespace ${{ env.NAMESPACE }} 2>/dev/null || true
-
-      - name: Clean previous Helm release
-        run: |
-          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait --no-hooks 2>/dev/null || true
-          kubectl delete all --all -n ${{ env.NAMESPACE }} --grace-period=0 --force 2>/dev/null || true
-          kubectl delete configmap --all -n ${{ env.NAMESPACE }} 2>/dev/null || true
-          kubectl delete secret --all -n ${{ env.NAMESPACE }} 2>/dev/null || true
-          echo "Waiting for resources to be fully cleaned up..."
-          kubectl wait --for=delete pod --all -n ${{ env.NAMESPACE }} --timeout=60s 2>/dev/null || true
-          kubectl wait --for=delete svc --all -n ${{ env.NAMESPACE }} --timeout=30s 2>/dev/null || true
+          docker build -t ghcr.io/robbeverhelst/preparr:${{ env.IMAGE_TAG }} .
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/robbeverhelst/preparr:${{ env.IMAGE_TAG }}
+          echo "Docker image built and pushed: ghcr.io/robbeverhelst/preparr:${{ env.IMAGE_TAG }}"
 
       - name: Deploy stack via Helm
         run: |
           helm upgrade --install ${{ env.RELEASE_NAME }} ./helm/preparr \
             -f helm/preparr/values-e2e.yaml \
+            --set preparr.image.tag=${{ env.IMAGE_TAG }} \
+            --set global.namespace=${{ env.NAMESPACE }} \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
-            --timeout 10m
+            --timeout 25m
+          echo "Helm deployment completed. Current pod status:"
+          kubectl get pods -n ${{ env.NAMESPACE }}
 
       - name: Wait for all pods ready
         run: |
@@ -78,6 +90,9 @@ jobs:
           echo "Waiting for Radarr..."
           kubectl wait --for=condition=ready pod -l app=radarr -n ${{ env.NAMESPACE }} --timeout=180s
 
+          echo "Waiting for Bazarr..."
+          kubectl wait --for=condition=ready pod -l app=bazarr -n ${{ env.NAMESPACE }} --timeout=120s
+
           echo "All pods ready"
 
       - name: Run E2E tests
@@ -91,9 +106,9 @@ jobs:
           mkdir -p ./e2e-logs
 
           echo "Collecting PrepArr sidecar logs..."
-          for app in sonarr radarr prowlarr; do
-            kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-sidecar --tail=500 > ./e2e-logs/${app}-preparr-sidecar.log 2>&1 || true
+          for app in sonarr radarr prowlarr bazarr; do
             kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-init --tail=500 > ./e2e-logs/${app}-preparr-init.log 2>&1 || true
+            kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-sidecar --tail=500 > ./e2e-logs/${app}-preparr-sidecar.log 2>&1 || true
             kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c $app --tail=200 > ./e2e-logs/${app}-app.log 2>&1 || true
           done
 

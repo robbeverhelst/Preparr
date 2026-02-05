@@ -67,6 +67,7 @@
       "style": {
         "noDefaultExport": "error",
         "noNamespace": "error",
+        "noNonNullAssertion": "off",
         "noParameterAssign": "error",
         "useAsConstAssertion": "error",
         "useBlockStatements": "off",

@@ -66,6 +66,7 @@ downloadClients: [...]
 | `qualityDefinitions` | array | Quality size limits |
 | `releaseProfiles` | array | Release scoring (Sonarr only) |
 | `qbittorrent` | object | qBittorrent-specific settings |
+| `bazarr` | object | [Bazarr subtitle manager settings](/Preparr/configuration/bazarr/) |
 
 ## How Reconciliation Works
 

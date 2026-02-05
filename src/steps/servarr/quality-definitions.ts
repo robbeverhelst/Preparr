@@ -1,12 +1,7 @@
 import type { QualityDefinition } from '@/config/schema'
-import {
-  type ChangeRecord,
-  ConfigurationStep,
-  type StepContext,
-  type StepResult,
-} from '@/core/step'
+import { type ChangeRecord, ServarrStep, type StepContext, type StepResult } from '@/core/step'
 
-export class QualityDefinitionsStep extends ConfigurationStep {
+export class QualityDefinitionsStep extends ServarrStep {
   readonly name = 'quality-definitions'
   readonly description = 'Configure Servarr quality definitions (size limits)'
   readonly dependencies: string[] = ['servarr-connectivity']
@@ -14,12 +9,12 @@ export class QualityDefinitionsStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Check if Servarr is ready
-    if (!context.servarrClient.isReady()) {
+    if (!this.client.isReady()) {
       return false
     }
 
     // Check if quality definitions are supported
-    const capabilities = context.servarrClient.getCapabilities()
+    const capabilities = this.client.getCapabilities()
     if (!capabilities.hasQualityDefinitions) {
       context.logger.debug('Quality definitions not supported for this Servarr type')
       return false
@@ -38,7 +33,7 @@ export class QualityDefinitionsStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<QualityDefinition[]> {
     try {
-      return await context.servarrClient.getQualityDefinitions()
+      return await this.client.getQualityDefinitions()
     } catch (error) {
       context.logger.warn('Failed to read current quality definitions', { error })
       return []
@@ -124,7 +119,7 @@ export class QualityDefinitionsStep extends ConfigurationStep {
             )
           }
 
-          await context.servarrClient.updateQualityDefinition(change.identifier, {
+          await this.client.updateQualityDefinition(change.identifier, {
             minSize: desiredDef.minSize,
             maxSize: desiredDef.maxSize,
             preferredSize: desiredDef.preferredSize,

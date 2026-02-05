@@ -29,11 +29,11 @@ postgresql:
     port: 5432
   resources:
     requests:
-      memory: "128Mi"
-      cpu: "50m"
-    limits:
       memory: "256Mi"
-      cpu: "250m"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
   persistence:
     enabled: false
 
@@ -267,3 +267,51 @@ radarr:
 
 lidarr:
   enabled: false
+
+bazarr:
+  enabled: true
+  image:
+    repository: linuxserver/bazarr
+    tag: latest
+    pullPolicy: IfNotPresent
+  apiKey: "e2e33333333333333333333333333333"
+  auth:
+    existingSecret: ""
+    secretKeys:
+      apiKeyKey: api-key
+  service:
+    type: ClusterIP
+    webui:
+      port: 6767
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+  securityContext: {}
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+  reconciliation:
+    watch: true
+    interval: 60
+  config:
+    apiKey: "e2e33333333333333333333333333333"
+    bazarr:
+      languages:
+        - code: "en"
+          name: "English"
+        - code: "nl"
+          name: "Dutch"
+      providers:
+        - name: "opensubtitlescom"
+          enabled: true
+      sonarr:
+        url: "http://sonarr:8989"
+        apiKey: "e2e11111111111111111111111111111"
+      radarr:
+        url: "http://radarr:7878"
+        apiKey: "e2e22222222222222222222222222222"

@@ -13,6 +13,13 @@ qBittorrent config PVC name
 {{- end }}
 
 {{/*
+Bazarr config PVC name
+*/}}
+{{- define "preparr.bazarr.configPvcName" -}}
+{{- printf "%s-bazarr-config" .Release.Name -}}
+{{- end }}
+
+{{/*
 Create a default fully qualified app name.
 */}}
 {{- define "preparr.fullname" -}}

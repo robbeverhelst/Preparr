@@ -1,13 +1,13 @@
 import type { DownloadClient } from '@/config/schema'
 import {
   type ChangeRecord,
-  ConfigurationStep,
+  ServarrStep,
   type StepContext,
   type StepResult,
   type Warning,
 } from '@/core/step'
 
-export class DownloadClientsStep extends ConfigurationStep {
+export class DownloadClientsStep extends ServarrStep {
   readonly name = 'download-clients'
   readonly description = 'Configure Servarr download clients'
   readonly dependencies: string[] = []
@@ -19,7 +19,7 @@ export class DownloadClientsStep extends ConfigurationStep {
       return true
     }
 
-    return context.servarrClient.isReady()
+    return this.client.isReady()
   }
 
   async readCurrentState(context: StepContext): Promise<DownloadClient[]> {
@@ -30,7 +30,7 @@ export class DownloadClientsStep extends ConfigurationStep {
     }
     try {
       context.logger.info('Reading current download clients...')
-      const result = await context.servarrClient.getDownloadClients()
+      const result = await this.client.getDownloadClients()
       context.logger.info('Current download clients read', { count: result.length })
       return result
     } catch (error) {
@@ -221,11 +221,11 @@ export class DownloadClientsStep extends ConfigurationStep {
             context.logger.info('About to call addDownloadClient', {
               clientName: client.name,
               hasServarrClient: !!context.servarrClient,
-              servarrClientType: context.servarrClient?.constructor?.name,
+              servarrClientType: this.client.constructor?.name,
             })
 
             try {
-              await context.servarrClient.addDownloadClient(client)
+              await this.client.addDownloadClient(client)
               results.push({
                 ...change,
                 type: 'create',
@@ -263,8 +263,8 @@ export class DownloadClientsStep extends ConfigurationStep {
             try {
               // For updates, we need to remove the old client and add the new one
               // since Servarr doesn't have a direct update API for download clients
-              await context.servarrClient.removeDownloadClient(change.identifier)
-              await context.servarrClient.addDownloadClient(client)
+              await this.client.removeDownloadClient(change.identifier)
+              await this.client.addDownloadClient(client)
 
               results.push({
                 ...change,
@@ -291,7 +291,7 @@ export class DownloadClientsStep extends ConfigurationStep {
             )
           }
         } else if (change.type === 'delete') {
-          await context.servarrClient.removeDownloadClient(change.identifier)
+          await this.client.removeDownloadClient(change.identifier)
           results.push({
             ...change,
             type: 'delete',

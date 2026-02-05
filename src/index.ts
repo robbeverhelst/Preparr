@@ -1,3 +1,4 @@
+import { BazarrManager } from '@/bazarr/client'
 import { type Config, loadConfigurationSafe } from '@/config'
 import { getEnvironmentInfo } from '@/config/loaders/env'
 import { ContextBuilder } from '@/core/context'
@@ -20,6 +21,28 @@ class PrepArrNew {
     this.health = new HealthServer(this.config.health.port)
   }
 
+  private get isBazarrDeployment(): boolean {
+    return this.config.servarr.type === 'bazarr'
+  }
+
+  private createBazarrClient(): BazarrManager | undefined {
+    const bazarrConfig = this.config.services?.bazarr
+
+    if (this.isBazarrDeployment) {
+      // Standalone Bazarr deployment - PrepArr sidecar alongside Bazarr container
+      return new BazarrManager({
+        url: bazarrConfig?.url || 'http://localhost:6767',
+        ...(bazarrConfig?.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
+      })
+    }
+    // Remote service mode - Servarr deployment that also configures a remote Bazarr
+    if (!bazarrConfig?.url) return undefined
+    return new BazarrManager({
+      url: bazarrConfig.url,
+      ...(bazarrConfig.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
+    })
+  }
+
   async initializeInfrastructure(): Promise<void> {
     logger.info('PrepArr starting infrastructure initialization (new architecture)...', {
       servarrType: this.config.servarr.type,
@@ -27,7 +50,10 @@ class PrepArrNew {
     })
 
     try {
-      const servarrClient = new ServarrManager(this.config.servarr)
+      const servarrClient = this.isBazarrDeployment
+        ? undefined
+        : new ServarrManager(this.config.servarr)
+      const bazarrClient = this.createBazarrClient()
 
       const context = new ContextBuilder()
         .setConfig(this.config)
@@ -42,6 +68,7 @@ class PrepArrNew {
               )
             : undefined,
         )
+        .setBazarrClient(bazarrClient)
         .setExecutionMode('init')
         .setConfigPath(this.config.configPath)
         .setConfigWatch(this.config.configWatch)
@@ -80,8 +107,16 @@ class PrepArrNew {
     this.health.start()
 
     try {
-      const servarrClient = new ServarrManager(this.config.servarr)
-      await servarrClient.initializeSidecarMode()
+      let servarrClient: ServarrManager | undefined
+      if (!this.isBazarrDeployment) {
+        servarrClient = new ServarrManager(this.config.servarr)
+        await servarrClient.initializeSidecarMode()
+      }
+
+      const bazarrClient = this.createBazarrClient()
+      if (bazarrClient) {
+        await bazarrClient.initialize()
+      }
 
       const context = new ContextBuilder()
         .setConfig(this.config)
@@ -96,6 +131,7 @@ class PrepArrNew {
               )
             : undefined,
         )
+        .setBazarrClient(bazarrClient)
         .setExecutionMode('sidecar')
         .setConfigPath(this.config.configPath)
         .setConfigWatch(this.config.configWatch)

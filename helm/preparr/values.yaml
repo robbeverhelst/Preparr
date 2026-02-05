@@ -598,3 +598,70 @@ lidarr:
     rootFolders:
       - path: "/music"
         accessible: true
+
+# Bazarr configuration (subtitle management)
+bazarr:
+  enabled: false
+  replicaCount: 1
+
+  image:
+    repository: linuxserver/bazarr
+    tag: latest
+
+  apiKey: "your-bazarr-api-key"
+
+  auth:
+    existingSecret: ""
+    secretKeys:
+      apiKeyKey: api-key
+
+  service:
+    type: NodePort
+    webui:
+      port: 6767
+      nodePort: 30767
+
+  env:
+    TZ: UTC
+    PUID: "1000"
+    PGID: "1000"
+
+  securityContext: {}
+  podSecurityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  reconciliation:
+    watch: true
+    interval: 60
+
+  extraVolumes: []
+  extraVolumeMounts: []
+  envFrom: []
+
+  config:
+    apiKey: "your-bazarr-api-key"
+    bazarr:
+      languages:
+        - code: "en"
+          name: "English"
+        - code: "es"
+          name: "Spanish"
+      providers:
+        - name: "opensubtitles"
+          enabled: true
+      sonarr:
+        url: "http://sonarr:8989"
+        apiKey: "your-sonarr-api-key"
+      radarr:
+        url: "http://radarr:7878"
+        apiKey: "your-radarr-api-key"

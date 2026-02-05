@@ -1,0 +1,325 @@
+{{- if .Values.bazarr.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bazarr-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: bazarr
+    {{- include "preparr.serviceLabels" (dict "local" .Values.bazarr "Values" .Values) | nindent 4 }}
+data:
+  bazarr-config.json: |
+    {{- dict "app" .Values.bazarr.config | toJson | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bazarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: bazarr
+    {{- include "preparr.serviceLabels" (dict "local" .Values.bazarr "Values" .Values) | nindent 4 }}
+  {{- $annotations := include "preparr.serviceAnnotations" (dict "local" .Values.bazarr "Values" .Values) }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.bazarr.service.type }}
+  selector:
+    app: bazarr
+  ports:
+    - name: webui
+      port: {{ .Values.bazarr.service.webui.port }}
+      targetPort: 6767
+      protocol: TCP
+      {{- if and (eq .Values.bazarr.service.type "NodePort") .Values.bazarr.service.webui.nodePort }}
+      nodePort: {{ .Values.bazarr.service.webui.nodePort }}
+      {{- end }}
+    - name: health
+      port: {{ .Values.preparr.health.port }}
+      targetPort: {{ .Values.preparr.health.port }}
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bazarr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "preparr.labels" . | nindent 4 }}
+    app: bazarr
+spec:
+  replicas: {{ .Values.bazarr.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: bazarr
+  template:
+    metadata:
+      labels:
+        app: bazarr
+        {{- include "preparr.podLabels" (dict "local" .Values.bazarr "Values" .Values) | nindent 8 }}
+      {{- $podAnnotations := include "preparr.podAnnotations" (dict "local" .Values.bazarr "Values" .Values) }}
+      {{- if $podAnnotations }}
+      annotations:
+        {{- $podAnnotations | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- include "preparr.imagePullSecrets" (dict "local" .Values.bazarr "Values" .Values) | nindent 6 }}
+      {{- with .Values.bazarr.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.bazarr.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.bazarr.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.bazarr.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+      - name: wait-for-postgres
+        image: postgres:18-alpine
+        command:
+          - sh
+          - -c
+          - |
+            echo "Waiting for PostgreSQL to be ready..."
+            until pg_isready -h {{ include "preparr.postgresHost" . }} -p {{ .Values.postgresql.service.port }} -U {{ .Values.postgresql.auth.username }}; do
+              echo "PostgreSQL is unavailable - sleeping"
+              sleep 2
+            done
+            echo "PostgreSQL is ready - testing connection..."
+            PGPASSWORD="$PGPASSWORD" psql -h {{ include "preparr.postgresHost" . }} -p {{ .Values.postgresql.service.port }} -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "SELECT 1"
+            echo "PostgreSQL connection verified"
+        env:
+          - name: PGPASSWORD
+            {{- if .Values.postgresql.auth.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "preparr.postgresql.secretName" . }}
+                key: {{ .Values.postgresql.auth.secretKeys.adminPasswordKey | default "password" }}
+            {{- else }}
+            value: {{ .Values.postgresql.auth.password | quote }}
+            {{- end }}
+      - name: preparr-init
+        image: {{ include "preparr.image" . }}
+        imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
+        {{- with .Values.bazarr.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          {{- if .Values.postgresql.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.postgresql.secretName" . }}
+              key: {{ .Values.postgresql.auth.secretKeys.adminPasswordKey | default "password" }}
+          {{- else }}
+          value: {{ .Values.postgresql.auth.password | quote }}
+          {{- end }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.auth.database | quote }}
+        - name: SERVARR_TYPE
+          value: "bazarr"
+        - name: BAZARR_URL
+          value: "http://localhost:6767"
+        - name: BAZARR_API_KEY
+          {{- if .Values.bazarr.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.componentSecretName" (dict "root" . "componentName" "bazarr" "local" .Values.bazarr) }}
+              key: {{ .Values.bazarr.auth.secretKeys.apiKeyKey | default "api-key" }}
+          {{- else }}
+          value: {{ .Values.bazarr.apiKey | quote }}
+          {{- end }}
+        - name: CONFIG_PATH
+          value: "/config/bazarr-config.json"
+        - name: LOG_LEVEL
+          value: {{ .Values.preparr.logLevel | quote }}
+        command: ["bun", "run", "dist/index.js", "--init"]
+        volumeMounts:
+        - name: bazarr-config-volume
+          mountPath: /config
+        - name: bazarr-config-file
+          mountPath: /config/bazarr-config.json
+          subPath: bazarr-config.json
+      containers:
+      - name: preparr-sidecar
+        image: {{ include "preparr.image" . }}
+        imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
+        {{- with .Values.bazarr.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          {{- if .Values.postgresql.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.postgresql.secretName" . }}
+              key: {{ .Values.postgresql.auth.secretKeys.adminPasswordKey | default "password" }}
+          {{- else }}
+          value: {{ .Values.postgresql.auth.password | quote }}
+          {{- end }}
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.auth.database | quote }}
+        - name: SERVARR_TYPE
+          value: "bazarr"
+        - name: BAZARR_URL
+          value: "http://localhost:6767"
+        - name: BAZARR_API_KEY
+          {{- if .Values.bazarr.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.componentSecretName" (dict "root" . "componentName" "bazarr" "local" .Values.bazarr) }}
+              key: {{ .Values.bazarr.auth.secretKeys.apiKeyKey | default "api-key" }}
+          {{- else }}
+          value: {{ .Values.bazarr.apiKey | quote }}
+          {{- end }}
+        - name: CONFIG_PATH
+          value: "/config/bazarr-config.json"
+        - name: CONFIG_WATCH
+          value: {{ .Values.bazarr.reconciliation.watch | quote }}
+        - name: CONFIG_RECONCILE_INTERVAL
+          value: {{ .Values.bazarr.reconciliation.interval | quote }}
+        - name: HEALTH_PORT
+          value: {{ .Values.preparr.health.port | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.preparr.logLevel | quote }}
+        {{- with .Values.bazarr.envFrom }}
+        envFrom:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        command:
+          - sh
+          - -c
+          - |
+            echo "Waiting for Bazarr API to be ready..."
+            i=0
+            while [ $i -lt 60 ]; do
+              if curl -s http://localhost:6767/ > /dev/null 2>&1; then
+                echo "Bazarr API is ready!"
+                break
+              fi
+              i=$((i + 1))
+              echo "Attempt $i/60: Bazarr not ready yet, waiting..."
+              sleep 2
+            done
+            echo "Starting PrepArr sidecar..."
+            exec bun run dist/index.js
+        ports:
+        - name: health
+          containerPort: {{ .Values.preparr.health.port }}
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: {{ .Values.preparr.health.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: {{ .Values.preparr.health.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        volumeMounts:
+        - name: bazarr-config-volume
+          mountPath: /config
+        - name: bazarr-config-file
+          mountPath: /config/bazarr-config.json
+          subPath: bazarr-config.json
+        {{- with .Values.bazarr.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      - name: bazarr
+        image: "{{ .Values.bazarr.image.repository }}:{{ .Values.bazarr.image.tag }}"
+        imagePullPolicy: {{ .Values.bazarr.image.pullPolicy | default "IfNotPresent" }}
+        env:
+        - name: PUID
+          value: {{ .Values.bazarr.env.PUID | quote }}
+        - name: PGID
+          value: {{ .Values.bazarr.env.PGID | quote }}
+        - name: TZ
+          value: {{ .Values.bazarr.env.TZ | quote }}
+        # Bazarr reads postgres settings from env vars first (os.getenv fallback to config.yaml).
+        # These must be set explicitly to override Kubernetes service discovery env vars
+        # (e.g. POSTGRES_PORT=tcp://10.x.x.x:5432 injected by K8s for the postgres service).
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USERNAME
+          value: "bazarr"
+        - name: POSTGRES_PASSWORD
+          {{- if .Values.postgresql.auth.existingSecret }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "preparr.postgresql.secretName" . }}
+              key: {{ .Values.postgresql.auth.secretKeys.adminPasswordKey | default "password" }}
+          {{- else }}
+          value: {{ .Values.postgresql.auth.password | quote }}
+          {{- end }}
+        - name: POSTGRES_DATABASE
+          value: "bazarr"
+        ports:
+        - name: webui
+          containerPort: 6767
+          protocol: TCP
+        {{- if .Values.bazarr.resources }}
+        resources:
+          {{- toYaml .Values.bazarr.resources | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: bazarr-config-volume
+          mountPath: /config
+        - name: bazarr-config-file
+          mountPath: /config/bazarr-config.json
+          subPath: bazarr-config.json
+        {{- with .Values.bazarr.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        startupProbe:
+          httpGet:
+            path: /
+            port: 6767
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 6767
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: bazarr-config-volume
+        emptyDir: {}
+      - name: bazarr-config-file
+        configMap:
+          name: bazarr-config
+      {{- with .Values.bazarr.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end }}

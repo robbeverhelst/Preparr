@@ -38,6 +38,7 @@ export default defineConfig({
             { label: 'Download Clients', slug: 'configuration/download-clients' },
             { label: 'Indexers', slug: 'configuration/indexers' },
             { label: 'Media Management', slug: 'configuration/media-management' },
+            { label: 'Bazarr', slug: 'configuration/bazarr' },
             { label: 'Naming', slug: 'configuration/naming' },
             { label: 'Validation', slug: 'configuration/validation' },
           ],

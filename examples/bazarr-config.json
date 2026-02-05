@@ -1,0 +1,77 @@
+{
+  "postgres": {
+    "host": "postgres.default.svc.cluster.local",
+    "port": 5432,
+    "username": "postgres",
+    "password": "your-postgres-password",
+    "database": "servarr",
+    "skipProvisioning": false
+  },
+  "servarr": {
+    "url": "http://bazarr:6767",
+    "type": "bazarr",
+    "apiKey": "your-bazarr-api-key-here",
+    "adminUser": "admin",
+    "adminPassword": "your-secure-password",
+    "authenticationMethod": "forms"
+  },
+  "services": {
+    "bazarr": {
+      "url": "http://bazarr:6767",
+      "apiKey": "your-bazarr-api-key-here"
+    }
+  },
+  "app": {
+    "bazarr": {
+      "sonarr": {
+        "url": "http://sonarr:8989",
+        "apiKey": "your-sonarr-api-key"
+      },
+      "radarr": {
+        "url": "http://radarr:7878",
+        "apiKey": "your-radarr-api-key"
+      },
+      "languages": [
+        {
+          "code": "nl",
+          "name": "Dutch",
+          "enabled": true
+        },
+        {
+          "code": "en",
+          "name": "English",
+          "enabled": true
+        }
+      ],
+      "providers": [
+        {
+          "name": "opensubtitlescom",
+          "enabled": true,
+          "settings": {
+            "username": "your-opensubtitles-user",
+            "password": "your-opensubtitles-pass"
+          }
+        },
+        {
+          "name": "podnapisi",
+          "enabled": true,
+          "settings": {}
+        }
+      ],
+      "subtitleDefaults": {
+        "seriesType": "hearing_impaired_preferred",
+        "movieType": "hearing_impaired_preferred",
+        "searchOnUpgrade": true,
+        "searchOnDownload": true
+      }
+    }
+  },
+  "health": {
+    "port": 8080
+  },
+  "logLevel": "info",
+  "logFormat": "json",
+  "configPath": "/config/bazarr.yaml",
+  "configWatch": true,
+  "configReconcileInterval": 60
+}

@@ -5,7 +5,7 @@
 [![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Infrastructure as Code for Servarr** - Complete automation from fresh PostgreSQL to fully configured Servarr stacks
+> **Infrastructure as Code for Servarr** - Complete automation from fresh PostgreSQL to fully configured Servarr and Bazarr stacks
 
 PrepArr eliminates manual Servarr setup by managing your entire media stack configuration as code. Deploy once, configure through JSON files, never touch a web UI again.
 
@@ -20,7 +20,7 @@ PrepArr eliminates manual Servarr setup by managing your entire media stack conf
 
 **After PrepArr:**
 - Automated PostgreSQL database initialization
-- Generated config.xml with API keys and database connections
+- Generated config.xml/config.yaml with API keys and database connections
 - Complete configuration management through JSON files
 - GitOps-ready: version control your entire media stack
 - Continuous reconciliation keeps everything in sync
@@ -40,8 +40,8 @@ graph LR
     E -->|monitors| D
 ```
 
-1. **Init Container** - Runs once, sets up databases and config.xml, then exits
-2. **Servarr App** - Standard Linuxserver container using prepared config
+1. **Init Container** - Runs once, sets up databases and config files, then exits
+2. **Servarr/Bazarr App** - Standard Linuxserver container using prepared config
 3. **Sidecar Container** - Continuously applies your JSON configuration
 
 ## 🚀 Quick Start
@@ -165,11 +165,12 @@ Define your entire Servarr setup as code:
 
 ## 🎯 Multi-Service Setup
 
-For complete Prowlarr + Sonarr + Radarr stack, see our [docker-compose.test.yml](docker-compose.test.yml) which includes:
+For complete Prowlarr + Sonarr + Radarr + Bazarr stack, see our [docker-compose.test.yml](docker-compose.test.yml) which includes:
 
 - **Prowlarr** managing indexers and syncing to Sonarr/Radarr
-- **Sonarr** for TV shows with automatic download client setup  
+- **Sonarr** for TV shows with automatic download client setup
 - **Radarr** for movies with shared qBittorrent client
+- **Bazarr** for subtitles, linked to Sonarr and Radarr
 - **qBittorrent** configured automatically by PrepArr
 - **Shared PostgreSQL** database for all services
 
@@ -198,15 +199,16 @@ Each service gets its own init + sidecar containers managing separate config fil
 - **Truly Stateless** - Eliminates persistent config volumes, Servarr apps become ephemeral
 - **Drift Prevention** - Sidecar ensures config stays as specified
 - **GitOps Ready** - Update configs via git, automatic deployment
-- **Multi-Service** - Coordinate complex Prowlarr + Sonarr + Radarr setups
+- **Multi-Service** - Coordinate complex Prowlarr + Sonarr + Radarr + Bazarr setups
 
 ## 🎯 Supported Services
 
 | Service | Init Support | Sidecar Support | Notes |
 |---------|--------------|-----------------|--------|
 | **Sonarr** | ✅ | ✅ | TV shows, full automation |
-| **Radarr** | ✅ | ✅ | Movies, full automation |  
+| **Radarr** | ✅ | ✅ | Movies, full automation |
 | **Prowlarr** | ✅ | ✅ | Indexers + app sync |
+| **Bazarr** | ✅ | ✅ | Subtitles, languages, providers |
 | **qBittorrent** | ✅ | ⚠️ | Config file management |
 | **Lidarr** | 🚧 | 🚧 | Coming soon |
 | **Readarr** | 🚧 | 🚧 | Coming soon |
@@ -214,6 +216,8 @@ Each service gets its own init + sidecar containers managing separate config fil
 **Integration Features:**
 - Automatic qBittorrent web UI configuration
 - Prowlarr ↔ Sonarr/Radarr application syncing
+- Bazarr ↔ Sonarr/Radarr subtitle integration
+- Bazarr language and subtitle provider management
 - PostgreSQL database and user management
 - Health monitoring for Kubernetes deployments
 

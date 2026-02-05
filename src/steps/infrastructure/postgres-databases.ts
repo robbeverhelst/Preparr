@@ -22,17 +22,29 @@ export class PostgresDatabasesStep extends ConfigurationStep {
     return context.executionMode === 'init'
   }
 
+  private getDatabaseNames(context: StepContext): string[] {
+    const databases: string[] = []
+    // Servarr databases when we have a servarr client (not bazarr standalone)
+    if (context.servarrClient) {
+      databases.push(`${context.servarrType}_main`, `${context.servarrType}_log`)
+    }
+    // Bazarr uses a single database (standalone or remote service mode)
+    if (context.bazarrClient) {
+      databases.push('bazarr')
+    }
+    return databases
+  }
+
   async readCurrentState(context: StepContext): Promise<{ databases: string[] }> {
     try {
-      const mainDb = `${context.servarrType}_main`
-      const logDb = `${context.servarrType}_log`
-
-      const mainExists = await context.postgresClient.databaseExists(mainDb)
-      const logExists = await context.postgresClient.databaseExists(logDb)
-
+      const desired = this.getDatabaseNames(context)
       const databases: string[] = []
-      if (mainExists) databases.push(mainDb)
-      if (logExists) databases.push(logDb)
+
+      for (const db of desired) {
+        if (await context.postgresClient.databaseExists(db)) {
+          databases.push(db)
+        }
+      }
 
       return { databases }
     } catch (error) {
@@ -43,7 +55,7 @@ export class PostgresDatabasesStep extends ConfigurationStep {
 
   protected getDesiredState(context: StepContext): { databases: string[] } {
     return {
-      databases: [`${context.servarrType}_main`, `${context.servarrType}_log`],
+      databases: this.getDatabaseNames(context),
     }
   }
 
@@ -113,13 +125,11 @@ export class PostgresDatabasesStep extends ConfigurationStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      const mainDb = `${context.servarrType}_main`
-      const logDb = `${context.servarrType}_log`
-
-      const mainExists = await context.postgresClient.databaseExists(mainDb)
-      const logExists = await context.postgresClient.databaseExists(logDb)
-
-      return mainExists && logExists
+      const desired = this.getDatabaseNames(context)
+      for (const db of desired) {
+        if (!(await context.postgresClient.databaseExists(db))) return false
+      }
+      return true
     } catch (error) {
       context.logger.debug('PostgreSQL database verification failed', { error })
       return false

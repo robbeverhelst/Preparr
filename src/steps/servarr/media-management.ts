@@ -1,12 +1,7 @@
 import type { MediaManagementConfig } from '@/config/schema'
-import {
-  type ChangeRecord,
-  ConfigurationStep,
-  type StepContext,
-  type StepResult,
-} from '@/core/step'
+import { type ChangeRecord, ServarrStep, type StepContext, type StepResult } from '@/core/step'
 
-export class MediaManagementStep extends ConfigurationStep {
+export class MediaManagementStep extends ServarrStep {
   readonly name = 'media-management'
   readonly description = 'Configure Servarr media management settings'
   readonly dependencies: string[] = ['servarr-connectivity']
@@ -14,12 +9,12 @@ export class MediaManagementStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Check if Servarr is ready
-    if (!context.servarrClient.isReady()) {
+    if (!this.client.isReady()) {
       return false
     }
 
     // Check if media management config is supported
-    const capabilities = context.servarrClient.getCapabilities()
+    const capabilities = this.client.getCapabilities()
     if (!capabilities.hasMediaManagement) {
       context.logger.debug('Media management config not supported for this Servarr type')
       return false
@@ -38,7 +33,7 @@ export class MediaManagementStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<MediaManagementConfig | null> {
     try {
-      return await context.servarrClient.getMediaManagementConfig()
+      return await this.client.getMediaManagementConfig()
     } catch (error) {
       context.logger.warn('Failed to read current media management config', { error })
       return null
@@ -109,7 +104,7 @@ export class MediaManagementStep extends ConfigurationStep {
     for (const change of changes) {
       try {
         if (change.type === 'update' && desired) {
-          await context.servarrClient.updateMediaManagementConfig(desired)
+          await this.client.updateMediaManagementConfig(desired)
           results.push({ ...change, type: 'update' })
           context.logger.info('Media management config updated successfully', {
             changedFields: change.details?.changedFields,

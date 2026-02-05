@@ -18,6 +18,7 @@ This page documents every field available in PrepArr configuration files. The sc
 | `indexers` | Indexer[] | No | *undefined* | Indexer configurations (omit to leave unchanged) |
 | `applications` | Application[] | No | `[]` | Prowlarr application sync targets |
 | `qbittorrent` | QBittorrentConfig | No | — | qBittorrent direct configuration |
+| `bazarr` | BazarrConfig | No | — | Bazarr subtitle manager configuration |
 | `releaseProfiles` | ReleaseProfile[] | No | `[]` | Release profiles (Sonarr only) |
 | `naming` | NamingConfig | No | — | File and folder naming settings |
 | `mediaManagement` | MediaManagementConfig | No | — | Import, permissions, and file handling |
@@ -228,6 +229,67 @@ Direct qBittorrent configuration (alternative to using the Servarr download clie
 | `downloads.defaultPath` | `/downloads` |
 | `downloads.categories` | `[]` |
 | `connection.port` | `6881` |
+
+---
+
+## BazarrConfig
+
+Bazarr subtitle manager configuration. Used when `SERVARR_TYPE=bazarr` or when configuring a remote Bazarr instance.
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `languages` | BazarrLanguage[] | No | `[]` | Languages to enable for subtitles |
+| `providers` | BazarrProvider[] | No | `[]` | Subtitle provider configurations |
+| `subtitleDefaults` | SubtitleDefaults | No | — | Default subtitle preferences |
+| `sonarr` | object | No | — | Sonarr integration: `{ url: string, apiKey: string }` |
+| `radarr` | object | No | — | Radarr integration: `{ url: string, apiKey: string }` |
+
+### BazarrLanguage
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `code` | string | Yes | — | ISO 639-1 language code (e.g., `en`, `nl`) |
+| `name` | string | Yes | — | Language display name (e.g., `English`) |
+| `enabled` | boolean | No | `true` | Whether to enable this language |
+
+### BazarrProvider
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `name` | string | Yes | — | Provider name (e.g., `opensubtitlescom`) |
+| `enabled` | boolean | No | `true` | Whether to enable this provider |
+| `settings` | Record | No | `{}` | Provider-specific settings |
+
+### SubtitleDefaults
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `seriesType` | string | No | `hearing_impaired_preferred` | Series subtitle type |
+| `movieType` | string | No | `hearing_impaired_preferred` | Movie subtitle type |
+| `searchOnUpgrade` | boolean | No | `true` | Search for subtitles on upgrade |
+| `searchOnDownload` | boolean | No | `true` | Search for subtitles on download |
+
+```json
+{
+  "bazarr": {
+    "languages": [
+      { "code": "en", "name": "English" },
+      { "code": "nl", "name": "Dutch" }
+    ],
+    "providers": [
+      { "name": "opensubtitlescom", "enabled": true }
+    ],
+    "sonarr": {
+      "url": "http://sonarr:8989",
+      "apiKey": "your-sonarr-api-key"
+    },
+    "radarr": {
+      "url": "http://radarr:7878",
+      "apiKey": "your-radarr-api-key"
+    }
+  }
+}
+```
 
 ---
 

@@ -1,3 +1,4 @@
+import type { BazarrManager } from '@/bazarr/client'
 import type { Config } from '@/config/schema'
 import type { PostgresClient } from '@/postgres/client'
 import type { QBittorrentManager } from '@/qbittorrent/client'
@@ -36,13 +37,18 @@ export class ContextBuilder {
     return this
   }
 
-  setServarrClient(client: ServarrManager): this {
+  setServarrClient(client?: ServarrManager): this {
     this.context.servarrClient = client
     return this
   }
 
   setQBittorrentClient(client?: QBittorrentManager): this {
     this.context.qbittorrentClient = client
+    return this
+  }
+
+  setBazarrClient(client?: BazarrManager): this {
+    this.context.bazarrClient = client
     return this
   }
 
@@ -70,8 +76,8 @@ export class ContextBuilder {
     if (!this.context.postgresClient) {
       throw new Error('PostgreSQL client is required')
     }
-    if (!this.context.servarrClient) {
-      throw new Error('Servarr client is required')
+    if (!this.context.servarrClient && !this.context.bazarrClient) {
+      throw new Error('At least one of Servarr client or Bazarr client is required')
     }
     if (!this.context.servarrType) {
       throw new Error('Servarr type is required')

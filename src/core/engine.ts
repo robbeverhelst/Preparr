@@ -1,7 +1,13 @@
 // Import all step classes
+
+import { BazarrIntegrationStep } from '@/steps/bazarr/bazarr-integration'
+import { BazarrLanguagesStep } from '@/steps/bazarr/bazarr-languages'
+import { BazarrProvidersStep } from '@/steps/bazarr/bazarr-providers'
+import { BazarrConnectivityStep } from '@/steps/connectivity/bazarr-connectivity'
 import { PostgresConnectivityStep } from '@/steps/connectivity/postgres-connectivity'
 import { QBittorrentConnectivityStep } from '@/steps/connectivity/qbittorrent-connectivity'
 import { ServarrConnectivityStep } from '@/steps/connectivity/servarr-connectivity'
+import { BazarrConfigFileStep } from '@/steps/infrastructure/bazarr-config-file'
 import { PostgresDatabasesStep } from '@/steps/infrastructure/postgres-databases'
 import { PostgresUsersStep } from '@/steps/infrastructure/postgres-users'
 import { QBittorrentInitStep } from '@/steps/infrastructure/qbittorrent-init'
@@ -60,9 +66,11 @@ export class ConfigurationEngine {
       this.registry.register(new PostgresConnectivityStep())
       this.registry.register(new ServarrConnectivityStep())
       this.registry.register(new QBittorrentConnectivityStep())
+      this.registry.register(new BazarrConnectivityStep())
       this.registry.register(new PostgresDatabasesStep())
       this.registry.register(new PostgresUsersStep())
       this.registry.register(new ServarrConfigFileStep())
+      this.registry.register(new BazarrConfigFileStep())
       this.registry.register(new UserCreationStep())
       this.registry.register(new QBittorrentInitStep())
       this.registry.register(new ConfigLoadingStep())
@@ -77,6 +85,9 @@ export class ConfigurationEngine {
       this.registry.register(new ReleaseProfilesStep()) // Sonarr only
       this.registry.register(new ApplicationsStep())
       this.registry.register(new QBittorrentConfigStep())
+      this.registry.register(new BazarrIntegrationStep())
+      this.registry.register(new BazarrLanguagesStep())
+      this.registry.register(new BazarrProvidersStep())
 
       logger.info('Configuration steps registered successfully', {
         totalSteps: this.registry.getAll().length,

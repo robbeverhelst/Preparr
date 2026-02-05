@@ -1,13 +1,13 @@
 import type { CustomFormat } from '@/config/schema'
 import {
   type ChangeRecord,
-  ConfigurationStep,
+  ServarrStep,
   type StepContext,
   type StepResult,
   type Warning,
 } from '@/core/step'
 
-export class CustomFormatsStep extends ConfigurationStep {
+export class CustomFormatsStep extends ServarrStep {
   readonly name = 'custom-formats'
   readonly description = 'Configure Servarr custom formats'
   readonly dependencies: string[] = ['servarr-connectivity']
@@ -15,12 +15,12 @@ export class CustomFormatsStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     // Check if Servarr is ready
-    if (!context.servarrClient.isReady()) {
+    if (!this.client.isReady()) {
       return false
     }
 
     // Only supported for Radarr and Sonarr
-    const capabilities = context.servarrClient.getCapabilities()
+    const capabilities = this.client.getCapabilities()
     if (!capabilities.hasCustomFormats) {
       context.logger.debug('Custom formats not supported for this Servarr type')
       return false
@@ -39,7 +39,7 @@ export class CustomFormatsStep extends ConfigurationStep {
 
   async readCurrentState(context: StepContext): Promise<CustomFormat[]> {
     try {
-      return await context.servarrClient.getCustomFormats()
+      return await this.client.getCustomFormats()
     } catch (error) {
       context.logger.warn('Failed to read current custom formats', { error })
       return []
@@ -151,7 +151,7 @@ export class CustomFormatsStep extends ConfigurationStep {
             throw new Error(`Could not find custom format ${change.identifier} in desired state`)
           }
 
-          await context.servarrClient.addCustomFormat(desiredFormat)
+          await this.client.addCustomFormat(desiredFormat)
           results.push({ ...change, type: 'create' })
           context.logger.info('Custom format added successfully', { name: desiredFormat.name })
         } else if (change.type === 'update') {
@@ -162,7 +162,7 @@ export class CustomFormatsStep extends ConfigurationStep {
             throw new Error(`Could not find custom format ${change.identifier} for update`)
           }
 
-          await context.servarrClient.updateCustomFormat(existingFormat.id, desiredFormat)
+          await this.client.updateCustomFormat(existingFormat.id, desiredFormat)
           results.push({ ...change, type: 'update' })
           context.logger.info('Custom format updated successfully', { name: desiredFormat.name })
         } else if (change.type === 'delete') {
@@ -171,7 +171,7 @@ export class CustomFormatsStep extends ConfigurationStep {
             throw new Error(`No ID found for custom format ${change.identifier}`)
           }
 
-          await context.servarrClient.deleteCustomFormat(id)
+          await this.client.deleteCustomFormat(id)
           results.push({ ...change, type: 'delete' })
           context.logger.info('Custom format deleted successfully', { name: change.identifier })
         }
