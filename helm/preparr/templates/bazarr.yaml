@@ -188,6 +188,19 @@ spec:
           value: {{ .Values.bazarr.env.PGID | quote }}
         - name: TZ
           value: {{ .Values.bazarr.env.TZ | quote }}
+        # Bazarr reads postgres settings from env vars first (os.getenv fallback to config.yaml).
+        # These must be set explicitly to override Kubernetes service discovery env vars
+        # (e.g. POSTGRES_PORT=tcp://10.x.x.x:5432 injected by K8s for the postgres service).
+        - name: POSTGRES_HOST
+          value: {{ include "preparr.postgresHost" . | quote }}
+        - name: POSTGRES_PORT
+          value: {{ .Values.postgresql.service.port | quote }}
+        - name: POSTGRES_USERNAME
+          value: "bazarr"
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.postgresql.auth.password | quote }}
+        - name: POSTGRES_DATABASE
+          value: "bazarr"
         ports:
         - name: webui
           containerPort: 6767

@@ -108,9 +108,9 @@ export class BazarrConfigFileStep extends ConfigurationStep {
       throw new Error('API key is required to write Bazarr config.yaml')
     }
 
-    const postgresHost = process.env.POSTGRES_HOST || 'postgres'
-    const postgresPort = process.env.POSTGRES_PORT || '5432'
-    const postgresPassword = process.env.POSTGRES_PASSWORD || ''
+    const postgresHost = context.config.postgres.host
+    const postgresPort = context.config.postgres.port
+    const postgresPassword = context.config.postgres.password
 
     const configYaml = `auth:
   apikey: ${apiKey}
