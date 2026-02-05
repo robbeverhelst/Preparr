@@ -116,17 +116,28 @@ export class BazarrConfigFileStep extends ConfigurationStep {
     const postgresPort = context.config.postgres.port
     const postgresPassword = context.config.postgres.password
 
+    // Get enabled providers from config (if any)
+    const providers = context.config.app?.bazarr?.providers ?? []
+    const enabledProviders = providers.filter((p) => p.enabled !== false).map((p) => p.name)
+
     const yamlQuote = (v: string) => `'${v.replace(/'/g, "''")}'`
+
+    let generalSection = `general:
+  ip: 0.0.0.0
+  port: 6767
+  base_url: /`
+
+    if (enabledProviders.length > 0) {
+      const providerList = enabledProviders.map((p) => `  - ${yamlQuote(p)}`).join('\n')
+      generalSection += `\n  enabled_providers:\n${providerList}`
+    }
 
     const configYaml = `auth:
   apikey: ${yamlQuote(apiKey)}
   password: ''
   type: null
   username: ''
-general:
-  ip: 0.0.0.0
-  port: 6767
-  base_url: /
+${generalSection}
 postgresql:
   enabled: true
   host: ${yamlQuote(postgresHost)}

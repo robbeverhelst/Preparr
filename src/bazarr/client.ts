@@ -236,16 +236,16 @@ export class BazarrManager {
 
   async getProviders(): Promise<BazarrProvider[]> {
     try {
-      const response = await this.apiGet('/providers')
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const raw = (await response.json()) as { data?: Array<Record<string, unknown>> }
+      // Read enabled providers from settings, not /api/providers
+      // (which returns provider throttle/runtime status, not configured providers)
+      const settings = await this.getSettings()
+      const general = settings.general as Record<string, unknown> | undefined
+      const enabledProviders = general?.enabled_providers
 
-      // Bazarr returns providers wrapped in { data: [...] }
-      const providers = raw.data || []
-      if (!Array.isArray(providers)) return []
+      if (!Array.isArray(enabledProviders)) return []
 
-      return providers.map((prov) => ({
-        name: (prov.name as string) || '',
+      return enabledProviders.map((name: unknown) => ({
+        name: String(name),
         enabled: true,
         settings: {},
       }))
