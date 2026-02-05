@@ -31,6 +31,10 @@ spec:
       {{- if and (eq .Values.bazarr.service.type "NodePort") .Values.bazarr.service.webui.nodePort }}
       nodePort: {{ .Values.bazarr.service.webui.nodePort }}
       {{- end }}
+    - name: health
+      port: {{ .Values.preparr.health.port }}
+      targetPort: {{ .Values.preparr.health.port }}
+      protocol: TCP
 ---
 apiVersion: apps/v1
 kind: Deployment
