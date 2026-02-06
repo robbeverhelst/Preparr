@@ -266,11 +266,29 @@ export class BazarrManager {
 
       if (!Array.isArray(enabledProviders)) return []
 
-      return enabledProviders.map((name: unknown) => ({
-        name: String(name),
-        enabled: true,
-        settings: {},
-      }))
+      return enabledProviders.map((name: unknown) => {
+        const providerName = String(name)
+        const providerSection = settings[providerName] as Record<string, unknown> | undefined
+        const providerSettings: Record<string, string | number | boolean> = {}
+
+        if (providerSection) {
+          for (const [key, value] of Object.entries(providerSection)) {
+            if (
+              typeof value === 'string' ||
+              typeof value === 'number' ||
+              typeof value === 'boolean'
+            ) {
+              providerSettings[key] = value
+            }
+          }
+        }
+
+        return {
+          name: providerName,
+          enabled: true,
+          settings: providerSettings,
+        }
+      })
     } catch (error) {
       logger.error('Failed to get Bazarr providers', { error })
       return []
@@ -284,9 +302,20 @@ export class BazarrManager {
       // Bazarr uses "settings-general-enabled_providers" for the provider list
       const enabledProviders = providers.filter((p) => p.enabled).map((p) => p.name)
 
-      const response = await this.postSettingsForm({
+      const formData: Record<string, string | string[]> = {
         'settings-general-enabled_providers': enabledProviders,
-      })
+      }
+
+      // Write provider-specific credentials and settings
+      for (const provider of providers) {
+        if (provider.enabled && Object.keys(provider.settings).length > 0) {
+          for (const [key, value] of Object.entries(provider.settings)) {
+            formData[`settings-${provider.name}-${key}`] = String(value)
+          }
+        }
+      }
+
+      const response = await this.postSettingsForm(formData)
 
       if (!response.ok) {
         const body = await response.text()
@@ -407,6 +436,7 @@ export class BazarrManager {
         const profileId = profilesByName.get(seriesProfileName)
         if (profileId !== undefined) {
           formData['settings-general-serie_default_profile'] = String(profileId)
+          formData['settings-general-serie_default_enabled'] = 'true'
         } else {
           logger.warn('Default series profile not found', { name: seriesProfileName })
         }
@@ -416,6 +446,7 @@ export class BazarrManager {
         const profileId = profilesByName.get(moviesProfileName)
         if (profileId !== undefined) {
           formData['settings-general-movie_default_profile'] = String(profileId)
+          formData['settings-general-movie_default_enabled'] = 'true'
         } else {
           logger.warn('Default movies profile not found', { name: moviesProfileName })
         }

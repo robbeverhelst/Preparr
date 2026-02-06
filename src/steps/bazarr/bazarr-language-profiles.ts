@@ -158,15 +158,15 @@ export class BazarrLanguageProfilesStep extends BazarrStep {
 
         await this.client.configureLanguageProfiles(desired)
 
-        // Configure default profiles if specified
-        const defaultProfiles = this.getDefaultProfilesConfig(context)
-        if (defaultProfiles.series || defaultProfiles.movies) {
-          await this.client.configureDefaultProfiles(defaultProfiles.series, defaultProfiles.movies)
-        }
-
         context.logger.info('Bazarr language profiles configured successfully', {
           profiles: desired.map((p) => p.name).join(', '),
         })
+      }
+
+      // Always configure default profiles if specified (idempotent, runs even when profiles unchanged)
+      const defaultProfiles = this.getDefaultProfilesConfig(context)
+      if (defaultProfiles.series || defaultProfiles.movies) {
+        await this.client.configureDefaultProfiles(defaultProfiles.series, defaultProfiles.movies)
       }
 
       return {
