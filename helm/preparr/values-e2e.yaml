@@ -306,6 +306,21 @@ bazarr:
           name: "English"
         - code: "nl"
           name: "Dutch"
+      languageProfiles:
+        - name: "Default"
+          cutoff: 1
+          items:
+            - language: "en"
+              forced: false
+              hi: false
+            - language: "nl"
+              forced: false
+              hi: true
+          mustContain: ""
+          mustNotContain: ""
+      defaultProfiles:
+        series: "Default"
+        movies: "Default"
       providers:
         - name: "opensubtitlescom"
           enabled: true

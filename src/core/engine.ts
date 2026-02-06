@@ -1,6 +1,7 @@
 // Import all step classes
 
 import { BazarrIntegrationStep } from '@/steps/bazarr/bazarr-integration'
+import { BazarrLanguageProfilesStep } from '@/steps/bazarr/bazarr-language-profiles'
 import { BazarrLanguagesStep } from '@/steps/bazarr/bazarr-languages'
 import { BazarrProvidersStep } from '@/steps/bazarr/bazarr-providers'
 import { BazarrConnectivityStep } from '@/steps/connectivity/bazarr-connectivity'
@@ -88,6 +89,7 @@ export class ConfigurationEngine {
       this.registry.register(new BazarrIntegrationStep())
       this.registry.register(new BazarrLanguagesStep())
       this.registry.register(new BazarrProvidersStep())
+      this.registry.register(new BazarrLanguageProfilesStep())
 
       logger.info('Configuration steps registered successfully', {
         totalSteps: this.registry.getAll().length,
