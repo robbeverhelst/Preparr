@@ -17,6 +17,7 @@ interface BazarrLanguageProfileApi {
     forced: string
     hi: string
     audio_exclude: string
+    audio_only_include: string
   }>
   mustContain: string
   mustNotContain: string
@@ -393,6 +394,7 @@ export class BazarrManager {
             forced: item.forced ? 'True' : 'False',
             hi: item.hi ? 'True' : 'False',
             audio_exclude: item.audio_exclude ? 'True' : 'False',
+            audio_only_include: item.audio_only_include ? 'True' : 'False',
           })),
           mustContain: profile.mustContain ?? '',
           mustNotContain: profile.mustNotContain ?? '',

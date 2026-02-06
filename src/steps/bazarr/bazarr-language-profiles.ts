@@ -15,6 +15,8 @@ interface BazarrLanguageProfileState {
     language: string
     forced: boolean
     hi: boolean
+    audio_exclude: boolean
+    audio_only_include: boolean
   }>
   mustContain: string
   mustNotContain: string
@@ -64,6 +66,8 @@ export class BazarrLanguageProfilesStep extends BazarrStep {
           language: item.language,
           forced: item.forced === 'True',
           hi: item.hi === 'True',
+          audio_exclude: item.audio_exclude === 'True',
+          audio_only_include: item.audio_only_include === 'True',
         })),
         mustContain: p.mustContain,
         mustNotContain: p.mustNotContain,
@@ -148,6 +152,8 @@ export class BazarrLanguageProfilesStep extends BazarrStep {
       if (currentItem.language !== desiredItem.language) return true
       if (currentItem.forced !== (desiredItem.forced ?? false)) return true
       if (currentItem.hi !== (desiredItem.hi ?? false)) return true
+      if (currentItem.audio_exclude !== (desiredItem.audio_exclude ?? false)) return true
+      if (currentItem.audio_only_include !== (desiredItem.audio_only_include ?? false)) return true
     }
 
     return false
