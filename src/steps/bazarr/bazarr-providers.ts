@@ -52,17 +52,21 @@ export class BazarrProvidersStep extends BazarrStep {
       }
     }
 
-    // Check for providers to update
+    // Check for providers to update (enabled status or settings/credentials changed)
     for (const provider of desired) {
       if (currentNames.has(provider.name)) {
         const currentProvider = current.find((p) => p.name === provider.name)
-        if (currentProvider && currentProvider.enabled !== provider.enabled) {
-          changes.push({
-            type: 'update',
-            resource: 'bazarr-provider',
-            identifier: provider.name,
-            details: { enabled: provider.enabled },
-          })
+        if (currentProvider) {
+          const enabledChanged = currentProvider.enabled !== provider.enabled
+          const settingsChanged = this.settingsDiffer(currentProvider.settings, provider.settings)
+          if (enabledChanged || settingsChanged) {
+            changes.push({
+              type: 'update',
+              resource: 'bazarr-provider',
+              identifier: provider.name,
+              details: { enabled: provider.enabled, settingsChanged },
+            })
+          }
         }
       }
     }
@@ -79,6 +83,19 @@ export class BazarrProvidersStep extends BazarrStep {
     }
 
     return changes
+  }
+
+  private settingsDiffer(
+    current: Record<string, string | number | boolean>,
+    desired: Record<string, string | number | boolean>,
+  ): boolean {
+    // Check that all desired settings match current values
+    for (const [key, value] of Object.entries(desired)) {
+      if (String(current[key] ?? '') !== String(value)) {
+        return true
+      }
+    }
+    return false
   }
 
   async executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult> {
