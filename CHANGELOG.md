@@ -1,3 +1,10 @@
+## [0.18.1](https://github.com/robbeverhelst/Preparr/compare/v0.18.0...v0.18.1) (2026-02-06)
+
+
+### Bug Fixes
+
+* **bazarr:** use correct API format for bulk profile assignment ([#62](https://github.com/robbeverhelst/Preparr/issues/62)) ([f16fd8a](https://github.com/robbeverhelst/Preparr/commit/f16fd8a32af43804ce7914808282d8271a22c95a))
+
 # [0.18.0](https://github.com/robbeverhelst/Preparr/compare/v0.17.1...v0.18.0) (2026-02-06)
 
 
