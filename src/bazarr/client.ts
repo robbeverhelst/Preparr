@@ -513,28 +513,40 @@ export class BazarrManager {
     if (seriesIds.length === 0) return
     logger.info('Assigning profile to series...', { count: seriesIds.length, profileId })
 
-    try {
-      const url = this.buildUrl('/series')
-      const params = new URLSearchParams()
-      for (const id of seriesIds) {
+    let assigned = 0
+    let failed = 0
+    const url = this.buildUrl('/series')
+
+    for (const id of seriesIds) {
+      try {
+        const params = new URLSearchParams()
         params.append('seriesid', String(id))
         params.append('profileid', String(profileId))
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
+        })
+        if (!response.ok) {
+          const body = await response.text()
+          logger.warn('Failed to assign profile to series', {
+            seriesId: id,
+            status: response.status,
+            body,
+          })
+          failed++
+        } else {
+          assigned++
+        }
+      } catch (error) {
+        logger.warn('Failed to assign profile to series', { seriesId: id, error })
+        failed++
       }
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      })
+    }
 
-      if (!response.ok) {
-        const body = await response.text()
-        throw new Error(`HTTP ${response.status}: ${body}`)
-      }
-
-      logger.info('Series profiles assigned successfully', { count: seriesIds.length })
-    } catch (error) {
-      logger.error('Failed to assign series profiles', { error })
-      throw error
+    logger.info('Series profile assignment complete', { assigned, failed, total: seriesIds.length })
+    if (assigned === 0 && failed > 0) {
+      throw new Error(`Failed to assign profile to all ${failed} series`)
     }
   }
 
@@ -542,28 +554,40 @@ export class BazarrManager {
     if (movieIds.length === 0) return
     logger.info('Assigning profile to movies...', { count: movieIds.length, profileId })
 
-    try {
-      const url = this.buildUrl('/movies')
-      const params = new URLSearchParams()
-      for (const id of movieIds) {
+    let assigned = 0
+    let failed = 0
+    const url = this.buildUrl('/movies')
+
+    for (const id of movieIds) {
+      try {
+        const params = new URLSearchParams()
         params.append('radarrid', String(id))
         params.append('profileid', String(profileId))
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
+        })
+        if (!response.ok) {
+          const body = await response.text()
+          logger.warn('Failed to assign profile to movie', {
+            radarrId: id,
+            status: response.status,
+            body,
+          })
+          failed++
+        } else {
+          assigned++
+        }
+      } catch (error) {
+        logger.warn('Failed to assign profile to movie', { radarrId: id, error })
+        failed++
       }
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      })
+    }
 
-      if (!response.ok) {
-        const body = await response.text()
-        throw new Error(`HTTP ${response.status}: ${body}`)
-      }
-
-      logger.info('Movie profiles assigned successfully', { count: movieIds.length })
-    } catch (error) {
-      logger.error('Failed to assign movie profiles', { error })
-      throw error
+    logger.info('Movie profile assignment complete', { assigned, failed, total: movieIds.length })
+    if (assigned === 0 && failed > 0) {
+      throw new Error(`Failed to assign profile to all ${failed} movies`)
     }
   }
 
