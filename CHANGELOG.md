@@ -1,3 +1,10 @@
+## [0.17.1](https://github.com/robbeverhelst/Preparr/compare/v0.17.0...v0.17.1) (2026-02-06)
+
+
+### Bug Fixes
+
+* **bazarr:** write provider credentials and enable default profiles ([#58](https://github.com/robbeverhelst/Preparr/issues/58)) ([1fbea51](https://github.com/robbeverhelst/Preparr/commit/1fbea5121b5b6194880ea0268d841998245cea2f)), closes [#57](https://github.com/robbeverhelst/Preparr/issues/57)
+
 # [0.17.0](https://github.com/robbeverhelst/Preparr/compare/v0.16.0...v0.17.0) (2026-02-06)
 
 
