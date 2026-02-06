@@ -1,3 +1,10 @@
+## [0.18.2](https://github.com/robbeverhelst/Preparr/compare/v0.18.1...v0.18.2) (2026-02-06)
+
+
+### Bug Fixes
+
+* **bazarr:** send individual requests for profile assignment to avoid server 500 ([#64](https://github.com/robbeverhelst/Preparr/issues/64)) ([01b9a65](https://github.com/robbeverhelst/Preparr/commit/01b9a6573fb18cc05784c89bb440c424bf612529)), closes [#63](https://github.com/robbeverhelst/Preparr/issues/63)
+
 ## [0.18.1](https://github.com/robbeverhelst/Preparr/compare/v0.18.0...v0.18.1) (2026-02-06)
 
 
