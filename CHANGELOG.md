@@ -1,3 +1,10 @@
+# [0.18.0](https://github.com/robbeverhelst/Preparr/compare/v0.17.1...v0.18.0) (2026-02-06)
+
+
+### Features
+
+* **bazarr:** add default profile flag and bulk media assignment ([#60](https://github.com/robbeverhelst/Preparr/issues/60)) ([5dcde2e](https://github.com/robbeverhelst/Preparr/commit/5dcde2ec16260ea6a6393dfd070b11e5ba45ad91)), closes [#59](https://github.com/robbeverhelst/Preparr/issues/59)
+
 ## [0.17.1](https://github.com/robbeverhelst/Preparr/compare/v0.17.0...v0.17.1) (2026-02-06)
 
 
