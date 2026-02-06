@@ -4,7 +4,7 @@ import {
   type ChangeRecord,
   type StepContext,
   type StepResult,
-  type Warning,
+  Warning,
 } from '@/core/step'
 
 interface BazarrLanguageProfileState {
@@ -177,10 +177,18 @@ export class BazarrLanguageProfilesStep extends BazarrStep {
         await this.client.configureDefaultProfiles(defaultProfiles.series, defaultProfiles.movies)
       }
 
-      // Bulk-assign profile to existing media with no profile
+      // Bulk-assign profile to existing media with no profile (non-fatal)
       const applyProfile = this.getProfilesConfig(context).find((p) => p.applyToExisting)
       if (applyProfile) {
-        await this.applyProfileToExistingMedia(applyProfile.name, context)
+        try {
+          await this.applyProfileToExistingMedia(applyProfile.name, context)
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error)
+          warnings.push(new Warning(`Profile assignment to existing media failed: ${msg}`))
+          context.logger.warn('Profile assignment to existing media failed (non-fatal)', {
+            error: msg,
+          })
+        }
       }
 
       return {

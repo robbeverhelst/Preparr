@@ -515,9 +515,19 @@ export class BazarrManager {
 
     let assigned = 0
     let failed = 0
+    let consecutiveFailures = 0
     const url = this.buildUrl('/series')
 
     for (const id of seriesIds) {
+      // Stop early if Bazarr is consistently failing
+      if (consecutiveFailures >= 5) {
+        logger.warn('Stopping series assignment after 5 consecutive failures', {
+          assigned,
+          remaining: seriesIds.length - assigned - failed,
+        })
+        break
+      }
+
       try {
         const params = new URLSearchParams()
         params.append('seriesid', String(id))
@@ -535,12 +545,20 @@ export class BazarrManager {
             body,
           })
           failed++
+          consecutiveFailures++
         } else {
           assigned++
+          consecutiveFailures = 0
         }
       } catch (error) {
         logger.warn('Failed to assign profile to series', { seriesId: id, error })
         failed++
+        consecutiveFailures++
+      }
+
+      // Throttle to avoid overwhelming Bazarr (each POST triggers list_missing_subtitles)
+      if (assigned + failed < seriesIds.length) {
+        await new Promise((resolve) => setTimeout(resolve, 200))
       }
     }
 
@@ -556,9 +574,18 @@ export class BazarrManager {
 
     let assigned = 0
     let failed = 0
+    let consecutiveFailures = 0
     const url = this.buildUrl('/movies')
 
     for (const id of movieIds) {
+      if (consecutiveFailures >= 5) {
+        logger.warn('Stopping movie assignment after 5 consecutive failures', {
+          assigned,
+          remaining: movieIds.length - assigned - failed,
+        })
+        break
+      }
+
       try {
         const params = new URLSearchParams()
         params.append('radarrid', String(id))
@@ -576,12 +603,19 @@ export class BazarrManager {
             body,
           })
           failed++
+          consecutiveFailures++
         } else {
           assigned++
+          consecutiveFailures = 0
         }
       } catch (error) {
         logger.warn('Failed to assign profile to movie', { radarrId: id, error })
         failed++
+        consecutiveFailures++
+      }
+
+      if (assigned + failed < movieIds.length) {
+        await new Promise((resolve) => setTimeout(resolve, 200))
       }
     }
 
