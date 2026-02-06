@@ -80,6 +80,28 @@ export const BazarrSubtitleDefaultsSchema = z.object({
   searchOnDownload: z.boolean().default(true),
 })
 
+export const BazarrLanguageProfileItemSchema = z.object({
+  language: z.string(),
+  forced: z.boolean().default(false),
+  hi: z.boolean().default(false),
+  audio_exclude: z.boolean().default(false),
+})
+
+export const BazarrLanguageProfileSchema = z.object({
+  name: z.string(),
+  cutoff: z.number().nullable().optional(),
+  items: z.array(BazarrLanguageProfileItemSchema).min(1),
+  mustContain: z.string().default(''),
+  mustNotContain: z.string().default(''),
+  originalFormat: z.boolean().nullable().optional(),
+  tag: z.string().nullable().optional(),
+})
+
+export const BazarrDefaultProfilesSchema = z.object({
+  series: z.string().optional(),
+  movies: z.string().optional(),
+})
+
 export const BazarrConfigSchema = z
   .object({
     sonarr: z
@@ -95,6 +117,8 @@ export const BazarrConfigSchema = z
       })
       .optional(),
     languages: z.array(BazarrLanguageSchema).default([]),
+    languageProfiles: z.array(BazarrLanguageProfileSchema).default([]),
+    defaultProfiles: BazarrDefaultProfilesSchema.optional(),
     providers: z.array(BazarrProviderSchema).default([]),
     subtitleDefaults: BazarrSubtitleDefaultsSchema.optional(),
   })
@@ -407,6 +431,9 @@ export type QBittorrentConfig = z.infer<typeof QBittorrentConfigSchema>
 export type BazarrLanguage = z.infer<typeof BazarrLanguageSchema>
 export type BazarrProvider = z.infer<typeof BazarrProviderSchema>
 export type BazarrSubtitleDefaults = z.infer<typeof BazarrSubtitleDefaultsSchema>
+export type BazarrLanguageProfileItem = z.infer<typeof BazarrLanguageProfileItemSchema>
+export type BazarrLanguageProfile = z.infer<typeof BazarrLanguageProfileSchema>
+export type BazarrDefaultProfiles = z.infer<typeof BazarrDefaultProfilesSchema>
 export type BazarrConfig = z.infer<typeof BazarrConfigSchema>
 export type AppConfig = z.infer<typeof AppConfigSchema>
 export type Config = z.infer<typeof ConfigSchema>

@@ -1,6 +1,28 @@
-import type { BazarrLanguage, BazarrProvider, BazarrSubtitleDefaults } from '@/config/schema'
+import type {
+  BazarrLanguage,
+  BazarrLanguageProfile,
+  BazarrProvider,
+  BazarrSubtitleDefaults,
+} from '@/config/schema'
 import { logger } from '@/utils/logger'
 import { withRetry } from '@/utils/retry'
+
+interface BazarrLanguageProfileApi {
+  profileId: number
+  name: string
+  cutoff: number | null
+  items: Array<{
+    id: number
+    language: string
+    forced: string
+    hi: string
+    audio_exclude: string
+  }>
+  mustContain: string
+  mustNotContain: string
+  originalFormat: number | null
+  tag: string | null
+}
 
 export class BazarrManager {
   private config: { url: string; apiKey?: string }
@@ -297,6 +319,123 @@ export class BazarrManager {
       logger.info('Bazarr subtitle defaults configured successfully')
     } catch (error) {
       logger.error('Failed to configure Bazarr subtitle defaults', { error })
+      throw error
+    }
+  }
+
+  async getLanguageProfiles(): Promise<BazarrLanguageProfileApi[]> {
+    try {
+      const response = await this.apiGet('/system/languages/profiles')
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const data = await response.json()
+
+      if (!Array.isArray(data)) return []
+      return data as BazarrLanguageProfileApi[]
+    } catch (error) {
+      logger.error('Failed to get Bazarr language profiles', { error })
+      return []
+    }
+  }
+
+  async configureLanguageProfiles(profiles: BazarrLanguageProfile[]): Promise<void> {
+    logger.info('Configuring Bazarr language profiles...', { count: profiles.length })
+
+    try {
+      // Get existing profiles to preserve IDs for updates
+      const existing = await this.getLanguageProfiles()
+      const existingByName = new Map(existing.map((p) => [p.name, p]))
+
+      // Find max profile ID to assign new IDs
+      const maxProfileId = existing.reduce((max, p) => Math.max(max, p.profileId), 0)
+
+      // Build the profiles array for the API
+      let nextProfileId = maxProfileId + 1
+      const profilesData = profiles.map((profile) => {
+        const existingProfile = existingByName.get(profile.name)
+        const profileId = existingProfile?.profileId ?? nextProfileId++
+
+        return {
+          profileId,
+          name: profile.name,
+          cutoff: profile.cutoff ?? null,
+          items: profile.items.map((item, itemIndex) => ({
+            id: itemIndex + 1,
+            language: item.language,
+            forced: item.forced ? 'True' : 'False',
+            hi: item.hi ? 'True' : 'False',
+            audio_exclude: item.audio_exclude ? 'True' : 'False',
+          })),
+          mustContain: profile.mustContain ?? '',
+          mustNotContain: profile.mustNotContain ?? '',
+          originalFormat: profile.originalFormat ? 1 : null,
+          tag: profile.tag ?? null,
+        }
+      })
+
+      const response = await this.postSettingsForm({
+        'languages-profiles': JSON.stringify(profilesData),
+      })
+
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`HTTP ${response.status}: ${body}`)
+      }
+
+      logger.info('Bazarr language profiles configured successfully', {
+        profiles: profiles.map((p) => p.name).join(', '),
+      })
+    } catch (error) {
+      logger.error('Failed to configure Bazarr language profiles', { error })
+      throw error
+    }
+  }
+
+  async configureDefaultProfiles(
+    seriesProfileName?: string,
+    moviesProfileName?: string,
+  ): Promise<void> {
+    logger.info('Configuring Bazarr default profiles...')
+
+    try {
+      // Get profiles to resolve names to IDs
+      const profiles = await this.getLanguageProfiles()
+      const profilesByName = new Map(profiles.map((p) => [p.name, p.profileId]))
+
+      const formData: Record<string, string> = {}
+
+      if (seriesProfileName) {
+        const profileId = profilesByName.get(seriesProfileName)
+        if (profileId !== undefined) {
+          formData['settings-general-serie_default_profile'] = String(profileId)
+        } else {
+          logger.warn('Default series profile not found', { name: seriesProfileName })
+        }
+      }
+
+      if (moviesProfileName) {
+        const profileId = profilesByName.get(moviesProfileName)
+        if (profileId !== undefined) {
+          formData['settings-general-movie_default_profile'] = String(profileId)
+        } else {
+          logger.warn('Default movies profile not found', { name: moviesProfileName })
+        }
+      }
+
+      if (Object.keys(formData).length === 0) {
+        logger.debug('No default profiles to configure')
+        return
+      }
+
+      const response = await this.postSettingsForm(formData)
+
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`HTTP ${response.status}: ${body}`)
+      }
+
+      logger.info('Bazarr default profiles configured successfully')
+    } catch (error) {
+      logger.error('Failed to configure Bazarr default profiles', { error })
       throw error
     }
   }

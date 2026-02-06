@@ -181,6 +181,72 @@ describe('Bazarr Integration', () => {
     })
   })
 
+  describe('Language Profile Configuration', () => {
+    test('Bazarr has language profiles configured', async () => {
+      const result = await callBazarrApi<Array<Record<string, unknown>>>(
+        'bazarr',
+        '/system/languages/profiles',
+        { apiKey: BAZARR_API_KEY },
+      )
+
+      expect(result.ok).toBe(true)
+      expect(Array.isArray(result.data)).toBe(true)
+      expect(result.data!.length).toBeGreaterThan(0)
+    })
+
+    test('Bazarr language profile has correct structure', async () => {
+      const result = await callBazarrApi<Array<Record<string, unknown>>>(
+        'bazarr',
+        '/system/languages/profiles',
+        { apiKey: BAZARR_API_KEY },
+      )
+
+      expect(result.ok).toBe(true)
+      const profiles = result.data ?? []
+
+      if (profiles.length > 0) {
+        const profile = profiles[0]
+        expect(profile.profileId).toBeDefined()
+        expect(profile.name).toBeDefined()
+        expect(Array.isArray(profile.items)).toBe(true)
+      }
+    })
+
+    test('Bazarr has Default profile configured', async () => {
+      const result = await callBazarrApi<Array<Record<string, unknown>>>(
+        'bazarr',
+        '/system/languages/profiles',
+        { apiKey: BAZARR_API_KEY },
+      )
+
+      const profiles = result.data ?? []
+      const defaultProfile = profiles.find((p) => p.name === 'Default')
+      expect(defaultProfile).toBeDefined()
+    })
+
+    test('Bazarr has default profile for series configured', async () => {
+      const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
+        apiKey: BAZARR_API_KEY,
+      })
+
+      expect(result.ok).toBe(true)
+      const generalSettings = result.data?.general as Record<string, unknown> | undefined
+      expect(generalSettings?.serie_default_profile).toBeDefined()
+      expect(generalSettings?.serie_default_profile).not.toBeNull()
+    })
+
+    test('Bazarr has default profile for movies configured', async () => {
+      const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
+        apiKey: BAZARR_API_KEY,
+      })
+
+      expect(result.ok).toBe(true)
+      const generalSettings = result.data?.general as Record<string, unknown> | undefined
+      expect(generalSettings?.movie_default_profile).toBeDefined()
+      expect(generalSettings?.movie_default_profile).not.toBeNull()
+    })
+  })
+
   describe('Provider Configuration', () => {
     test('Bazarr has providers configured', async () => {
       const result = await callBazarrApi<Record<string, unknown>>('bazarr', '/system/settings', {
