@@ -34,6 +34,14 @@ export class BazarrLanguageProfilesStep extends BazarrStep {
     series: string | undefined
     movies: string | undefined
   } {
+    // Check for profile-level default flag first
+    const profiles = this.getProfilesConfig(context)
+    const defaultProfile = profiles.find((p) => p.default)
+    if (defaultProfile) {
+      return { series: defaultProfile.name, movies: defaultProfile.name }
+    }
+
+    // Fall back to explicit defaultProfiles config
     const defaults = context.config.app?.bazarr?.defaultProfiles
     return {
       series: defaults?.series,
@@ -169,6 +177,12 @@ export class BazarrLanguageProfilesStep extends BazarrStep {
         await this.client.configureDefaultProfiles(defaultProfiles.series, defaultProfiles.movies)
       }
 
+      // Bulk-assign profile to existing media with no profile
+      const applyProfile = this.getProfilesConfig(context).find((p) => p.applyToExisting)
+      if (applyProfile) {
+        await this.applyProfileToExistingMedia(applyProfile.name, context)
+      }
+
       return {
         success: true,
         changes,
@@ -187,6 +201,48 @@ export class BazarrLanguageProfilesStep extends BazarrStep {
         errors,
         warnings,
       }
+    }
+  }
+
+  private async applyProfileToExistingMedia(
+    profileName: string,
+    context: StepContext,
+  ): Promise<void> {
+    const profiles = await this.client.getLanguageProfiles()
+    const profile = profiles.find((p) => p.name === profileName)
+    if (!profile) {
+      context.logger.warn('Cannot apply profile to existing media: profile not found', {
+        name: profileName,
+      })
+      return
+    }
+
+    const profileId = profile.profileId
+
+    // Assign to series with no profile
+    const series = await this.client.getSeries()
+    const unassignedSeries = series.filter((s) => s.profileId == null).map((s) => s.sonarrSeriesId)
+    if (unassignedSeries.length > 0) {
+      context.logger.info('Assigning default profile to unassigned series...', {
+        count: unassignedSeries.length,
+        profileName,
+      })
+      await this.client.assignSeriesProfiles(unassignedSeries, profileId)
+    }
+
+    // Assign to movies with no profile
+    const movies = await this.client.getMovies()
+    const unassignedMovies = movies.filter((m) => m.profileId == null).map((m) => m.radarrId)
+    if (unassignedMovies.length > 0) {
+      context.logger.info('Assigning default profile to unassigned movies...', {
+        count: unassignedMovies.length,
+        profileName,
+      })
+      await this.client.assignMoviesProfiles(unassignedMovies, profileId)
+    }
+
+    if (unassignedSeries.length === 0 && unassignedMovies.length === 0) {
+      context.logger.debug('All media already has a profile assigned')
     }
   }
 

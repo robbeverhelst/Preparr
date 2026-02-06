@@ -95,6 +95,8 @@ export const BazarrLanguageProfileSchema = z.object({
   mustNotContain: z.string().default(''),
   originalFormat: z.boolean().nullable().optional(),
   tag: z.string().nullable().optional(),
+  default: z.boolean().default(false),
+  applyToExisting: z.boolean().default(false),
 })
 
 export const BazarrDefaultProfilesSchema = z.object({

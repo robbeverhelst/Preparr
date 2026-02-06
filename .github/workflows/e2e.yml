@@ -68,7 +68,9 @@ jobs:
             echo "Uninstalling stale release: $release"
             helm uninstall "$release" -n ${{ env.NAMESPACE }} --wait --no-hooks || true
           done
-          kubectl delete configmap,svc,deploy,statefulset,pvc --all -n ${{ env.NAMESPACE }} --wait 2>/dev/null || true
+          kubectl delete pod,replicaset,deploy,statefulset,job,svc,configmap,pvc --all -n ${{ env.NAMESPACE }} --wait 2>/dev/null || true
+          echo "Waiting for all pods to terminate..."
+          kubectl wait --for=delete pod --all -n ${{ env.NAMESPACE }} --timeout=60s 2>/dev/null || true
           echo "Namespace cleaned"
 
       - name: Deploy stack via Helm
@@ -86,22 +88,22 @@ jobs:
       - name: Wait for all pods ready
         run: |
           echo "Waiting for PostgreSQL..."
-          kubectl wait --for=condition=ready pod -l app=postgres -n ${{ env.NAMESPACE }} --timeout=120s
+          kubectl wait --for=condition=ready pod -l app=postgres --field-selector=status.phase=Running -n ${{ env.NAMESPACE }} --timeout=120s
 
           echo "Waiting for qBittorrent..."
-          kubectl wait --for=condition=ready pod -l app=qbittorrent -n ${{ env.NAMESPACE }} --timeout=120s
+          kubectl wait --for=condition=ready pod -l app=qbittorrent --field-selector=status.phase=Running -n ${{ env.NAMESPACE }} --timeout=120s
 
           echo "Waiting for Prowlarr..."
-          kubectl wait --for=condition=ready pod -l app=prowlarr -n ${{ env.NAMESPACE }} --timeout=180s
+          kubectl wait --for=condition=ready pod -l app=prowlarr --field-selector=status.phase=Running -n ${{ env.NAMESPACE }} --timeout=180s
 
           echo "Waiting for Sonarr..."
-          kubectl wait --for=condition=ready pod -l app=sonarr -n ${{ env.NAMESPACE }} --timeout=180s
+          kubectl wait --for=condition=ready pod -l app=sonarr --field-selector=status.phase=Running -n ${{ env.NAMESPACE }} --timeout=180s
 
           echo "Waiting for Radarr..."
-          kubectl wait --for=condition=ready pod -l app=radarr -n ${{ env.NAMESPACE }} --timeout=180s
+          kubectl wait --for=condition=ready pod -l app=radarr --field-selector=status.phase=Running -n ${{ env.NAMESPACE }} --timeout=180s
 
           echo "Waiting for Bazarr..."
-          kubectl wait --for=condition=ready pod -l app=bazarr -n ${{ env.NAMESPACE }} --timeout=120s
+          kubectl wait --for=condition=ready pod -l app=bazarr --field-selector=status.phase=Running -n ${{ env.NAMESPACE }} --timeout=120s
 
           echo "All pods ready"
 
