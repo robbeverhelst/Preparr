@@ -471,6 +471,88 @@ export class BazarrManager {
     }
   }
 
+  async getSeries(): Promise<Array<{ sonarrSeriesId: number; profileId: number | null }>> {
+    try {
+      const response = await this.apiGet('/series')
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const body = (await response.json()) as { data?: unknown[] } | unknown[]
+      const data = Array.isArray(body) ? body : (body.data ?? [])
+      if (!Array.isArray(data)) return []
+      return data.map((s: Record<string, unknown>) => ({
+        sonarrSeriesId: Number(s.sonarrSeriesId),
+        profileId: s.profileId != null ? Number(s.profileId) : null,
+      }))
+    } catch (error) {
+      logger.error('Failed to get Bazarr series', { error })
+      return []
+    }
+  }
+
+  async getMovies(): Promise<Array<{ radarrId: number; profileId: number | null }>> {
+    try {
+      const response = await this.apiGet('/movies')
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const body = (await response.json()) as { data?: unknown[] } | unknown[]
+      const data = Array.isArray(body) ? body : (body.data ?? [])
+      if (!Array.isArray(data)) return []
+      return data.map((m: Record<string, unknown>) => ({
+        radarrId: Number(m.radarrId),
+        profileId: m.profileId != null ? Number(m.profileId) : null,
+      }))
+    } catch (error) {
+      logger.error('Failed to get Bazarr movies', { error })
+      return []
+    }
+  }
+
+  async assignSeriesProfiles(seriesIds: number[], profileId: number): Promise<void> {
+    if (seriesIds.length === 0) return
+    logger.info('Assigning profile to series...', { count: seriesIds.length, profileId })
+
+    try {
+      const url = this.buildUrl('/series')
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seriesid: seriesIds, profileid: profileId }),
+      })
+
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`HTTP ${response.status}: ${body}`)
+      }
+
+      logger.info('Series profiles assigned successfully', { count: seriesIds.length })
+    } catch (error) {
+      logger.error('Failed to assign series profiles', { error })
+      throw error
+    }
+  }
+
+  async assignMoviesProfiles(movieIds: number[], profileId: number): Promise<void> {
+    if (movieIds.length === 0) return
+    logger.info('Assigning profile to movies...', { count: movieIds.length, profileId })
+
+    try {
+      const url = this.buildUrl('/movies')
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ radarrid: movieIds, profileid: profileId }),
+      })
+
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(`HTTP ${response.status}: ${body}`)
+      }
+
+      logger.info('Movie profiles assigned successfully', { count: movieIds.length })
+    } catch (error) {
+      logger.error('Failed to assign movie profiles', { error })
+      throw error
+    }
+  }
+
   async initialize(): Promise<void> {
     if (this.isInitialized) {
       logger.debug('BazarrManager already initialized')

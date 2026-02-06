@@ -58,6 +58,17 @@
           "settings": {}
         }
       ],
+      "languageProfiles": [
+        {
+          "name": "Default",
+          "default": true,
+          "applyToExisting": true,
+          "items": [
+            { "language": "en", "forced": false, "hi": false, "audio_exclude": false },
+            { "language": "nl", "forced": false, "hi": false, "audio_exclude": false }
+          ]
+        }
+      ],
       "subtitleDefaults": {
         "seriesType": "hearing_impaired_preferred",
         "movieType": "hearing_impaired_preferred",
