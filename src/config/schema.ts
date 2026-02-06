@@ -85,6 +85,7 @@ export const BazarrLanguageProfileItemSchema = z.object({
   forced: z.boolean().default(false),
   hi: z.boolean().default(false),
   audio_exclude: z.boolean().default(false),
+  audio_only_include: z.boolean().default(false),
 })
 
 export const BazarrLanguageProfileSchema = z.object({
