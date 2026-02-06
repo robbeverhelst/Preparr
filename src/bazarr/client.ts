@@ -515,10 +515,15 @@ export class BazarrManager {
 
     try {
       const url = this.buildUrl('/series')
+      const params = new URLSearchParams()
+      for (const id of seriesIds) {
+        params.append('seriesid', String(id))
+        params.append('profileid', String(profileId))
+      }
       const response = await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seriesid: seriesIds, profileid: profileId }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
       })
 
       if (!response.ok) {
@@ -539,10 +544,15 @@ export class BazarrManager {
 
     try {
       const url = this.buildUrl('/movies')
+      const params = new URLSearchParams()
+      for (const id of movieIds) {
+        params.append('radarrid', String(id))
+        params.append('profileid', String(profileId))
+      }
       const response = await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ radarrid: movieIds, profileid: profileId }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
       })
 
       if (!response.ok) {
