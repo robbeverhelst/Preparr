@@ -1,3 +1,10 @@
+## [0.18.3](https://github.com/robbeverhelst/Preparr/compare/v0.18.2...v0.18.3) (2026-02-06)
+
+
+### Bug Fixes
+
+* **bazarr:** add audio_only_include field to language profiles ([#67](https://github.com/robbeverhelst/Preparr/issues/67)) ([1028e4f](https://github.com/robbeverhelst/Preparr/commit/1028e4fe46d56839ed98c4218e45b93747adaaf6))
+
 ## [0.18.2](https://github.com/robbeverhelst/Preparr/compare/v0.18.1...v0.18.2) (2026-02-06)
 
 
