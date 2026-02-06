@@ -1,3 +1,10 @@
+# [0.17.0](https://github.com/robbeverhelst/Preparr/compare/v0.16.0...v0.17.0) (2026-02-06)
+
+
+### Features
+
+* **bazarr:** Add language profiles support ([#56](https://github.com/robbeverhelst/Preparr/issues/56)) ([b57b70d](https://github.com/robbeverhelst/Preparr/commit/b57b70d51c70bbadf4da165f1e75d573e5a0bfad)), closes [#55](https://github.com/robbeverhelst/Preparr/issues/55)
+
 # [0.16.0](https://github.com/robbeverhelst/Preparr/compare/v0.15.0...v0.16.0) (2026-02-05)
 
 
