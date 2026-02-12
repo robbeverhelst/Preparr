@@ -138,7 +138,7 @@ jobs:
 
       - name: Upload logs artifact
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: e2e-logs
           path: ./e2e-logs/
