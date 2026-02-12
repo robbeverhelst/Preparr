@@ -6,6 +6,9 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
+    paths:
+      - 'helm/**'
+      - '.github/workflows/helm.yml'
   workflow_run:
     workflows: ["CI"]
     types:
@@ -23,6 +26,10 @@ env:
 jobs:
   lint-test:
     runs-on: arc-preparr
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -53,7 +60,11 @@ jobs:
   publish:
     needs: lint-test
     runs-on: arc-preparr
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'))
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main'))
     steps:
       - name: Checkout
         uses: actions/checkout@v6

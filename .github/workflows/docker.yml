@@ -6,11 +6,17 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
-  workflow_dispatch:
+    paths:
+      - 'src/**'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/docker.yml'
   workflow_run:
     workflows: ["CI"]
-    types: 
+    types:
       - completed
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -19,8 +25,10 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Run on pushes, PRs, manual dispatch, or when CI completes successfully
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
     permissions:
       contents: read
       packages: write
