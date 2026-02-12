@@ -1,3 +1,10 @@
+# [0.19.0](https://github.com/robbeverhelst/Preparr/compare/v0.18.3...v0.19.0) (2026-02-12)
+
+
+### Features
+
+* **helm:** add default resource requests/limits for injected containers ([#81](https://github.com/robbeverhelst/Preparr/issues/81)) ([afbc0e9](https://github.com/robbeverhelst/Preparr/commit/afbc0e9aa2e759fd578e718b045ee15c53653a0c)), closes [#68](https://github.com/robbeverhelst/Preparr/issues/68)
+
 ## [0.18.3](https://github.com/robbeverhelst/Preparr/compare/v0.18.2...v0.18.3) (2026-02-06)
 
 
