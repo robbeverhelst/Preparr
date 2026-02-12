@@ -104,6 +104,10 @@ spec:
         {{- with .Values.qbittorrent.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+        {{- with .Values.preparr.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       containers:
       - name: qbittorrent
         image: "{{ .Values.qbittorrent.image.repository }}:{{ .Values.qbittorrent.image.tag }}"

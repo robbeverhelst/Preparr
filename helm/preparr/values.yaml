@@ -20,6 +20,15 @@ preparr:
   health:
     port: 9001
 
+  # Resource limits for preparr-init and preparr-sidecar containers
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
   # Logging configuration
   logLevel: info  # debug|info|warn|error
 
@@ -64,6 +73,16 @@ postgresql:
     limits:
       memory: "512Mi"
       cpu: "500m"
+
+  # Resource limits for the wait-for-postgres init container
+  waitContainer:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        cpu: 50m
+        memory: 64Mi
 
   # Persistence configuration
   persistence:

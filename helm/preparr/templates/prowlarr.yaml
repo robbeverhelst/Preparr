@@ -78,6 +78,10 @@ spec:
         env:
           - name: PGPASSWORD
             value: {{ .Values.postgresql.auth.password | quote }}
+        {{- with .Values.postgresql.waitContainer.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       - name: preparr-init
         image: {{ include "preparr.image" . }}
         imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
@@ -111,6 +115,10 @@ spec:
         - name: prowlarr-config-file
           mountPath: /config/prowlarr-config.json
           subPath: prowlarr-config.json
+        {{- with .Values.preparr.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       containers:
       - name: prowlarr
         image: "{{ .Values.prowlarr.image.repository }}:{{ .Values.prowlarr.image.tag }}"
@@ -202,6 +210,10 @@ spec:
             port: {{ .Values.preparr.health.port }}
           initialDelaySeconds: 60
           periodSeconds: 30
+        {{- with .Values.preparr.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       volumes:
       - name: prowlarr-config-volume
         emptyDir: {}

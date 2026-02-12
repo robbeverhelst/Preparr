@@ -78,6 +78,10 @@ spec:
         env:
           - name: PGPASSWORD
             value: {{ .Values.postgresql.auth.password | quote }}
+        {{- with .Values.postgresql.waitContainer.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       - name: preparr-init
         image: {{ include "preparr.image" . }}
         imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
@@ -113,6 +117,10 @@ spec:
           subPath: radarr-config.json
         {{- with .Values.radarr.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.preparr.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
         {{- end }}
       containers:
       - name: radarr
@@ -205,6 +213,10 @@ spec:
             port: {{ .Values.preparr.health.port }}
           initialDelaySeconds: 60
           periodSeconds: 30
+        {{- with .Values.preparr.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       {{- with .Values.radarr.extraContainers }}
       {{- toYaml . | nindent 6 }}
       {{- end }}

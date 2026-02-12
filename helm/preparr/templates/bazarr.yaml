@@ -109,6 +109,10 @@ spec:
             {{- else }}
             value: {{ .Values.postgresql.auth.password | quote }}
             {{- end }}
+        {{- with .Values.postgresql.waitContainer.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       - name: preparr-init
         image: {{ include "preparr.image" . }}
         imagePullPolicy: {{ .Values.preparr.image.pullPolicy }}
@@ -158,6 +162,10 @@ spec:
         - name: bazarr-config-file
           mountPath: /config/bazarr-config.json
           subPath: bazarr-config.json
+        {{- with .Values.preparr.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       containers:
       - name: preparr-sidecar
         image: {{ include "preparr.image" . }}
@@ -252,6 +260,10 @@ spec:
           subPath: bazarr-config.json
         {{- with .Values.bazarr.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.preparr.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
         {{- end }}
       - name: bazarr
         image: "{{ .Values.bazarr.image.repository }}:{{ .Values.bazarr.image.tag }}"
