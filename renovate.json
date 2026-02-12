@@ -17,6 +17,21 @@
       "matchPackageNames": ["tsarr"],
       "groupName": "Tsarr",
       "schedule": ["at any time"]
+    },
+    {
+      "matchFileNames": ["docs/**"],
+      "groupName": "Documentation dependencies",
+      "automerge": true
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "automerge": true
+    },
+    {
+      "matchPackagePatterns": ["^@types/", "^bun-types$"],
+      "groupName": "Type definitions",
+      "automerge": true
     }
   ],
   "postUpdateOptions": ["bunInstall"],
@@ -25,6 +40,7 @@
   "prConcurrentLimit": 10,
   "prCreation": "immediate",
   "automergeType": "pr",
+  "platformAutomerge": true,
   "commitMessagePrefix": "chore(deps):",
   "commitMessageAction": "update",
   "commitMessageTopic": "{{depName}}"

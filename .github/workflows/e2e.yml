@@ -3,16 +3,25 @@ name: E2E Tests
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'helm/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'helm/**'
   workflow_dispatch:
 
 concurrency:
-  group: e2e-${{ github.head_ref || github.ref_name }}
+  group: e2e-tests
   cancel-in-progress: true
 
 jobs:
   e2e:
+    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'renovate/')
     runs-on: arc-preparr
     timeout-minutes: 30
     permissions:
