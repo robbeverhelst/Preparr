@@ -1,3 +1,10 @@
+## [0.19.1](https://github.com/robbeverhelst/Preparr/compare/v0.19.0...v0.19.1) (2026-03-09)
+
+
+### Bug Fixes
+
+* format renovate.json with biome ([9db02ce](https://github.com/robbeverhelst/Preparr/commit/9db02ce39b288b5dbf114ce20297dd4333c192ea))
+
 # [0.19.0](https://github.com/robbeverhelst/Preparr/compare/v0.18.3...v0.19.0) (2026-02-12)
 
 
