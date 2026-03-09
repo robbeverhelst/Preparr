@@ -1,68 +1,42 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    ":dependencyDashboard",
-    ":semanticCommitTypeAll(chore)"
-  ],
+  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommitTypeAll(chore)"],
   "timezone": "Europe/Brussels",
-  "schedule": [
-    "before 3am on Monday"
-  ],
+  "schedule": ["before 3am on Monday"],
   "packageRules": [
     {
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
+      "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true
     },
     {
-      "matchDepTypes": [
-        "devDependencies"
-      ],
+      "matchDepTypes": ["devDependencies"],
       "automerge": true
     },
     {
-      "matchPackageNames": [
-        "tsarr"
-      ],
+      "matchPackageNames": ["tsarr"],
       "groupName": "Tsarr",
-      "schedule": [
-        "at any time"
-      ]
+      "schedule": ["at any time"]
     },
     {
-      "matchFileNames": [
-        "docs/**"
-      ],
+      "matchFileNames": ["docs/**"],
       "groupName": "Documentation dependencies",
       "automerge": true
     },
     {
-      "matchManagers": [
-        "github-actions"
-      ],
+      "matchManagers": ["github-actions"],
       "groupName": "GitHub Actions",
       "automerge": true
     },
     {
       "groupName": "Type definitions",
       "automerge": true,
-      "matchPackageNames": [
-        "/^@types//",
-        "/^bun-types$/"
-      ]
+      "matchPackageNames": ["/^@types//", "/^bun-types$/"]
     }
   ],
-  "postUpdateOptions": [
-    "bunInstall"
-  ],
+  "postUpdateOptions": ["bunInstall"],
   "rangeStrategy": "bump",
-  "labels": [
-    "dependencies"
-  ],
+  "labels": ["dependencies"],
   "prConcurrentLimit": 10,
   "prCreation": "immediate",
   "automergeType": "pr",
