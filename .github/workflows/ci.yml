@@ -54,9 +54,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22.22.1
+          node-version: 24.14.0
 
       - uses: oven-sh/setup-bun@v2
         with:
