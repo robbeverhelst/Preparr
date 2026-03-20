@@ -5,7 +5,7 @@
     "": {
       "name": "preparr",
       "dependencies": {
-        "tsarr": "^2.4.9",
+        "tsarr": "^2.4.12",
         "zod": "^4.3.6",
       },
       "devDependencies": {
@@ -494,7 +494,7 @@
 
     "traverse": ["traverse@0.6.8", "", {}, "sha512-aXJDbk6SnumuaZSANd21XAo15ucCDE38H4fkqiGsc3MhCK+wOlZvLP9cB/TvpHT0mOyWgC4Z8EwRlzqYSUzdsA=="],
 
-    "tsarr": ["tsarr@2.4.9", "", { "dependencies": { "citty": "^0.2.1", "consola": "^3.4.2" }, "bin": { "tsarr": "dist/cli/index.js" } }, "sha512-mCXWWmsxJNCWV5OzN5gugzGmLXiTgS5PwPxXu/awfqJ6WyRN40ni31vglfK/tyqT6OBh6pGWFM0VOB8HXBKKFA=="],
+    "tsarr": ["tsarr@2.4.12", "", { "dependencies": { "citty": "^0.2.1", "consola": "^3.4.2" }, "bin": { "tsarr": "dist/cli/index.js" } }, "sha512-nCXLAepmxXYYjxbcYwSvRYk4VueFDCYZ2L2hqL8JFje2h+oZkXHhZh3ckRfvf8MbTVlD/BHxetA5mX8E2VOjDg=="],
 
     "tunnel": ["tunnel@0.0.6", "", {}, "sha512-1h/Lnq9yajKY2PEbBadPXj3VxsDDu844OnaAo52UVmIzIvwwtBPIuNvkjuzBlTWpfJyUbG3ez0KSBibQkj4ojg=="],
 
