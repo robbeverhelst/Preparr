@@ -96,6 +96,8 @@ spec:
           value: {{ .Values.postgresql.auth.password | quote }}
         - name: POSTGRES_DB
           value: {{ .Values.postgresql.auth.database | quote }}
+        - name: POSTGRES_LOG_DATABASE_ENABLED
+          value: {{ .Values.postgresql.logDatabaseEnabled | quote }}
         - name: SERVARR_URL
           value: "http://prowlarr:{{ .Values.prowlarr.service.webui.port }}"
         - name: SERVARR_TYPE
@@ -161,6 +163,8 @@ spec:
           value: {{ .Values.postgresql.auth.password | quote }}
         - name: POSTGRES_DB
           value: "prowlarr_main"
+        - name: POSTGRES_LOG_DATABASE_ENABLED
+          value: {{ .Values.postgresql.logDatabaseEnabled | quote }}
         - name: SERVARR_URL
           value: "http://localhost:9696"
         - name: SERVARR_TYPE

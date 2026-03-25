@@ -25,6 +25,20 @@ class PrepArrNew {
     return this.config.servarr.type === 'bazarr'
   }
 
+  private get isQbittorrentDeployment(): boolean {
+    return this.config.servarr.type === 'qbittorrent'
+  }
+
+  private createServarrClient(): ServarrManager | undefined {
+    if (this.isBazarrDeployment || this.isQbittorrentDeployment) {
+      return undefined
+    }
+
+    return new ServarrManager(this.config.servarr, {
+      logDatabaseEnabled: this.config.postgres.logDatabaseEnabled,
+    })
+  }
+
   private createBazarrClient(): BazarrManager | undefined {
     const bazarrConfig = this.config.services?.bazarr
 
@@ -50,9 +64,7 @@ class PrepArrNew {
     })
 
     try {
-      const servarrClient = this.isBazarrDeployment
-        ? undefined
-        : new ServarrManager(this.config.servarr)
+      const servarrClient = this.createServarrClient()
       const bazarrClient = this.createBazarrClient()
 
       const context = new ContextBuilder()
@@ -107,9 +119,8 @@ class PrepArrNew {
     this.health.start()
 
     try {
-      let servarrClient: ServarrManager | undefined
-      if (!this.isBazarrDeployment) {
-        servarrClient = new ServarrManager(this.config.servarr)
+      const servarrClient = this.createServarrClient()
+      if (servarrClient) {
         await servarrClient.initializeSidecarMode()
       }
 

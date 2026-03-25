@@ -10,6 +10,8 @@ describe('PostgresClient', () => {
     username: 'testuser',
     password: 'testpass',
     database: 'testdb',
+    logDatabaseEnabled: true,
+    skipProvisioning: false,
   }
 
   beforeEach(() => {

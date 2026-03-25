@@ -41,6 +41,7 @@ describe('loadEnvironmentConfig', () => {
     process.env.POSTGRES_DATABASE = 'mydb'
     process.env.POSTGRES_USERNAME = 'user'
     process.env.POSTGRES_PASSWORD = 'secret'
+    process.env.POSTGRES_LOG_DATABASE_ENABLED = 'false'
 
     const config = loadEnvironmentConfig()
 
@@ -49,6 +50,7 @@ describe('loadEnvironmentConfig', () => {
     expect(config.postgres?.database).toBe('mydb')
     expect(config.postgres?.username).toBe('user')
     expect(config.postgres?.password).toBe('secret')
+    expect(config.postgres?.logDatabaseEnabled).toBe(false)
   })
 
   test('loads servarr configuration from environment', () => {

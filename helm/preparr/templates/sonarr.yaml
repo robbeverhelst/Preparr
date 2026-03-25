@@ -154,6 +154,8 @@ spec:
           {{- end }}
         - name: POSTGRES_DB
           value: {{ .Values.postgresql.auth.database | quote }}
+        - name: POSTGRES_LOG_DATABASE_ENABLED
+          value: {{ .Values.postgresql.logDatabaseEnabled | quote }}
         - name: SERVARR_URL
           value: "http://sonarr:{{ .Values.sonarr.service.webui.port }}"
         - name: SERVARR_TYPE
@@ -284,6 +286,8 @@ spec:
           {{- end }}
         - name: POSTGRES_DB
           value: "sonarr_main"
+        - name: POSTGRES_LOG_DATABASE_ENABLED
+          value: {{ .Values.postgresql.logDatabaseEnabled | quote }}
         - name: SERVARR_URL
           value: "http://localhost:8989"
         - name: SERVARR_TYPE

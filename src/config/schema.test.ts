@@ -106,6 +106,7 @@ describe('Configuration Schema Validation', () => {
     if (result.success) {
       expect(result.data.postgres.host).toBe('localhost') // Default
       expect(result.data.postgres.port).toBe(5432) // Default
+      expect(result.data.postgres.logDatabaseEnabled).toBe(true) // Default
       expect(result.data.health.port).toBe(8080) // Default
       expect(result.data.logLevel).toBe('info') // Default
       expect(result.data.configWatch).toBe(true) // Default

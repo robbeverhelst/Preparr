@@ -6,6 +6,7 @@ export const PostgresConfigSchema = z.object({
   username: z.string().default('postgres'),
   password: z.string(),
   database: z.string().default('servarr'),
+  logDatabaseEnabled: z.boolean().default(true),
   skipProvisioning: z.boolean().default(false),
 })
 

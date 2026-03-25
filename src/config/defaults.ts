@@ -6,6 +6,7 @@ export const defaultConfig: Partial<Config> = {
     username: 'postgres',
     password: '', // Will be required via validation
     database: 'servarr',
+    logDatabaseEnabled: true,
     skipProvisioning: false,
   },
   servarr: {
@@ -39,6 +40,7 @@ export const envMapping = {
   POSTGRES_PASSWORD: 'postgres.password',
   POSTGRES_DB: 'postgres.database',
   POSTGRES_DATABASE: 'postgres.database', // Alternative name
+  POSTGRES_LOG_DATABASE_ENABLED: 'postgres.logDatabaseEnabled',
   POSTGRES_SKIP_PROVISIONING: 'postgres.skipProvisioning',
 
   SERVARR_URL: 'servarr.url',
@@ -84,6 +86,7 @@ export const cliMapping = {
   'postgres-password': 'postgres.password',
   'postgres-db': 'postgres.database',
   'postgres-database': 'postgres.database',
+  'postgres-log-database-enabled': 'postgres.logDatabaseEnabled',
 
   'servarr-url': 'servarr.url',
   'servarr-type': 'servarr.type',

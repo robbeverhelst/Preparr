@@ -332,9 +332,6 @@ describe('validateRequiredFields', () => {
 
   test('allows missing servarr URL when type is qbittorrent', () => {
     const config: Partial<Config> = {
-      postgres: {
-        password: 'secret',
-      },
       servarr: {
         type: 'qbittorrent',
         // url is missing but that's OK for qbittorrent
@@ -342,6 +339,7 @@ describe('validateRequiredFields', () => {
     }
 
     const errors = validateRequiredFields(config)
+    expect(errors).not.toContain('postgres.password is required')
     expect(errors).not.toContain('servarr.url is required when type is not qbittorrent or bazarr')
     expect(errors).not.toContain(
       'servarr.adminPassword is required when type is not qbittorrent or bazarr',

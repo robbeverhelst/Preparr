@@ -13,6 +13,10 @@ export class PostgresUsersStep extends ConfigurationStep {
   readonly mode: 'init' | 'sidecar' | 'both' = 'init'
 
   validatePrerequisites(context: StepContext): boolean {
+    if (context.servarrType === 'qbittorrent') {
+      context.logger.debug('Skipping PostgreSQL user provisioning for qBittorrent')
+      return false
+    }
     // Skip if provisioning is disabled (for pre-provisioned databases)
     if (context.config.postgres.skipProvisioning) {
       context.logger.info('PostgreSQL user provisioning skipped (POSTGRES_SKIP_PROVISIONING=true)')
@@ -38,7 +42,11 @@ export class PostgresUsersStep extends ConfigurationStep {
     if (user === 'bazarr') {
       return ['bazarr']
     }
-    return [`${context.servarrType}_main`, `${context.servarrType}_log`]
+    const databases = [`${context.servarrType}_main`]
+    if (context.config.postgres.logDatabaseEnabled) {
+      databases.push(`${context.servarrType}_log`)
+    }
+    return databases
   }
 
   async readCurrentState(context: StepContext): Promise<{ users: string[] }> {
