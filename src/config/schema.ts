@@ -2,7 +2,15 @@ import { z } from 'zod'
 
 export const PostgresConfigSchema = z.object({
   host: z.string().default('localhost'),
-  port: z.coerce.number().default(5432),
+  port: z
+    .union([z.number(), z.string()])
+    .transform((val) => {
+      if (typeof val === 'number') return Number.isNaN(val) ? undefined : val
+      const parsed = Number.parseInt(val, 10)
+      return Number.isNaN(parsed) ? undefined : parsed
+    })
+    .pipe(z.number().optional())
+    .default(5432),
   username: z.string().default('postgres'),
   password: z.string(),
   database: z.string().default('servarr'),

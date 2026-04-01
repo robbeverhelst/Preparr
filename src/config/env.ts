@@ -5,7 +5,7 @@ export function loadEnvironmentConfig(): Config {
   const config = {
     postgres: {
       host: env.POSTGRES_HOST,
-      port: env.POSTGRES_PORT ? Number.parseInt(env.POSTGRES_PORT, 10) || undefined : undefined,
+      port: env.POSTGRES_PORT ? Number.parseInt(env.POSTGRES_PORT, 10) : undefined,
       username: env.POSTGRES_USER,
       password: env.POSTGRES_PASSWORD || '',
       database: env.POSTGRES_DB,
