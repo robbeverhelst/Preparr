@@ -12,6 +12,8 @@ description: Complete reference for all PrepArr environment variables
 | `POSTGRES_USER` | No | `postgres` | PostgreSQL username |
 | `POSTGRES_PASSWORD` | Yes | - | PostgreSQL password |
 | `POSTGRES_DB` | No | `servarr` | PostgreSQL database name |
+| `POSTGRES_LOG_DATABASE_ENABLED` | No | `true` | Create a separate `_log` database for each Servarr instance |
+| `POSTGRES_SKIP_PROVISIONING` | No | `false` | Skip database/user provisioning (for pre-provisioned databases) |
 | `SERVARR_URL` | Yes | - | Full URL to Servarr application (e.g., `http://sonarr:8989`) |
 | `SERVARR_TYPE` | Yes | - | Service type: `sonarr`, `radarr`, `prowlarr`, `lidarr`, `readarr`, `qbittorrent`, `bazarr`, `auto` |
 | `SERVARR_ADMIN_USER` | No | `admin` | Admin username for Servarr |

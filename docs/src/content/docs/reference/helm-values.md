@@ -43,6 +43,7 @@ Find the chart on [ArtifactHub](https://artifacthub.io/packages/helm/preparr/pre
 | `postgresql.auth.database` | Default database | `servarr` |
 | `postgresql.service.type` | Service type | `ClusterIP` |
 | `postgresql.service.port` | Service port | `5432` |
+| `postgresql.logDatabaseEnabled` | Create a separate `_log` database for each Servarr instance | `true` |
 | `postgresql.persistence.enabled` | Enable persistent volume | `false` |
 | `postgresql.persistence.size` | Volume size | `8Gi` |
 | `postgresql.persistence.storageClass` | Storage class | `""` |
