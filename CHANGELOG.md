@@ -1,3 +1,10 @@
+## [0.19.2](https://github.com/robbeverhelst/Preparr/compare/v0.19.1...v0.19.2) (2026-04-01)
+
+
+### Bug Fixes
+
+* qBittorrent Postgres provisioning ([#105](https://github.com/robbeverhelst/Preparr/issues/105)) ([94f0864](https://github.com/robbeverhelst/Preparr/commit/94f086498330171e74e7ec1a633f7cda0b870120))
+
 ## [0.19.1](https://github.com/robbeverhelst/Preparr/compare/v0.19.0...v0.19.1) (2026-03-09)
 
 
