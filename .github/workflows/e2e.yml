@@ -135,7 +135,8 @@ jobs:
 
           echo "Collecting infrastructure logs..."
           kubectl logs -n ${{ env.NAMESPACE }} -l app=postgres --tail=200 > ./e2e-logs/postgres.log 2>&1 || true
-          kubectl logs -n ${{ env.NAMESPACE }} -l app=qbittorrent --tail=200 > ./e2e-logs/qbittorrent.log 2>&1 || true
+          kubectl logs -n ${{ env.NAMESPACE }} -l app=qbittorrent -c preparr-init --tail=500 > ./e2e-logs/qbittorrent-preparr-init.log 2>&1 || true
+          kubectl logs -n ${{ env.NAMESPACE }} -l app=qbittorrent -c qbittorrent --tail=200 > ./e2e-logs/qbittorrent.log 2>&1 || true
 
           echo "Collecting pod descriptions..."
           kubectl describe pods -n ${{ env.NAMESPACE }} > ./e2e-logs/pod-descriptions.txt 2>&1 || true
