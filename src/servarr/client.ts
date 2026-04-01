@@ -104,11 +104,16 @@ export class ServarrManager {
   private isInitialized = false
   private configPath: string
   private capabilities: ClientCapabilities
+  private logDatabaseEnabled: boolean
 
-  constructor(config: ServarrConfig, configPath?: string) {
+  constructor(
+    config: ServarrConfig,
+    options?: { configPath?: string; logDatabaseEnabled?: boolean },
+  ) {
     this.config = config
-    this.configPath = configPath || process.env.SERVARR_CONFIG_PATH || '/config/config.xml'
+    this.configPath = options?.configPath || process.env.SERVARR_CONFIG_PATH || '/config/config.xml'
     this.capabilities = this.getClientCapabilities()
+    this.logDatabaseEnabled = options?.logDatabaseEnabled ?? true
   }
 
   private getClientCapabilities(): ClientCapabilities {
@@ -377,6 +382,13 @@ export class ServarrManager {
     return new SQL(connectionString)
   }
 
+  private getDatabaseNames(): { main: string; log?: string } {
+    return {
+      main: `${this.config.type}_main`,
+      ...(this.logDatabaseEnabled ? { log: `${this.config.type}_log` } : {}),
+    }
+  }
+
   private async readExistingApiKey(): Promise<string | null> {
     try {
       const configFile = file(this.configPath)
@@ -616,6 +628,11 @@ export class ServarrManager {
               ? 8787
               : 9696
     const authenticationMethod = this.config.authenticationMethod === 'forms' ? 'Forms' : 'Basic'
+    const databases = this.getDatabaseNames()
+    const postgresLogDb = this.logDatabaseEnabled
+      ? `
+  <PostgresLogDb>${databases.log}</PostgresLogDb>`
+      : ''
 
     const configXml = `<Config>
   <BindAddress>*</BindAddress>
@@ -638,8 +655,7 @@ export class ServarrManager {
   <PostgresPassword>${process.env.POSTGRES_PASSWORD}</PostgresPassword>
   <PostgresPort>${process.env.POSTGRES_PORT || 5432}</PostgresPort>
   <PostgresHost>${process.env.POSTGRES_HOST || 'postgres'}</PostgresHost>
-  <PostgresMainDb>${this.config.type}_main</PostgresMainDb>
-  <PostgresLogDb>${this.config.type}_log</PostgresLogDb>
+  <PostgresMainDb>${databases.main}</PostgresMainDb>${postgresLogDb}
 </Config>`
 
     try {
@@ -1003,15 +1019,19 @@ export class ServarrManager {
     }
 
     logger.info('Configuring Servarr database connection...')
+    const databases = this.getDatabaseNames()
 
-    const dbConfig = {
+    const dbConfig: Record<string, string | number> = {
       databaseType: 'postgresql',
       host: postgresConfig.host,
       port: postgresConfig.port,
-      database: `${this.config.type}_main`,
+      database: databases.main,
       user: this.config.type,
       password: postgresConfig.password,
-      logDatabase: `${this.config.type}_log`,
+    }
+
+    if (databases.log) {
+      dbConfig.logDatabase = databases.log
     }
 
     try {

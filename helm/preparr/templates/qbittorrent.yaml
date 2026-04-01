@@ -68,16 +68,6 @@ spec:
           runAsUser: 0
           runAsGroup: 0
         env:
-        - name: POSTGRES_HOST
-          value: {{ include "preparr.postgresHost" . | quote }}
-        - name: POSTGRES_PORT
-          value: {{ .Values.postgresql.service.port | quote }}
-        - name: POSTGRES_USER
-          value: {{ .Values.postgresql.auth.username | quote }}
-        - name: POSTGRES_PASSWORD
-          value: {{ .Values.postgresql.auth.password | quote }}
-        - name: POSTGRES_DB
-          value: {{ .Values.postgresql.auth.database | quote }}
         - name: SERVARR_TYPE
           value: "qbittorrent"
         - name: QBITTORRENT_USER
@@ -94,6 +84,8 @@ spec:
           value: "/config/qbittorrent-config.json"
         - name: QBITTORRENT_DOWNLOADS_PATH
           value: {{ .Values.qbittorrent.downloadsPath | default "/downloads" | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.preparr.logLevel | default "info" | quote }}
         command: ["bun", "run", "dist/index.js", "--init"]
         volumeMounts:
         - name: qbittorrent-config-volume

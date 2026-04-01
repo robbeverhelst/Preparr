@@ -12,8 +12,8 @@ export class PostgresConnectivityStep extends ConfigurationStep {
   readonly dependencies: string[] = []
   readonly mode: 'init' | 'sidecar' | 'both' = 'both'
 
-  validatePrerequisites(_context: StepContext): boolean {
-    return true
+  validatePrerequisites(context: StepContext): boolean {
+    return context.servarrType !== 'qbittorrent'
   }
 
   async readCurrentState(context: StepContext): Promise<{ connected: boolean; version?: string }> {

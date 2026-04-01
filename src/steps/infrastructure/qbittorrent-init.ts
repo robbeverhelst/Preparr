@@ -222,8 +222,13 @@ WebUI\\Password_PBKDF2=${passwordHash}
 `
 
     // Ensure the qBittorrent directory exists
+    const configDir = '/config/qBittorrent'
     try {
-      await spawn(['mkdir', '-p', '/config/qBittorrent']).exited
+      const proc = spawn(['mkdir', '-p', configDir])
+      const exitCode = await proc.exited
+      if (exitCode !== 0) {
+        throw new Error(`mkdir -p ${configDir} exited with code ${exitCode}`)
+      }
       context.logger.debug('qBittorrent directory created successfully')
     } catch (error) {
       context.logger.error('Failed to create qBittorrent directory:', { error: String(error) })
@@ -231,7 +236,8 @@ WebUI\\Password_PBKDF2=${passwordHash}
     }
 
     // Write the config file
-    await write('/config/qBittorrent/qBittorrent.conf', configContent)
+    const configFilePath = `${configDir}/qBittorrent.conf`
+    await write(configFilePath, configContent)
   }
 
   private getDownloadPaths(): { downloadsPath: string; tempPath: string } {

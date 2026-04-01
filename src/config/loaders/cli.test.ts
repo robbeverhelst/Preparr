@@ -60,10 +60,16 @@ describe('parseCliArgs', () => {
   })
 
   test('handles boolean values', () => {
-    const result = parseCliArgs(['--config-watch=true', '--config-reconcile-interval', '60'])
+    const result = parseCliArgs([
+      '--config-watch=true',
+      '--config-reconcile-interval',
+      '60',
+      '--postgres-log-database-enabled=false',
+    ])
 
     expect(result.config.configWatch).toBe(true) // Converted to boolean
     expect(result.config.configReconcileInterval).toBe(60) // Converted to number
+    expect(result.config.postgres?.logDatabaseEnabled).toBe(false)
   })
 
   test('handles string values with quotes', () => {

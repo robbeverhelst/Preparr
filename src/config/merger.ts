@@ -88,9 +88,10 @@ export function cleanConfig(config: Partial<Config>): Partial<Config> {
  */
 export function validateRequiredFields(config: Partial<Config>): string[] {
   const errors: string[] = []
+  const isQbittorrentDeployment = config.servarr?.type === 'qbittorrent'
 
   // Check required fields
-  if (!config.postgres?.password) {
+  if (!isQbittorrentDeployment && !config.postgres?.password) {
     errors.push('postgres.password is required')
   }
 

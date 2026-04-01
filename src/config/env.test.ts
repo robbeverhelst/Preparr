@@ -33,6 +33,7 @@ describe('Environment Configuration', () => {
     expect(config.postgres.username).toBe('postgres')
     expect(config.postgres.password).toBe('postgres')
     expect(config.postgres.database).toBe('servarr')
+    expect(config.postgres.logDatabaseEnabled).toBe(true)
 
     expect(config.servarr.url).toBe('http://localhost:8989')
     expect(config.servarr.type).toBe('auto')
@@ -53,6 +54,7 @@ describe('Environment Configuration', () => {
     Bun.env.POSTGRES_USER = 'custom_user'
     Bun.env.POSTGRES_PASSWORD = 'secret_password'
     Bun.env.POSTGRES_DB = 'custom_db'
+    Bun.env.POSTGRES_LOG_DATABASE_ENABLED = 'false'
 
     const config = loadEnvironmentConfig()
 
@@ -61,6 +63,7 @@ describe('Environment Configuration', () => {
     expect(config.postgres.username).toBe('custom_user')
     expect(config.postgres.password).toBe('secret_password')
     expect(config.postgres.database).toBe('custom_db')
+    expect(config.postgres.logDatabaseEnabled).toBe(false)
   })
 
   test('loads custom Servarr configuration', () => {

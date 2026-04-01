@@ -375,6 +375,22 @@ type = "sonarr"
     expect(result.config.services.prowlarr.url).toBe('http://prowlarr:9696')
     expect(result.config.services.prowlarr.apiKey).toBe('prowlarr123')
   })
+
+  test('loads qbittorrent configuration without postgres credentials', async () => {
+    process.env.SERVARR_TYPE = 'qbittorrent'
+    process.env.QBITTORRENT_URL = 'http://qbittorrent:8080'
+    process.env.QBITTORRENT_USERNAME = 'admin'
+    process.env.QBITTORRENT_PASSWORD = 'adminpass'
+
+    const result = await loadConfiguration([])
+
+    expect(result.config.servarr.type).toBe('qbittorrent')
+    expect(result.config.postgres.password).toBe('')
+    expect(result.config.postgres.logDatabaseEnabled).toBe(true)
+    expect(result.config.services.qbittorrent.url).toBe('http://qbittorrent:8080')
+    expect(result.config.services.qbittorrent.username).toBe('admin')
+    expect(result.config.services.qbittorrent.password).toBe('adminpass')
+  })
 })
 
 describe('loadConfigurationSafe', () => {

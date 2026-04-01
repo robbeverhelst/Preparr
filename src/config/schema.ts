@@ -2,10 +2,19 @@ import { z } from 'zod'
 
 export const PostgresConfigSchema = z.object({
   host: z.string().default('localhost'),
-  port: z.number().default(5432),
+  port: z
+    .union([z.number(), z.string()])
+    .transform((val) => {
+      if (typeof val === 'number') return Number.isNaN(val) ? undefined : val
+      const parsed = Number.parseInt(val, 10)
+      return Number.isNaN(parsed) ? undefined : parsed
+    })
+    .pipe(z.number().optional())
+    .default(5432),
   username: z.string().default('postgres'),
   password: z.string(),
   database: z.string().default('servarr'),
+  logDatabaseEnabled: z.boolean().default(true),
   skipProvisioning: z.boolean().default(false),
 })
 
@@ -404,14 +413,14 @@ export const ConfigSchema = z.object({
   }),
   health: z
     .object({
-      port: z.number().default(8080),
+      port: z.coerce.number().default(8080),
     })
     .default({ port: 8080 }),
   logLevel: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   logFormat: z.enum(['json', 'pretty']).default('json'),
   configPath: z.string().default('/config/servarr.yaml'),
   configWatch: z.boolean().default(true),
-  configReconcileInterval: z.number().default(60),
+  configReconcileInterval: z.coerce.number().default(60),
 })
 
 export type PostgresConfig = z.infer<typeof PostgresConfigSchema>
