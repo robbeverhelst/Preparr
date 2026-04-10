@@ -18,7 +18,18 @@ describe('BazarrManager language profile configuration', () => {
       if (url.includes('/api/system/languages/profiles')) {
         // After restart, return the created profile to simulate cache reload
         const data = restarted
-          ? [{ profileId: 1, name: 'Default', cutoff: 1, items: [], mustContain: '', mustNotContain: '', originalFormat: null, tag: null }]
+          ? [
+              {
+                profileId: 1,
+                name: 'Default',
+                cutoff: 1,
+                items: [],
+                mustContain: '',
+                mustNotContain: '',
+                originalFormat: null,
+                tag: null,
+              },
+            ]
           : []
         return Promise.resolve(new Response(JSON.stringify(data), { status: 200 }))
       }
