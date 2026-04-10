@@ -72,10 +72,15 @@ describe('BazarrManager language profile configuration', () => {
     expect(calledUrls).toContain(
       'http://bazarr:6767/api/system?action=restart&apikey=0123456789abcdef0123456789abcdef',
     )
-    // After restart, should check that language profiles are available
-    expect(calledUrls).toContain(
-      'http://bazarr:6767/api/system/languages/profiles?apikey=0123456789abcdef0123456789abcdef',
-    )
+    // Verify language profiles were checked AFTER the restart
+    const restartIndex = calledUrls.findIndex((url) => url.includes('/api/system?action=restart'))
+    const profileCallIndexes = calledUrls
+      .map((url, index) => ({ url, index }))
+      .filter(({ url }) => url.includes('/api/system/languages/profiles'))
+      .map(({ index }) => index)
+
+    expect(profileCallIndexes.length).toBeGreaterThanOrEqual(2)
+    expect(profileCallIndexes.some((index) => index > restartIndex)).toBe(true)
   })
 
   test('does not restart Bazarr when language profiles already exist', async () => {

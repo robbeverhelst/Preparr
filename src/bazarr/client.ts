@@ -89,13 +89,21 @@ export class BazarrManager {
   private async restartSystem(): Promise<void> {
     logger.info('Restarting Bazarr...')
 
+    let response: Response | undefined
     try {
-      await fetch(this.buildUrl('/system?action=restart'), {
+      response = await fetch(this.buildUrl('/system?action=restart'), {
         method: 'POST',
       })
     } catch (error) {
       // Bazarr can drop the connection while restarting before sending a full response.
       logger.debug('Bazarr restart request ended before a response was returned', { error })
+    }
+
+    if (response && !response.ok) {
+      const body = await response.text().catch(() => '')
+      throw new Error(
+        `Bazarr restart request failed: HTTP ${response.status}${body ? `: ${body}` : ''}`,
+      )
     }
 
     await this.waitForStartup(60, 2000)
@@ -123,7 +131,9 @@ export class BazarrManager {
       await Bun.sleep(retryDelay)
     }
 
-    logger.warn('Bazarr language profile cache did not populate in time', { expectedCount })
+    const message = 'Bazarr language profile cache did not populate in time'
+    logger.error(message, { expectedCount, maxRetries, retryDelay })
+    throw new Error(`${message} (expected at least ${expectedCount} profiles)`)
   }
 
   async testConnection(): Promise<boolean> {
