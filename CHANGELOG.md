@@ -1,3 +1,10 @@
+## [0.19.3](https://github.com/robbeverhelst/Preparr/compare/v0.19.2...v0.19.3) (2026-04-10)
+
+
+### Bug Fixes
+
+* **config:** apply logDatabaseEnabled and skipProvisioning env overrides ([#110](https://github.com/robbeverhelst/Preparr/issues/110)) ([30b2e61](https://github.com/robbeverhelst/Preparr/commit/30b2e61424ed26ea425938438c853a063487d742)), closes [#109](https://github.com/robbeverhelst/Preparr/issues/109)
+
 ## [0.19.2](https://github.com/robbeverhelst/Preparr/compare/v0.19.1...v0.19.2) (2026-04-01)
 
 
