@@ -86,6 +86,22 @@ export class BazarrManager {
     })
   }
 
+  private async restartSystem(): Promise<void> {
+    logger.info('Restarting Bazarr...')
+
+    try {
+      await fetch(this.buildUrl('/system?action=restart'), {
+        method: 'POST',
+      })
+    } catch (error) {
+      // Bazarr can drop the connection while restarting before sending a full response.
+      logger.debug('Bazarr restart request ended before a response was returned', { error })
+    }
+
+    await this.waitForStartup(60, 2000)
+    logger.info('Bazarr restart completed successfully')
+  }
+
   async testConnection(): Promise<boolean> {
     try {
       const response = await this.apiGet('/system/status')
@@ -415,6 +431,13 @@ export class BazarrManager {
       logger.info('Bazarr language profiles configured successfully', {
         profiles: profiles.map((p) => p.name).join(', '),
       })
+
+      if (existing.length === 0 && profiles.length > 0) {
+        logger.info(
+          'Restarting Bazarr after initial language profile creation to refresh the profile cache',
+        )
+        await this.restartSystem()
+      }
     } catch (error) {
       logger.error('Failed to configure Bazarr language profiles', { error })
       throw error
