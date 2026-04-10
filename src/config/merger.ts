@@ -192,6 +192,18 @@ export function mergeConfigsWithEnvOverride(
       database: envConfig.postgres.database,
     } as unknown as Config['postgres']
   }
+  if (envConfig.postgres?.logDatabaseEnabled !== undefined) {
+    result.postgres = {
+      ...(result.postgres || {}),
+      logDatabaseEnabled: envConfig.postgres.logDatabaseEnabled,
+    } as unknown as Config['postgres']
+  }
+  if (envConfig.postgres?.skipProvisioning !== undefined) {
+    result.postgres = {
+      ...(result.postgres || {}),
+      skipProvisioning: envConfig.postgres.skipProvisioning,
+    } as unknown as Config['postgres']
+  }
 
   // Override sensitive servarr fields if provided in environment
   if (envConfig.servarr?.apiKey !== undefined) {

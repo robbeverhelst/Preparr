@@ -3,6 +3,7 @@ import {
   cleanConfig,
   createConfigurationSource,
   mergeConfigs,
+  mergeConfigsWithEnvOverride,
   validateRequiredFields,
 } from './merger'
 import type { Config } from './schema'
@@ -209,6 +210,77 @@ describe('mergeConfigs', () => {
 
     expect(result.config?.watch).toBe(false) // From CLI (overrides defaults)
     expect(result.config?.reconcileInterval).toBe(60) // From defaults
+  })
+})
+
+describe('mergeConfigsWithEnvOverride', () => {
+  test('env logDatabaseEnabled=false overrides default true', () => {
+    const defaults: Partial<Config> = {
+      postgres: {
+        host: 'localhost',
+        port: 5432,
+        username: 'postgres',
+        password: 'secret',
+        database: 'servarr',
+        logDatabaseEnabled: true,
+        skipProvisioning: false,
+      },
+    }
+
+    const envConfig: Partial<Config> = {
+      postgres: {
+        logDatabaseEnabled: false,
+      },
+    }
+
+    const result = mergeConfigsWithEnvOverride(defaults, null, envConfig, {})
+    expect(result.postgres?.logDatabaseEnabled).toBe(false)
+  })
+
+  test('env skipProvisioning=true overrides default false', () => {
+    const defaults: Partial<Config> = {
+      postgres: {
+        host: 'localhost',
+        port: 5432,
+        username: 'postgres',
+        password: 'secret',
+        database: 'servarr',
+        logDatabaseEnabled: true,
+        skipProvisioning: false,
+      },
+    }
+
+    const envConfig: Partial<Config> = {
+      postgres: {
+        skipProvisioning: true,
+      },
+    }
+
+    const result = mergeConfigsWithEnvOverride(defaults, null, envConfig, {})
+    expect(result.postgres?.skipProvisioning).toBe(true)
+  })
+
+  test('env logDatabaseEnabled=false overrides file config true', () => {
+    const defaults: Partial<Config> = {
+      postgres: {
+        logDatabaseEnabled: true,
+      },
+    }
+
+    const fileConfig: Partial<Config> = {
+      postgres: {
+        logDatabaseEnabled: true,
+      },
+    }
+
+    const envConfig: Partial<Config> = {
+      postgres: {
+        logDatabaseEnabled: false,
+      },
+    }
+
+    const result = mergeConfigsWithEnvOverride(defaults, fileConfig, envConfig, {})
+    expect(result.postgres?.logDatabaseEnabled).toBe(false)
   })
 })
 

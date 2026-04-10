@@ -86,6 +86,56 @@ export class BazarrManager {
     })
   }
 
+  private async restartSystem(): Promise<void> {
+    logger.info('Restarting Bazarr...')
+
+    let response: Response | undefined
+    try {
+      response = await fetch(this.buildUrl('/system?action=restart'), {
+        method: 'POST',
+      })
+    } catch (error) {
+      // Bazarr can drop the connection while restarting before sending a full response.
+      logger.debug('Bazarr restart request ended before a response was returned', { error })
+    }
+
+    if (response && !response.ok) {
+      const body = await response.text().catch(() => '')
+      throw new Error(
+        `Bazarr restart request failed: HTTP ${response.status}${body ? `: ${body}` : ''}`,
+      )
+    }
+
+    await this.waitForStartup(60, 2000)
+    logger.info('Bazarr restart completed successfully')
+  }
+
+  private async waitForLanguageProfiles(
+    expectedCount: number,
+    maxRetries = 15,
+    retryDelay = 2000,
+  ): Promise<void> {
+    logger.info('Waiting for Bazarr language profile cache to populate...', { expectedCount })
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const profiles = await this.getLanguageProfiles()
+      if (profiles.length >= expectedCount) {
+        logger.info('Bazarr language profile cache is ready', { count: profiles.length })
+        return
+      }
+      logger.debug('Language profiles not yet available, retrying...', {
+        attempt,
+        found: profiles.length,
+        expected: expectedCount,
+      })
+      await Bun.sleep(retryDelay)
+    }
+
+    const message = 'Bazarr language profile cache did not populate in time'
+    logger.error(message, { expectedCount, maxRetries, retryDelay })
+    throw new Error(`${message} (expected at least ${expectedCount} profiles)`)
+  }
+
   async testConnection(): Promise<boolean> {
     try {
       const response = await this.apiGet('/system/status')
@@ -415,6 +465,14 @@ export class BazarrManager {
       logger.info('Bazarr language profiles configured successfully', {
         profiles: profiles.map((p) => p.name).join(', '),
       })
+
+      if (existing.length === 0 && profiles.length > 0) {
+        logger.info(
+          'Restarting Bazarr after initial language profile creation to refresh the profile cache',
+        )
+        await this.restartSystem()
+        await this.waitForLanguageProfiles(profiles.length)
+      }
     } catch (error) {
       logger.error('Failed to configure Bazarr language profiles', { error })
       throw error
