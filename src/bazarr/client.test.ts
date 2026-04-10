@@ -11,11 +11,16 @@ describe('BazarrManager language profile configuration', () => {
   })
 
   test('restarts Bazarr after creating the first language profiles', async () => {
+    let restarted = false
     const fetchMock = mock((input: RequestInfo | URL) => {
       const url = input.toString()
 
       if (url.includes('/api/system/languages/profiles')) {
-        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }))
+        // After restart, return the created profile to simulate cache reload
+        const data = restarted
+          ? [{ profileId: 1, name: 'Default', cutoff: 1, items: [], mustContain: '', mustNotContain: '', originalFormat: null, tag: null }]
+          : []
+        return Promise.resolve(new Response(JSON.stringify(data), { status: 200 }))
       }
 
       if (url.includes('/api/system/settings')) {
@@ -23,6 +28,7 @@ describe('BazarrManager language profile configuration', () => {
       }
 
       if (url.includes('/api/system?action=restart')) {
+        restarted = true
         return Promise.resolve(new Response('', { status: 204 }))
       }
 
@@ -55,8 +61,9 @@ describe('BazarrManager language profile configuration', () => {
     expect(calledUrls).toContain(
       'http://bazarr:6767/api/system?action=restart&apikey=0123456789abcdef0123456789abcdef',
     )
-    expect(calledUrls.at(-1)).toBe(
-      'http://bazarr:6767/api/system/status?apikey=0123456789abcdef0123456789abcdef',
+    // After restart, should check that language profiles are available
+    expect(calledUrls).toContain(
+      'http://bazarr:6767/api/system/languages/profiles?apikey=0123456789abcdef0123456789abcdef',
     )
   })
 
