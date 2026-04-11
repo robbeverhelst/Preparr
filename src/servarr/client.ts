@@ -633,6 +633,7 @@ export class ServarrManager {
       ? `
   <PostgresLogDb>${databases.log}</PostgresLogDb>`
       : ''
+    const logDbEnabled = this.logDatabaseEnabled ? 'True' : 'False'
 
     const configXml = `<Config>
   <BindAddress>*</BindAddress>
@@ -645,6 +646,7 @@ export class ServarrManager {
   <AuthenticationRequired>Enabled</AuthenticationRequired>
   <Branch>main</Branch>
   <LogLevel>info</LogLevel>
+  <LogDbEnabled>${logDbEnabled}</LogDbEnabled>
   <SslCertPath></SslCertPath>
   <SslCertPassword></SslCertPassword>
   <UrlBase></UrlBase>
