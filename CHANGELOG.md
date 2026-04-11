@@ -1,3 +1,10 @@
+## [0.19.4](https://github.com/robbeverhelst/Preparr/compare/v0.19.3...v0.19.4) (2026-04-11)
+
+
+### Bug Fixes
+
+* **config:** write LogDbEnabled element in config.xml ([#111](https://github.com/robbeverhelst/Preparr/issues/111)) ([673cc98](https://github.com/robbeverhelst/Preparr/commit/673cc984092f949e5fe11c2b26214b7f068e68dd)), closes [#109](https://github.com/robbeverhelst/Preparr/issues/109)
+
 ## [0.19.3](https://github.com/robbeverhelst/Preparr/compare/v0.19.2...v0.19.3) (2026-04-10)
 
 
