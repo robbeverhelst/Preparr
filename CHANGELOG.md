@@ -1,3 +1,10 @@
+## [0.19.5](https://github.com/robbeverhelst/Preparr/compare/v0.19.4...v0.19.5) (2026-04-15)
+
+
+### Bug Fixes
+
+* **helm:** add existingSecret support for POSTGRES_PASSWORD in radarr and prowlarr ([#114](https://github.com/robbeverhelst/Preparr/issues/114)) ([5984cf6](https://github.com/robbeverhelst/Preparr/commit/5984cf6172fd1ed64011c58f3b507c12578ae231)), closes [#106](https://github.com/robbeverhelst/Preparr/issues/106)
+
 ## [0.19.4](https://github.com/robbeverhelst/Preparr/compare/v0.19.3...v0.19.4) (2026-04-11)
 
 
