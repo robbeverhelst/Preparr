@@ -5,7 +5,7 @@
     "": {
       "name": "preparr",
       "dependencies": {
-        "tsarr": "^2.5.0",
+        "tsarr": "^2.7.0",
         "zod": "^4.3.6",
       },
       "devDependencies": {
@@ -142,7 +142,7 @@
 
     "char-regex": ["char-regex@1.0.2", "", {}, "sha512-kWWXztvZ5SBQV+eRgKFeh8q5sLuZY2+8WUIzlxWVTg+oGwY14qylx1KbKzHd8P6ZYkAg0xyIDU9JMHhyJMZ1jw=="],
 
-    "citty": ["citty@0.2.1", "", {}, "sha512-kEV95lFBhQgtogAPlQfJJ0WGVSokvLr/UEoFPiKKOXF7pl98HfUVUD0ejsuTCld/9xH9vogSywZ5KqHzXrZpqg=="],
+    "citty": ["citty@0.2.2", "", {}, "sha512-+6vJA3L98yv+IdfKGZHBNiGW5KHn22e/JwID0Strsz8h4S/csAu/OuICwxrg44k5MRiZHWIo8XXuJgQTriRP4w=="],
 
     "clean-stack": ["clean-stack@2.2.0", "", {}, "sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A=="],
 
@@ -494,7 +494,7 @@
 
     "traverse": ["traverse@0.6.8", "", {}, "sha512-aXJDbk6SnumuaZSANd21XAo15ucCDE38H4fkqiGsc3MhCK+wOlZvLP9cB/TvpHT0mOyWgC4Z8EwRlzqYSUzdsA=="],
 
-    "tsarr": ["tsarr@2.5.0", "", { "dependencies": { "citty": "^0.2.1", "consola": "^3.4.2" }, "bin": { "tsarr": "dist/cli/index.js" } }, "sha512-2zLG7pVRmT9SdFtEOBx5Po6eL+jnFKghO6PUHZXj+kCuPX9DEL/Zs8N2HJrCvDOuP9eo+VXvkrvUtTKrdipW9w=="],
+    "tsarr": ["tsarr@2.7.0", "", { "dependencies": { "citty": "^0.2.2", "consola": "^3.4.2" }, "bin": { "tsarr": "dist/cli/index.js" } }, "sha512-Ce1Brt7Q64C4Mv27tSBSo+t53xESaFt6sBbjKKr23ShQ1iU2vwTKpDPuHFuCt9YQWm+7tTThboq24KgLKy1erg=="],
 
     "tunnel": ["tunnel@0.0.6", "", {}, "sha512-1h/Lnq9yajKY2PEbBadPXj3VxsDDu844OnaAo52UVmIzIvwwtBPIuNvkjuzBlTWpfJyUbG3ez0KSBibQkj4ojg=="],
 
