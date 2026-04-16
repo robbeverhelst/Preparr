@@ -6,6 +6,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class CustomFormatsStep extends ServarrStep {
   readonly name = 'custom-formats'
@@ -22,7 +24,7 @@ export class CustomFormatsStep extends ServarrStep {
     // Only supported for Radarr and Sonarr
     const capabilities = this.client.getCapabilities()
     if (!capabilities.hasCustomFormats) {
-      context.logger.debug('Custom formats not supported for this Servarr type')
+      logger.debug('Custom formats not supported for this Servarr type')
       return false
     }
 
@@ -30,25 +32,25 @@ export class CustomFormatsStep extends ServarrStep {
 
     // Skip if no custom formats defined
     if (!config?.customFormats || config.customFormats.length === 0) {
-      context.logger.debug('No custom formats defined in config, skipping')
+      logger.debug('No custom formats defined in config, skipping')
       return false
     }
 
     return true
   }
 
-  async readCurrentState(context: StepContext): Promise<CustomFormat[]> {
+  async readCurrentState(_context: StepContext): Promise<CustomFormat[]> {
     try {
       return await this.client.getCustomFormats()
     } catch (error) {
-      context.logger.warn('Failed to read current custom formats', { error })
+      logger.warn('Failed to read current custom formats', { error })
       return []
     }
   }
 
   protected getDesiredState(context: StepContext): CustomFormat[] {
     const config = context.config.app
-    context.logger.debug('Getting desired custom format state', {
+    logger.debug('Getting desired custom format state', {
       hasConfig: !!config,
       hasCustomFormats: !!config?.customFormats,
       customFormatCount: config?.customFormats?.length || 0,
@@ -153,7 +155,7 @@ export class CustomFormatsStep extends ServarrStep {
 
           await this.client.addCustomFormat(desiredFormat)
           results.push({ ...change, type: 'create' })
-          context.logger.info('Custom format added successfully', { name: desiredFormat.name })
+          logger.info('Custom format added successfully', { name: desiredFormat.name })
         } else if (change.type === 'update') {
           const desiredFormat = desiredFormats.find((cf) => cf.name === change.identifier)
           const existingFormat = currentByName.get(change.identifier)
@@ -164,7 +166,7 @@ export class CustomFormatsStep extends ServarrStep {
 
           await this.client.updateCustomFormat(existingFormat.id, desiredFormat)
           results.push({ ...change, type: 'update' })
-          context.logger.info('Custom format updated successfully', { name: desiredFormat.name })
+          logger.info('Custom format updated successfully', { name: desiredFormat.name })
         } else if (change.type === 'delete') {
           const id = change.details?.id as number | undefined
           if (!id) {
@@ -173,12 +175,12 @@ export class CustomFormatsStep extends ServarrStep {
 
           await this.client.deleteCustomFormat(id)
           results.push({ ...change, type: 'delete' })
-          context.logger.info('Custom format deleted successfully', { name: change.identifier })
+          logger.info('Custom format deleted successfully', { name: change.identifier })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to manage custom format', {
+        logger.error('Failed to manage custom format', {
           error: stepError.message,
           change: change.identifier,
         })
@@ -202,7 +204,7 @@ export class CustomFormatsStep extends ServarrStep {
 
       return JSON.stringify(currentNames) === JSON.stringify(desiredNames)
     } catch (error) {
-      context.logger.debug('Custom formats verification failed', { error })
+      logger.debug('Custom formats verification failed', { error })
       return false
     }
   }

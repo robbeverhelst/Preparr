@@ -5,6 +5,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class ConfigLoadingStep extends ConfigurationStep {
   readonly name = 'config-loading'
@@ -20,27 +22,14 @@ export class ConfigLoadingStep extends ConfigurationStep {
     const configPath = context.config.configPath
     const hasDesired = !!context.config.app
 
-    // Debug logging
-    context.logger.info('DEBUG: Configuration analysis', {
-      configPath,
-      hasApp: !!context.config.app,
-      appType: typeof context.config.app,
-      appKeys: context.config.app ? Object.keys(context.config.app) : [],
-      appStringified: context.config.app
-        ? JSON.stringify(context.config.app, null, 2)
-        : 'undefined',
-    })
-
     if (hasDesired) {
-      context.logger.info('Desired-state present in unified configuration', {
+      logger.info('Desired-state present in unified configuration', {
         rootFolders: context.config.app.rootFolders?.length || 0,
         indexers: context.config.app.indexers?.length || 0,
         downloadClients: context.config.app.downloadClients?.length || 0,
         qualityProfiles: context.config.app.qualityProfiles?.length || 0,
         applications: context.config.app.applications?.length || 0,
       })
-    } else {
-      context.logger.info('DEBUG: No app configuration found in context.config')
     }
     return Promise.resolve({ configLoaded: hasDesired, configPath })
   }
@@ -71,7 +60,7 @@ export class ConfigLoadingStep extends ConfigurationStep {
     return changes
   }
 
-  executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult> {
+  executeChanges(changes: ChangeRecord[], _context: StepContext): Promise<StepResult> {
     const results: ChangeRecord[] = []
     const errors: Error[] = []
     const warnings: Warning[] = []
@@ -80,9 +69,9 @@ export class ConfigLoadingStep extends ConfigurationStep {
       try {
         results.push(change)
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to load configuration', {
+        logger.error('Failed to load configuration', {
           error: stepError.message,
           configPath: change.details?.configPath,
         })

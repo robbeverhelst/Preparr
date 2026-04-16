@@ -5,6 +5,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class PostgresConnectivityStep extends ConfigurationStep {
   readonly name = 'postgres-connectivity'
@@ -21,7 +23,7 @@ export class PostgresConnectivityStep extends ConfigurationStep {
       const connected = await context.postgresClient.testConnection()
       return { connected }
     } catch (error) {
-      context.logger.debug('PostgreSQL connection test failed', { error })
+      logger.debug('PostgreSQL connection test failed', { error })
       return { connected: false }
     }
   }
@@ -67,15 +69,15 @@ export class PostgresConnectivityStep extends ConfigurationStep {
               ...change,
               type: 'create',
             })
-            context.logger.info('PostgreSQL connection established successfully')
+            logger.info('PostgreSQL connection established successfully')
           } else {
             errors.push(new Error('Failed to establish PostgreSQL connection'))
           }
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('PostgreSQL connection failed', {
+        logger.error('PostgreSQL connection failed', {
           error: stepError.message,
           details: change.details,
         })
@@ -94,7 +96,7 @@ export class PostgresConnectivityStep extends ConfigurationStep {
     try {
       return await context.postgresClient.testConnection()
     } catch (error) {
-      context.logger.debug('PostgreSQL verification failed', { error })
+      logger.debug('PostgreSQL verification failed', { error })
       return false
     }
   }

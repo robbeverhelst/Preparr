@@ -5,6 +5,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 interface BazarrIntegrationState {
   sonarrConfigured: boolean
@@ -42,7 +44,7 @@ export class BazarrIntegrationStep extends BazarrStep {
     return !!desired.sonarr || !!desired.radarr
   }
 
-  async readCurrentState(context: StepContext): Promise<BazarrIntegrationState> {
+  async readCurrentState(_context: StepContext): Promise<BazarrIntegrationState> {
     try {
       const settings = await this.client.getSettings()
       // In Bazarr, the enabled flag is under general.use_sonarr / general.use_radarr
@@ -53,7 +55,7 @@ export class BazarrIntegrationStep extends BazarrStep {
         radarrConfigured: generalSettings?.use_radarr === true,
       }
     } catch (error) {
-      context.logger.debug('Failed to read Bazarr integration state', { error })
+      logger.debug('Failed to read Bazarr integration state', { error })
       return { sonarrConfigured: false, radarrConfigured: false }
     }
   }
@@ -102,21 +104,21 @@ export class BazarrIntegrationStep extends BazarrStep {
     try {
       for (const change of changes) {
         if (change.identifier === 'sonarr' && desired.sonarr) {
-          context.logger.info('Configuring Bazarr Sonarr integration...', {
+          logger.info('Configuring Bazarr Sonarr integration...', {
             url: desired.sonarr.url,
           })
           await this.client.configureSonarrIntegration(desired.sonarr.url, desired.sonarr.apiKey)
         }
 
         if (change.identifier === 'radarr' && desired.radarr) {
-          context.logger.info('Configuring Bazarr Radarr integration...', {
+          logger.info('Configuring Bazarr Radarr integration...', {
             url: desired.radarr.url,
           })
           await this.client.configureRadarrIntegration(desired.radarr.url, desired.radarr.apiKey)
         }
       }
 
-      context.logger.info('Bazarr integrations configured successfully')
+      logger.info('Bazarr integrations configured successfully')
 
       return {
         success: true,
@@ -125,9 +127,9 @@ export class BazarrIntegrationStep extends BazarrStep {
         warnings,
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error))
+      const err = toError(error)
       errors.push(err)
-      context.logger.error('Failed to configure Bazarr integrations', { error: err.message })
+      logger.error('Failed to configure Bazarr integrations', { error: err.message })
       return {
         success: false,
         changes,

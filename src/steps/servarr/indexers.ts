@@ -6,6 +6,8 @@ import {
   type StepResult,
   Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class IndexersStep extends ServarrStep {
   readonly name = 'indexers'
@@ -22,7 +24,7 @@ export class IndexersStep extends ServarrStep {
 
     // Skip indexer management if Prowlarr sync is enabled
     if (config?.prowlarrSync === true) {
-      context.logger.info(
+      logger.info(
         'Prowlarr sync enabled, skipping indexer management (allowing Prowlarr to manage indexers)',
       )
       return false
@@ -35,7 +37,7 @@ export class IndexersStep extends ServarrStep {
       config.indexers === undefined ||
       (Array.isArray(config.indexers) && config.indexers.length === 0)
     ) {
-      context.logger.info(
+      logger.info(
         'Indexers not defined or empty in config, skipping indexer management (allowing Prowlarr sync)',
       )
       return false
@@ -44,11 +46,11 @@ export class IndexersStep extends ServarrStep {
     return true
   }
 
-  async readCurrentState(context: StepContext): Promise<Indexer[]> {
+  async readCurrentState(_context: StepContext): Promise<Indexer[]> {
     try {
       return await this.client.getIndexers()
     } catch (error) {
-      context.logger.warn('Failed to read current indexers', { error })
+      logger.warn('Failed to read current indexers', { error })
       return []
     }
   }
@@ -56,7 +58,7 @@ export class IndexersStep extends ServarrStep {
   protected getDesiredState(context: StepContext): Indexer[] {
     // Get indexers from the loaded configuration - using servarrConfig from config loading step
     const config = context.config.app
-    context.logger.debug('Getting desired indexer state', {
+    logger.debug('Getting desired indexer state', {
       hasConfig: !!config,
       hasIndexers: !!config?.indexers,
       indexerCount: config?.indexers?.length || 0,
@@ -64,13 +66,13 @@ export class IndexersStep extends ServarrStep {
     })
 
     if (!config || !config.indexers) {
-      context.logger.warn('No configuration or indexers found in context')
+      logger.warn('No configuration or indexers found in context')
       return []
     }
 
     // Debug log the actual indexer objects
     for (const indexer of config.indexers) {
-      context.logger.debug('Loaded indexer from config', {
+      logger.debug('Loaded indexer from config', {
         name: indexer.name,
         appProfileId: indexer.appProfileId,
         fullIndexer: JSON.stringify(indexer, null, 2),
@@ -141,7 +143,7 @@ export class IndexersStep extends ServarrStep {
             throw new Error(`Could not find indexer ${change.identifier} in desired state`)
           }
 
-          context.logger.debug('Adding indexer with full config', {
+          logger.debug('Adding indexer with full config', {
             name: desiredIndexer.name,
             appProfileId: desiredIndexer.appProfileId,
             fields: desiredIndexer.fields,
@@ -154,7 +156,7 @@ export class IndexersStep extends ServarrStep {
             type: 'create',
           })
 
-          context.logger.info('Indexer added successfully', {
+          logger.info('Indexer added successfully', {
             name: desiredIndexer.name,
             implementation: desiredIndexer.implementation,
             appProfileId: desiredIndexer.appProfileId,
@@ -166,12 +168,12 @@ export class IndexersStep extends ServarrStep {
             type: 'delete',
           })
 
-          context.logger.info('Indexer removed successfully', {
+          logger.info('Indexer removed successfully', {
             name: change.identifier,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
 
         // Check if this is an indexer connection/validation error (non-fatal)
         const errorMessage = stepError.message.toLowerCase()
@@ -183,7 +185,7 @@ export class IndexersStep extends ServarrStep {
 
         if (isConnectionError) {
           // Log as warning for connection issues, but don't fail the step
-          context.logger.warn('Indexer connection failed, skipping but continuing', {
+          logger.warn('Indexer connection failed, skipping but continuing', {
             name: change.identifier,
             error: stepError.message,
             details: change.details,
@@ -197,7 +199,7 @@ export class IndexersStep extends ServarrStep {
         } else {
           // For other errors (like API errors, config issues), still treat as errors
           errors.push(stepError)
-          context.logger.error('Failed to manage indexer', {
+          logger.error('Failed to manage indexer', {
             error: stepError.message,
             change: change.identifier,
             name: change.identifier,
@@ -224,7 +226,7 @@ export class IndexersStep extends ServarrStep {
 
       return JSON.stringify(currentNames) === JSON.stringify(desiredNames)
     } catch (error) {
-      context.logger.debug('Indexers verification failed', { error })
+      logger.debug('Indexers verification failed', { error })
       return false
     }
   }

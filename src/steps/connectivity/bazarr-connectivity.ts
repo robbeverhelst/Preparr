@@ -5,6 +5,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class BazarrConnectivityStep extends BazarrStep {
   readonly name = 'bazarr-connectivity'
@@ -19,7 +21,7 @@ export class BazarrConnectivityStep extends BazarrStep {
   }
 
   async readCurrentState(
-    context: StepContext,
+    _context: StepContext,
   ): Promise<{ connected: boolean; apiKeyValid?: boolean }> {
     try {
       const connected = await this.client.testConnection()
@@ -30,7 +32,7 @@ export class BazarrConnectivityStep extends BazarrStep {
         apiKeyValid: status !== null,
       }
     } catch (error) {
-      context.logger.debug('Failed to read Bazarr connectivity state', { error })
+      logger.debug('Failed to read Bazarr connectivity state', { error })
       return { connected: false, apiKeyValid: false }
     }
   }
@@ -68,13 +70,13 @@ export class BazarrConnectivityStep extends BazarrStep {
     return []
   }
 
-  async executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult> {
+  async executeChanges(changes: ChangeRecord[], _context: StepContext): Promise<StepResult> {
     const errors: Error[] = []
     const warnings: Warning[] = []
 
     try {
       if (changes.length > 0) {
-        context.logger.info('Testing Bazarr connectivity...', {
+        logger.info('Testing Bazarr connectivity...', {
           changeCount: changes.length,
         })
 
@@ -83,7 +85,7 @@ export class BazarrConnectivityStep extends BazarrStep {
           throw new Error('Bazarr is not responding to API requests')
         }
 
-        context.logger.info('Bazarr connectivity verified')
+        logger.info('Bazarr connectivity verified')
       }
 
       return {
@@ -93,7 +95,7 @@ export class BazarrConnectivityStep extends BazarrStep {
         warnings,
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error))
+      const err = toError(error)
       errors.push(err)
       return {
         success: false,

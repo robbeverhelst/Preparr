@@ -6,6 +6,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class QualityProfilesStep extends ServarrStep {
   readonly name = 'quality-profiles'
@@ -18,14 +20,14 @@ export class QualityProfilesStep extends ServarrStep {
     return this.client.isReady()
   }
 
-  readCurrentState(context: StepContext): Promise<QualityProfile[]> {
+  readCurrentState(_context: StepContext): Promise<QualityProfile[]> {
     try {
       // Note: This would need to be implemented in ServarrManager
       // For now, return empty array as placeholder
-      context.logger.debug('Quality profiles reading not yet implemented')
+      logger.debug('Quality profiles reading not yet implemented')
       return Promise.resolve([])
     } catch (error) {
-      context.logger.warn('Failed to read current quality profiles', { error })
+      logger.warn('Failed to read current quality profiles', { error })
       return Promise.resolve([])
     }
   }
@@ -93,7 +95,7 @@ export class QualityProfilesStep extends ServarrStep {
           if (profile) {
             // Note: This would need to be implemented in ServarrManager
             // For now, just log the action
-            context.logger.info('Quality profile would be added', {
+            logger.info('Quality profile would be added', {
               name: profile.name,
               cutoff: profile.cutoff,
               itemCount: profile.items.length,
@@ -110,7 +112,7 @@ export class QualityProfilesStep extends ServarrStep {
           }
         } else if (change.type === 'delete') {
           // Note: This would need to be implemented in ServarrManager
-          context.logger.info('Quality profile would be removed', {
+          logger.info('Quality profile would be removed', {
             name: change.identifier,
           })
 
@@ -120,9 +122,9 @@ export class QualityProfilesStep extends ServarrStep {
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to manage quality profile', {
+        logger.error('Failed to manage quality profile', {
           error: stepError.message,
           change: change.identifier,
           name: change.identifier,
@@ -148,7 +150,7 @@ export class QualityProfilesStep extends ServarrStep {
 
       return JSON.stringify(currentNames) === JSON.stringify(desiredNames)
     } catch (error) {
-      context.logger.debug('Quality profiles verification failed', { error })
+      logger.debug('Quality profiles verification failed', { error })
       return false
     }
   }

@@ -6,6 +6,8 @@ import {
   type StepResult,
   Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class ApplicationsStep extends ServarrStep {
   readonly name = 'applications'
@@ -25,7 +27,7 @@ export class ApplicationsStep extends ServarrStep {
 
   async readCurrentState(context: StepContext): Promise<Application[]> {
     const dbApplications = await context.postgresClient.getApplicationsTable()
-    context.logger.debug('Loaded applications from database')
+    logger.debug('Loaded applications from database')
     return dbApplications.map((app) => ({
       id: app.id,
       name: app.name,
@@ -130,7 +132,7 @@ export class ApplicationsStep extends ServarrStep {
               type: 'create',
             })
 
-            context.logger.info('Application added successfully', {
+            logger.info('Application added successfully', {
               name: application.name,
               implementation: application.implementation,
               syncLevel: application.syncLevel,
@@ -155,7 +157,7 @@ export class ApplicationsStep extends ServarrStep {
               type: 'update',
             })
 
-            context.logger.info('Application updated successfully', {
+            logger.info('Application updated successfully', {
               name: application.name,
               implementation: application.implementation,
               syncLevel: application.syncLevel,
@@ -177,7 +179,7 @@ export class ApplicationsStep extends ServarrStep {
               type: 'delete',
             })
 
-            context.logger.info('Application removed successfully', {
+            logger.info('Application removed successfully', {
               name: change.identifier,
             })
           } else {
@@ -185,9 +187,9 @@ export class ApplicationsStep extends ServarrStep {
           }
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to manage application', {
+        logger.error('Failed to manage application', {
           error: stepError.message,
           change: change.identifier,
           name: change.identifier,
@@ -213,7 +215,7 @@ export class ApplicationsStep extends ServarrStep {
 
       return JSON.stringify(currentNames) === JSON.stringify(desiredNames)
     } catch (error) {
-      context.logger.debug('Applications verification failed', { error })
+      logger.debug('Applications verification failed', { error })
       return false
     }
   }

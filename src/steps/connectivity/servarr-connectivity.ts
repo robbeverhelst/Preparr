@@ -5,6 +5,8 @@ import {
   type StepResult,
   Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class ServarrConnectivityStep extends ServarrStep {
   readonly name = 'servarr-connectivity'
@@ -18,7 +20,7 @@ export class ServarrConnectivityStep extends ServarrStep {
   }
 
   async readCurrentState(
-    context: StepContext,
+    _context: StepContext,
   ): Promise<{ connected: boolean; type?: string; version?: string }> {
     try {
       if (!this.client.isReady()) {
@@ -30,7 +32,7 @@ export class ServarrConnectivityStep extends ServarrStep {
 
       return { connected, type }
     } catch (error) {
-      context.logger.debug('Servarr connection test failed', { error })
+      logger.debug('Servarr connection test failed', { error })
       return { connected: false }
     }
   }
@@ -90,7 +92,7 @@ export class ServarrConnectivityStep extends ServarrStep {
               ...change,
               type: 'create',
             })
-            context.logger.info('Servarr connection established successfully', {
+            logger.info('Servarr connection established successfully', {
               type: context.servarrType,
               url: context.config.servarr.url,
             })
@@ -107,9 +109,9 @@ export class ServarrConnectivityStep extends ServarrStep {
           results.push(change)
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Servarr connection failed', {
+        logger.error('Servarr connection failed', {
           error: stepError.message,
           details: change.details,
         })
@@ -124,11 +126,11 @@ export class ServarrConnectivityStep extends ServarrStep {
     }
   }
 
-  async verifySuccess(context: StepContext): Promise<boolean> {
+  async verifySuccess(_context: StepContext): Promise<boolean> {
     try {
       return await this.client.testConnection()
     } catch (error) {
-      context.logger.debug('Servarr verification failed', { error })
+      logger.debug('Servarr verification failed', { error })
       return false
     }
   }

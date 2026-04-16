@@ -5,6 +5,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class ServarrConfigFileStep extends ServarrStep {
   readonly name = 'servarr-config-file'
@@ -30,7 +32,7 @@ export class ServarrConfigFileStep extends ServarrStep {
         hasApiKey: !!apiKey || !!context.apiKey,
       }
     } catch (error) {
-      context.logger.debug('Failed to check Servarr config file', { error })
+      logger.debug('Failed to check Servarr config file', { error })
       return {
         configExists: false,
         hasApiKey: false,
@@ -94,15 +96,15 @@ export class ServarrConfigFileStep extends ServarrStep {
             type: 'create',
           })
 
-          context.logger.info('Servarr configuration file written successfully', {
+          logger.info('Servarr configuration file written successfully', {
             servarrType: context.servarrType,
             hasApiKey: !!apiKey || !!context.apiKey,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to write Servarr configuration file', {
+        logger.error('Failed to write Servarr configuration file', {
           error: stepError.message,
           servarrType: context.servarrType,
           details: change.details,
@@ -126,7 +128,7 @@ export class ServarrConfigFileStep extends ServarrStep {
       // If writeConfigurationOnly doesn't throw and returns a boolean, the config is valid
       return true
     } catch (error) {
-      context.logger.debug('Servarr config file verification failed', { error })
+      logger.debug('Servarr config file verification failed', { error })
       return false
     }
   }

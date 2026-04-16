@@ -1,5 +1,7 @@
 import type { MediaManagementConfig } from '@/config/schema'
 import { type ChangeRecord, ServarrStep, type StepContext, type StepResult } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class MediaManagementStep extends ServarrStep {
   readonly name = 'media-management'
@@ -16,7 +18,7 @@ export class MediaManagementStep extends ServarrStep {
     // Check if media management config is supported
     const capabilities = this.client.getCapabilities()
     if (!capabilities.hasMediaManagement) {
-      context.logger.debug('Media management config not supported for this Servarr type')
+      logger.debug('Media management config not supported for this Servarr type')
       return false
     }
 
@@ -24,25 +26,25 @@ export class MediaManagementStep extends ServarrStep {
 
     // Skip if no media management config defined
     if (!config?.mediaManagement) {
-      context.logger.debug('No media management config defined, skipping')
+      logger.debug('No media management config defined, skipping')
       return false
     }
 
     return true
   }
 
-  async readCurrentState(context: StepContext): Promise<MediaManagementConfig | null> {
+  async readCurrentState(_context: StepContext): Promise<MediaManagementConfig | null> {
     try {
       return await this.client.getMediaManagementConfig()
     } catch (error) {
-      context.logger.warn('Failed to read current media management config', { error })
+      logger.warn('Failed to read current media management config', { error })
       return null
     }
   }
 
   protected getDesiredState(context: StepContext): MediaManagementConfig | null {
     const config = context.config.app
-    context.logger.debug('Getting desired media management config state', {
+    logger.debug('Getting desired media management config state', {
       hasConfig: !!config,
       hasMediaManagement: !!config?.mediaManagement,
     })
@@ -53,7 +55,7 @@ export class MediaManagementStep extends ServarrStep {
   compareAndPlan(
     current: MediaManagementConfig | null,
     desired: MediaManagementConfig | null,
-    context: StepContext,
+    _context: StepContext,
   ): ChangeRecord[] {
     const changes: ChangeRecord[] = []
 
@@ -89,7 +91,7 @@ export class MediaManagementStep extends ServarrStep {
           fieldCount: changedFields.length,
         },
       })
-      context.logger.debug('Media management config changes detected', { changedFields })
+      logger.debug('Media management config changes detected', { changedFields })
     }
 
     return changes
@@ -106,14 +108,14 @@ export class MediaManagementStep extends ServarrStep {
         if (change.type === 'update' && desired) {
           await this.client.updateMediaManagementConfig(desired)
           results.push({ ...change, type: 'update' })
-          context.logger.info('Media management config updated successfully', {
+          logger.info('Media management config updated successfully', {
             changedFields: change.details?.changedFields,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to update media management config', {
+        logger.error('Failed to update media management config', {
           error: stepError.message,
         })
       }
@@ -145,7 +147,7 @@ export class MediaManagementStep extends ServarrStep {
 
       return true
     } catch (error) {
-      context.logger.debug('Media management config verification failed', { error })
+      logger.debug('Media management config verification failed', { error })
       return false
     }
   }

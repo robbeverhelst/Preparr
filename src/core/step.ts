@@ -3,7 +3,8 @@ import type { Config } from '@/config/schema'
 import type { PostgresClient } from '@/postgres/client'
 import type { QBittorrentManager } from '@/qbittorrent/client'
 import type { ServarrManager } from '@/servarr/client'
-import type { logger } from '@/utils/logger'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export interface StepContext {
   config: Config
@@ -13,8 +14,7 @@ export interface StepContext {
   servarrClient?: ServarrManager | undefined
   qbittorrentClient?: QBittorrentManager | undefined
   bazarrClient?: BazarrManager | undefined
-  logger: typeof logger
-  executionMode?: 'init' | 'sidecar'
+  executionMode: 'init' | 'sidecar'
 }
 
 export interface ChangeRecord {
@@ -30,7 +30,7 @@ export interface StepResult {
   errors: Error[]
   warnings: Warning[]
   metadata?: Record<string, unknown>
-  skipped?: boolean // Indicates if the step was skipped due to prerequisites
+  skipped?: boolean
 }
 
 export class Warning {
@@ -40,7 +40,8 @@ export class Warning {
   ) {}
 }
 
-export abstract class ConfigurationStep {
+// biome-ignore lint/suspicious/noExplicitAny: heterogeneous step collections require any
+export abstract class ConfigurationStep<TState = any> {
   abstract readonly name: string
   abstract readonly description: string
   abstract readonly dependencies: string[]
@@ -48,22 +49,19 @@ export abstract class ConfigurationStep {
 
   async execute(context: StepContext): Promise<StepResult> {
     try {
-      context.logger.info(`Starting step: ${this.name}`, {
+      logger.info(`Starting step: ${this.name}`, {
         description: this.description,
         dependencies: this.dependencies,
       })
 
-      // 1. Validate prerequisites
-      const prerequisitesResult = this.validatePrerequisites(context)
-      const prerequisitesValid =
-        prerequisitesResult instanceof Promise ? await prerequisitesResult : prerequisitesResult
+      const prerequisitesValid = await this.validatePrerequisites(context)
 
       if (!prerequisitesValid) {
-        context.logger.debug('Step prerequisites not met, skipping step', {
+        logger.debug('Step prerequisites not met, skipping step', {
           step: this.name,
         })
         return {
-          success: true, // Mark as successful since it was intentionally skipped
+          success: true,
           changes: [],
           errors: [],
           warnings: [],
@@ -71,25 +69,11 @@ export abstract class ConfigurationStep {
         }
       }
 
-      // 2. Read current state
       const currentState = await this.readCurrentState(context)
-      context.logger.debug('Current state read', {
-        step: this.name,
-        stateType: typeof currentState,
-      })
-
-      // 3. Get desired state from context
       const desiredState = this.getDesiredState(context)
-      context.logger.debug('Desired state determined', {
-        step: this.name,
-        stateType: typeof desiredState,
-      })
+      const plannedChanges = await this.compareAndPlan(currentState, desiredState, context)
 
-      // 4. Compare and plan changes
-      const plannedChangesResult = this.compareAndPlan(currentState, desiredState, context)
-      const plannedChanges =
-        plannedChangesResult instanceof Promise ? await plannedChangesResult : plannedChangesResult
-      context.logger.info('Changes planned', {
+      logger.info('Changes planned', {
         step: this.name,
         changeCount: plannedChanges.length,
         changes: plannedChanges.map((c) => ({
@@ -99,19 +83,15 @@ export abstract class ConfigurationStep {
         })),
       })
 
-      // 5. Execute changes
       const result = await this.executeChanges(plannedChanges, context)
 
-      // 6. Verify success
-      const verifyResult = this.verifySuccess(context)
-      const verified = verifyResult instanceof Promise ? await verifyResult : verifyResult
-
+      const verified = await this.verifySuccess(context)
       if (!verified) {
         result.warnings.push(new Warning(`Verification failed for step: ${this.name}`))
-        context.logger.warn('Step verification failed', { step: this.name })
+        logger.warn('Step verification failed', { step: this.name })
       }
 
-      context.logger.info(`Step completed: ${this.name}`, {
+      logger.info(`Step completed: ${this.name}`, {
         success: result.success,
         changes: result.changes.length,
         errors: result.errors.length,
@@ -120,8 +100,8 @@ export abstract class ConfigurationStep {
 
       return result
     } catch (error) {
-      const stepError = error instanceof Error ? error : new Error(String(error))
-      context.logger.error(`Step execution failed: ${this.name}`, {
+      const stepError = toError(error)
+      logger.error(`Step execution failed: ${this.name}`, {
         error: stepError.message,
         stack: stepError.stack,
       })
@@ -136,23 +116,23 @@ export abstract class ConfigurationStep {
   }
 
   abstract validatePrerequisites(context: StepContext): boolean | Promise<boolean>
-  abstract readCurrentState(context: StepContext): Promise<unknown>
+  abstract readCurrentState(context: StepContext): Promise<TState>
   abstract compareAndPlan(
-    current: unknown,
-    desired: unknown,
+    current: TState,
+    desired: TState,
     context: StepContext,
   ): ChangeRecord[] | Promise<ChangeRecord[]>
   abstract executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult>
   abstract verifySuccess(context: StepContext): boolean | Promise<boolean>
-  protected abstract getDesiredState(context: StepContext): unknown
+  protected abstract getDesiredState(context: StepContext): TState
 }
 
 /**
  * Base class for steps that require a ServarrManager client.
  * Auto-skips when servarrClient is not available (e.g. Bazarr deployments).
- * Subclasses access the client via `this.client`.
  */
-export abstract class ServarrStep extends ConfigurationStep {
+// biome-ignore lint/suspicious/noExplicitAny: heterogeneous step collections require any
+export abstract class ServarrStep<TState = any> extends ConfigurationStep<TState> {
   protected client!: ServarrManager
 
   override execute(context: StepContext): Promise<StepResult> {
@@ -173,9 +153,9 @@ export abstract class ServarrStep extends ConfigurationStep {
 /**
  * Base class for steps that require a BazarrManager client.
  * Auto-skips when bazarrClient is not available.
- * Subclasses access the client via `this.client`.
  */
-export abstract class BazarrStep extends ConfigurationStep {
+// biome-ignore lint/suspicious/noExplicitAny: heterogeneous step collections require any
+export abstract class BazarrStep<TState = any> extends ConfigurationStep<TState> {
   protected client!: BazarrManager
 
   override execute(context: StepContext): Promise<StepResult> {

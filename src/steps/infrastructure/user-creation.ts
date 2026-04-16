@@ -5,6 +5,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class UserCreationStep extends ServarrStep {
   readonly name = 'user-creation'
@@ -24,7 +26,7 @@ export class UserCreationStep extends ServarrStep {
       const username = context.config.servarr.adminUser
       return Promise.resolve({ userExists: false, username }) // Simplified for now
     } catch (error) {
-      context.logger.debug('Failed to check user existence', { error })
+      logger.debug('Failed to check user existence', { error })
       return Promise.resolve({ userExists: false })
     }
   }
@@ -58,7 +60,7 @@ export class UserCreationStep extends ServarrStep {
     return changes
   }
 
-  async executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult> {
+  async executeChanges(changes: ChangeRecord[], _context: StepContext): Promise<StepResult> {
     const results: ChangeRecord[] = []
     const errors: Error[] = []
     const warnings: Warning[] = []
@@ -76,14 +78,14 @@ export class UserCreationStep extends ServarrStep {
             type: 'create',
           })
 
-          context.logger.info('Initial admin user created successfully', {
+          logger.info('Initial admin user created successfully', {
             username,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to create initial user', {
+        logger.error('Failed to create initial user', {
           error: stepError.message,
           username: change.details?.username,
         })
@@ -98,12 +100,12 @@ export class UserCreationStep extends ServarrStep {
     }
   }
 
-  async verifySuccess(context: StepContext): Promise<boolean> {
+  async verifySuccess(_context: StepContext): Promise<boolean> {
     try {
       // Test connection to verify user was created successfully
       return await this.client.testConnection()
     } catch (error) {
-      context.logger.debug('User creation verification failed', { error })
+      logger.debug('User creation verification failed', { error })
       return false
     }
   }

@@ -1,4 +1,3 @@
-import { file } from 'bun'
 import { logger } from '../utils/logger'
 import { defaultConfig } from './defaults'
 import { generateHelpText, parseCliArgs } from './loaders/cli'
@@ -47,23 +46,7 @@ export async function loadConfiguration(args?: string[]): Promise<ConfigurationR
 
   const configPath = cliArgs.config.configPath || envConfig.configPath || defaultConfig.configPath
 
-  // Debug the config path resolution
-  logger.info('DEBUG: Config path resolution', {
-    cliArgsConfigPath: cliArgs.config.configPath,
-    envConfigPath: envConfig.configPath,
-    defaultConfigPath: defaultConfig.configPath,
-    resolvedConfigPath: configPath,
-    rawEnvConfigPath: Bun.env.CONFIG_PATH,
-  })
-
   const configFilePath = await findConfigFile(configPath)
-
-  // Debug config file finding
-  logger.info('DEBUG: Config file resolution', {
-    searchPath: configPath,
-    foundPath: configFilePath,
-    fileExists: configFilePath ? await file(configFilePath).exists() : false,
-  })
 
   let fileConfig: Partial<Config> | null = null
   let configFileFormat: string | null = null
@@ -72,30 +55,12 @@ export async function loadConfiguration(args?: string[]): Promise<ConfigurationR
     try {
       fileConfig = await loadConfigFile(configFilePath)
       configFileFormat = configFilePath.split('.').pop() || null
-
-      // Debug loaded file config
-      logger.info('DEBUG: File config loaded', {
-        configFilePath,
-        hasFileConfig: !!fileConfig,
-        fileConfigKeys: fileConfig ? Object.keys(fileConfig) : [],
-        fileConfigApp: fileConfig?.app ? Object.keys(fileConfig.app) : undefined,
-      })
     } catch (error) {
       throw new Error(
         `Failed to load config file: ${error instanceof Error ? error.message : String(error)}`,
       )
     }
-  } else {
-    logger.info('DEBUG: No config file found', { searchPath: configPath })
   }
-
-  // Debug logging for configuration sources
-  logger.info('DEBUG: Configuration merging process', {
-    hasFileConfig: !!fileConfig,
-    fileConfigPath: configFilePath,
-    fileConfigApp: fileConfig?.app ? Object.keys(fileConfig.app) : undefined,
-    fileConfigAppStringified: fileConfig?.app ? JSON.stringify(fileConfig.app, null, 2) : undefined,
-  })
 
   const mergedConfig = mergeConfigsWithEnvOverride(
     defaultConfig,
@@ -103,14 +68,6 @@ export async function loadConfiguration(args?: string[]): Promise<ConfigurationR
     envConfig,
     cliArgs.config,
   )
-
-  // Debug the merged config before validation
-  logger.info('DEBUG: Merged configuration before validation', {
-    mergedConfigApp: mergedConfig.app ? Object.keys(mergedConfig.app) : undefined,
-    mergedConfigAppStringified: mergedConfig.app
-      ? JSON.stringify(mergedConfig.app, null, 2)
-      : undefined,
-  })
 
   const requiredFieldErrors = validateRequiredFields(mergedConfig)
   if (requiredFieldErrors.length > 0) {
@@ -124,21 +81,10 @@ export async function loadConfiguration(args?: string[]): Promise<ConfigurationR
 
   try {
     validatedConfig = ConfigSchema.parse(mergedConfig)
-
-    // Debug the validated config after schema validation
-    logger.info('DEBUG: Configuration after schema validation', {
-      validatedConfigApp: validatedConfig.app ? Object.keys(validatedConfig.app) : undefined,
-      validatedConfigAppStringified: validatedConfig.app
-        ? JSON.stringify(validatedConfig.app, null, 2)
-        : undefined,
-    })
   } catch (error) {
     if (error instanceof Error) {
       validationErrors.push(error.message)
     }
-    logger.error('DEBUG: Schema validation failed', {
-      error: error instanceof Error ? error.message : String(error),
-    })
     throw new Error(`Configuration schema validation failed: ${error}`)
   }
 

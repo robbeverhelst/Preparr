@@ -1,35 +1,7 @@
-// Import all step classes
-
-import { BazarrIntegrationStep } from '@/steps/bazarr/bazarr-integration'
-import { BazarrLanguageProfilesStep } from '@/steps/bazarr/bazarr-language-profiles'
-import { BazarrLanguagesStep } from '@/steps/bazarr/bazarr-languages'
-import { BazarrProvidersStep } from '@/steps/bazarr/bazarr-providers'
-import { BazarrConnectivityStep } from '@/steps/connectivity/bazarr-connectivity'
-import { PostgresConnectivityStep } from '@/steps/connectivity/postgres-connectivity'
-import { QBittorrentConnectivityStep } from '@/steps/connectivity/qbittorrent-connectivity'
-import { ServarrConnectivityStep } from '@/steps/connectivity/servarr-connectivity'
-import { BazarrConfigFileStep } from '@/steps/infrastructure/bazarr-config-file'
-import { PostgresDatabasesStep } from '@/steps/infrastructure/postgres-databases'
-import { PostgresUsersStep } from '@/steps/infrastructure/postgres-users'
-import { QBittorrentInitStep } from '@/steps/infrastructure/qbittorrent-init'
-import { ServarrConfigFileStep } from '@/steps/infrastructure/servarr-config-file'
-import { UserCreationStep } from '@/steps/infrastructure/user-creation'
-import { QBittorrentConfigStep } from '@/steps/integrations/qbittorrent-config'
-import { ApplicationsStep } from '@/steps/servarr/applications'
-import { CustomFormatsStep } from '@/steps/servarr/custom-formats'
-import { DownloadClientsStep } from '@/steps/servarr/download-clients'
-import { IndexersStep } from '@/steps/servarr/indexers'
-import { MediaManagementStep } from '@/steps/servarr/media-management'
-import { NamingConfigStep } from '@/steps/servarr/naming-config'
-import { QualityDefinitionsStep } from '@/steps/servarr/quality-definitions'
-import { QualityProfilesStep } from '@/steps/servarr/quality-profiles'
-import { ReleaseProfilesStep } from '@/steps/servarr/release-profiles'
-import { RootFoldersStep } from '@/steps/servarr/root-folders'
-import { ConfigLoadingStep } from '@/steps/validation/config-loading'
+import { toError } from '@/utils/errors'
 import { logger } from '@/utils/logger'
-import type { ExecutionContext } from './context'
 import { StepRegistry } from './registry'
-import type { StepResult } from './step'
+import type { ConfigurationStep, StepContext, StepResult } from './step'
 
 export interface ExecutionResult {
   success: boolean
@@ -51,59 +23,19 @@ export interface ExecutionSummary {
 
 export class ConfigurationEngine {
   private registry: StepRegistry
-  private context: ExecutionContext
 
-  constructor(context: ExecutionContext) {
-    this.context = context
+  constructor(steps: ConfigurationStep[]) {
     this.registry = new StepRegistry()
-    this.registerSteps()
-  }
-
-  private registerSteps(): void {
-    logger.info('Registering configuration steps...')
-
-    try {
-      // Register all steps
-      this.registry.register(new PostgresConnectivityStep())
-      this.registry.register(new ServarrConnectivityStep())
-      this.registry.register(new QBittorrentConnectivityStep())
-      this.registry.register(new BazarrConnectivityStep())
-      this.registry.register(new PostgresDatabasesStep())
-      this.registry.register(new PostgresUsersStep())
-      this.registry.register(new ServarrConfigFileStep())
-      this.registry.register(new BazarrConfigFileStep())
-      this.registry.register(new UserCreationStep())
-      this.registry.register(new QBittorrentInitStep())
-      this.registry.register(new ConfigLoadingStep())
-      this.registry.register(new RootFoldersStep())
-      this.registry.register(new IndexersStep())
-      this.registry.register(new DownloadClientsStep())
-      this.registry.register(new CustomFormatsStep()) // Must run before quality-profiles
-      this.registry.register(new QualityProfilesStep())
-      this.registry.register(new QualityDefinitionsStep())
-      this.registry.register(new NamingConfigStep())
-      this.registry.register(new MediaManagementStep())
-      this.registry.register(new ReleaseProfilesStep()) // Sonarr only
-      this.registry.register(new ApplicationsStep())
-      this.registry.register(new QBittorrentConfigStep())
-      this.registry.register(new BazarrIntegrationStep())
-      this.registry.register(new BazarrLanguagesStep())
-      this.registry.register(new BazarrProvidersStep())
-      this.registry.register(new BazarrLanguageProfilesStep())
-
-      logger.info('Configuration steps registered successfully', {
-        totalSteps: this.registry.getAll().length,
-        executionOrder: this.registry.getExecutionOrder(),
-      })
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      const errorStack = error instanceof Error ? error.stack : undefined
-      logger.error('Error registering steps', { error: errorMessage, stack: errorStack })
-      throw error
+    for (const step of steps) {
+      this.registry.register(step)
     }
+    logger.info('Configuration steps registered successfully', {
+      totalSteps: this.registry.getAll().length,
+      executionOrder: this.registry.getExecutionOrder(),
+    })
   }
 
-  async execute(mode: 'init' | 'sidecar'): Promise<ExecutionResult> {
+  async execute(mode: 'init' | 'sidecar', context: StepContext): Promise<ExecutionResult> {
     const startTime = Date.now()
     const results: Map<string, StepResult> = new Map()
     const errors: Error[] = []
@@ -159,7 +91,7 @@ export class ConfigurationEngine {
       })
 
       try {
-        const result = await step.execute(this.context)
+        const result = await step.execute(context)
         results.set(stepName, result)
 
         // Collect errors and warnings
@@ -186,7 +118,7 @@ export class ConfigurationEngine {
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         logger.error(`Unexpected error in step: ${step.name}`, {
           error: stepError.message,
           stack: stepError.stack,
@@ -229,14 +161,11 @@ export class ConfigurationEngine {
     }
   }
 
-  private shouldExecuteStep(
-    step: import('./step').ConfigurationStep,
-    mode: 'init' | 'sidecar',
-  ): boolean {
+  private shouldExecuteStep(step: ConfigurationStep, mode: 'init' | 'sidecar'): boolean {
     return step.mode === mode || step.mode === 'both'
   }
 
-  private isCriticalStep(step: import('./step').ConfigurationStep): boolean {
+  private isCriticalStep(step: ConfigurationStep): boolean {
     // Define which steps are critical and should stop execution if they fail
     const criticalSteps = ['config-validation', 'postgres-connectivity', 'servarr-connectivity']
     return criticalSteps.includes(step.name)

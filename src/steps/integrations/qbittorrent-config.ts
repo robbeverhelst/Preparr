@@ -6,6 +6,8 @@ import {
   type StepResult,
   Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class QBittorrentConfigStep extends ConfigurationStep {
   readonly name = 'qbittorrent-config'
@@ -21,7 +23,7 @@ export class QBittorrentConfigStep extends ConfigurationStep {
     try {
       return Promise.resolve({ configured: !!context.qbittorrentClient })
     } catch (error) {
-      context.logger.debug('Failed to check qBittorrent configuration', { error })
+      logger.debug('Failed to check qBittorrent configuration', { error })
       return Promise.resolve({ configured: false })
     }
   }
@@ -69,7 +71,7 @@ export class QBittorrentConfigStep extends ConfigurationStep {
               type: 'update',
             })
 
-            context.logger.info('qBittorrent configuration applied successfully', {
+            logger.info('qBittorrent configuration applied successfully', {
               hasWebUIConfig: !!qbittorrentConfig.webui,
               hasDownloadsConfig: !!qbittorrentConfig.downloads,
               hasConnectionConfig: !!qbittorrentConfig.connection,
@@ -79,9 +81,9 @@ export class QBittorrentConfigStep extends ConfigurationStep {
           }
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to apply qBittorrent configuration', {
+        logger.error('Failed to apply qBittorrent configuration', {
           error: stepError.message,
         })
       }
@@ -99,7 +101,7 @@ export class QBittorrentConfigStep extends ConfigurationStep {
     try {
       return (await context.qbittorrentClient?.testConnection()) || false
     } catch (error) {
-      context.logger.debug('qBittorrent configuration verification failed', { error })
+      logger.debug('qBittorrent configuration verification failed', { error })
       return false
     }
   }

@@ -5,6 +5,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class PostgresDatabasesStep extends ConfigurationStep {
   readonly name = 'postgres-databases'
@@ -14,12 +16,12 @@ export class PostgresDatabasesStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     if (context.servarrType === 'qbittorrent') {
-      context.logger.debug('Skipping PostgreSQL database provisioning for qBittorrent')
+      logger.debug('Skipping PostgreSQL database provisioning for qBittorrent')
       return false
     }
     // Skip if provisioning is disabled (for pre-provisioned databases)
     if (context.config.postgres.skipProvisioning) {
-      context.logger.info('PostgreSQL provisioning skipped (POSTGRES_SKIP_PROVISIONING=true)')
+      logger.info('PostgreSQL provisioning skipped (POSTGRES_SKIP_PROVISIONING=true)')
       return false
     }
     // Only run in init mode
@@ -55,7 +57,7 @@ export class PostgresDatabasesStep extends ConfigurationStep {
 
       return { databases }
     } catch (error) {
-      context.logger.debug('Failed to check existing databases', { error })
+      logger.debug('Failed to check existing databases', { error })
       return { databases: [] }
     }
   }
@@ -106,15 +108,15 @@ export class PostgresDatabasesStep extends ConfigurationStep {
             type: 'create',
           })
 
-          context.logger.info('PostgreSQL database created successfully', {
+          logger.info('PostgreSQL database created successfully', {
             database: dbName,
             servarrType: context.servarrType,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to create PostgreSQL database', {
+        logger.error('Failed to create PostgreSQL database', {
           error: stepError.message,
           database: change.identifier,
           details: change.details,
@@ -138,7 +140,7 @@ export class PostgresDatabasesStep extends ConfigurationStep {
       }
       return true
     } catch (error) {
-      context.logger.debug('PostgreSQL database verification failed', { error })
+      logger.debug('PostgreSQL database verification failed', { error })
       return false
     }
   }

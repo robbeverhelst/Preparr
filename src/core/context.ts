@@ -3,19 +3,10 @@ import type { Config } from '@/config/schema'
 import type { PostgresClient } from '@/postgres/client'
 import type { QBittorrentManager } from '@/qbittorrent/client'
 import type { ServarrManager } from '@/servarr/client'
-import { logger } from '@/utils/logger'
 import type { StepContext } from './step'
 
-export interface ExecutionContext extends StepContext {
-  executionMode: 'init' | 'sidecar'
-  startTime: Date
-  stepResults: Map<string, import('./step').StepResult>
-  configPath?: string
-  configWatch?: boolean
-}
-
 export class ContextBuilder {
-  private context: Partial<ExecutionContext> = {}
+  private context: Partial<StepContext> = {}
 
   setConfig(config: Config): this {
     this.context.config = config
@@ -57,19 +48,7 @@ export class ContextBuilder {
     return this
   }
 
-  // Unified config includes app desired-state; no separate setter required
-
-  setConfigPath(path: string): this {
-    this.context.configPath = path
-    return this
-  }
-
-  setConfigWatch(watch: boolean): this {
-    this.context.configWatch = watch
-    return this
-  }
-
-  build(): ExecutionContext {
+  build(): StepContext {
     if (!this.context.config) {
       throw new Error('Configuration is required')
     }
@@ -92,11 +71,6 @@ export class ContextBuilder {
       throw new Error('Execution mode is required')
     }
 
-    return {
-      ...this.context,
-      logger,
-      startTime: new Date(),
-      stepResults: new Map(),
-    } as ExecutionContext
+    return this.context as StepContext
   }
 }

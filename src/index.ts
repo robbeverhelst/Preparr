@@ -5,20 +5,24 @@ import { ContextBuilder } from '@/core/context'
 import { ConfigurationEngine } from '@/core/engine'
 import { HealthServer } from '@/core/health'
 import { ReconciliationManager } from '@/core/reconciliation'
+import type { StepContext } from '@/core/step'
 import { PostgresClient } from '@/postgres/client'
 import { QBittorrentManager } from '@/qbittorrent/client'
 import { ServarrManager } from '@/servarr/client'
+import { allSteps } from '@/steps'
+import { toError } from '@/utils/errors'
 import { logger } from '@/utils/logger'
 
-class PrepArrNew {
+class PrepArr {
   private config: Config
   private health: HealthServer
-  private engine: ConfigurationEngine | null = null
+  private engine: ConfigurationEngine
   private reconciliationManager: ReconciliationManager | null = null
 
   constructor(config: Config) {
     this.config = config
     this.health = new HealthServer(this.config.health.port)
+    this.engine = new ConfigurationEngine(allSteps)
   }
 
   private get isBazarrDeployment(): boolean {
@@ -43,13 +47,11 @@ class PrepArrNew {
     const bazarrConfig = this.config.services?.bazarr
 
     if (this.isBazarrDeployment) {
-      // Standalone Bazarr deployment - PrepArr sidecar alongside Bazarr container
       return new BazarrManager({
         url: bazarrConfig?.url || 'http://localhost:6767',
         ...(bazarrConfig?.apiKey ? { apiKey: bazarrConfig.apiKey } : {}),
       })
     }
-    // Remote service mode - Servarr deployment that also configures a remote Bazarr
     if (!bazarrConfig?.url) return undefined
     return new BazarrManager({
       url: bazarrConfig.url,
@@ -57,37 +59,43 @@ class PrepArrNew {
     })
   }
 
+  private buildContext(
+    mode: 'init' | 'sidecar',
+    options?: {
+      servarrClient?: ServarrManager | undefined
+      bazarrClient?: BazarrManager | undefined
+    },
+  ): StepContext {
+    const servarrClient = options?.servarrClient ?? this.createServarrClient()
+    const bazarrClient = options?.bazarrClient ?? this.createBazarrClient()
+
+    return new ContextBuilder()
+      .setConfig(this.config)
+      .setServarrType(this.config.servarr.type)
+      .setPostgresClient(new PostgresClient(this.config.postgres))
+      .setServarrClient(servarrClient)
+      .setQBittorrentClient(
+        this.config.services?.qbittorrent
+          ? new QBittorrentManager(
+              this.config.services.qbittorrent,
+              '/shared-qbittorrent/qBittorrent.conf',
+            )
+          : undefined,
+      )
+      .setBazarrClient(bazarrClient)
+      .setExecutionMode(mode)
+      .build()
+  }
+
   async initializeInfrastructure(): Promise<void> {
-    logger.info('PrepArr starting infrastructure initialization (new architecture)...', {
+    logger.info('PrepArr starting infrastructure initialization...', {
       servarrType: this.config.servarr.type,
       servarrUrl: this.config.servarr.url,
     })
 
     try {
-      const servarrClient = this.createServarrClient()
-      const bazarrClient = this.createBazarrClient()
-
-      const context = new ContextBuilder()
-        .setConfig(this.config)
-        .setServarrType(this.config.servarr.type)
-        .setPostgresClient(new PostgresClient(this.config.postgres))
-        .setServarrClient(servarrClient)
-        .setQBittorrentClient(
-          this.config.services?.qbittorrent
-            ? new QBittorrentManager(
-                this.config.services.qbittorrent,
-                '/shared-qbittorrent/qBittorrent.conf',
-              )
-            : undefined,
-        )
-        .setBazarrClient(bazarrClient)
-        .setExecutionMode('init')
-        .setConfigPath(this.config.configPath)
-        .setConfigWatch(this.config.configWatch)
-        .build()
-
-      this.engine = new ConfigurationEngine(context)
-      const result = await this.engine.execute('init')
+      const context = this.buildContext('init')
+      const result = await this.engine.execute('init', context)
 
       if (result.success) {
         logger.info('Infrastructure initialization completed successfully', {
@@ -111,7 +119,7 @@ class PrepArrNew {
   }
 
   async initialize(): Promise<void> {
-    logger.info('PrepArr starting sidecar mode (new architecture)...', {
+    logger.info('PrepArr starting sidecar mode...', {
       servarrType: this.config.servarr.type,
       servarrUrl: this.config.servarr.url,
     })
@@ -129,26 +137,8 @@ class PrepArrNew {
         await bazarrClient.initialize()
       }
 
-      const context = new ContextBuilder()
-        .setConfig(this.config)
-        .setServarrType(this.config.servarr.type)
-        .setPostgresClient(new PostgresClient(this.config.postgres))
-        .setServarrClient(servarrClient)
-        .setQBittorrentClient(
-          this.config.services?.qbittorrent
-            ? new QBittorrentManager(
-                this.config.services.qbittorrent,
-                '/shared-qbittorrent/qBittorrent.conf',
-              )
-            : undefined,
-        )
-        .setBazarrClient(bazarrClient)
-        .setExecutionMode('sidecar')
-        .setConfigPath(this.config.configPath)
-        .setConfigWatch(this.config.configWatch)
-        .build()
+      const context = this.buildContext('sidecar', { servarrClient, bazarrClient })
 
-      this.engine = new ConfigurationEngine(context)
       this.reconciliationManager = new ReconciliationManager(context, this.engine, async () => {
         const { config } = await loadConfigurationSafe()
         return config as Config
@@ -164,20 +154,16 @@ class PrepArrNew {
         configWatch: this.config.configWatch,
       })
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      const errorStack = error instanceof Error ? error.stack : undefined
-      const errorName = error instanceof Error ? error.name : 'UnknownError'
+      const err = toError(error)
       logger.error('Sidecar initialization failed', {
-        error: errorMessage,
-        stack: errorStack,
-        name: errorName,
+        error: err.message,
+        stack: err.stack,
+        name: err.name,
       })
-      this.health.markUnhealthy(`Initialization failed: ${errorMessage}`)
+      this.health.markUnhealthy(`Initialization failed: ${err.message}`)
       throw error
     }
   }
-
-  // Unified configuration loader is centralized; no per-app file parsing here anymore
 
   shutdown(): void {
     logger.info('PrepArr shutting down...')
@@ -198,7 +184,7 @@ async function main() {
 
   getEnvironmentInfo()
 
-  const preparr = new PrepArrNew(config)
+  const preparr = new PrepArr(config)
 
   process.on('SIGTERM', () => {
     logger.info('Received SIGTERM, shutting down gracefully...')
@@ -213,12 +199,12 @@ async function main() {
   })
 
   if (metadata.cliArgs.init) {
-    logger.info('Running in init mode (new architecture)...')
+    logger.info('Running in init mode...')
     await preparr.initializeInfrastructure()
     logger.info('Init mode completed successfully, exiting...')
     process.exit(0)
   } else {
-    logger.info('Running in sidecar mode (new architecture)...')
+    logger.info('Running in sidecar mode...')
     await preparr.initialize()
   }
 }
