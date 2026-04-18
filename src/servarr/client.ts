@@ -1,4 +1,4 @@
-import { file, SQL, write } from 'bun'
+import type { Sonarr } from 'tsarr'
 import type {
   Application,
   CustomFormat,
@@ -14,88 +14,19 @@ import type {
 } from '@/config/schema'
 import { logger } from '@/utils/logger'
 import { withRetry } from '@/utils/retry'
-
-interface DatabaseUser {
-  Id: number
-  Identifier: string
-  Username: string
-  Password: string
-  Salt: string
-  Iterations: number
-}
-
-import {
-  LidarrClient,
-  ProwlarrClient,
-  RadarrClient,
-  ReadarrClient,
-  type Sonarr,
-  SonarrClient,
-} from 'tsarr'
-
-type IndexerResource = Sonarr.IndexerResource
-type DownloadClientResource = Sonarr.DownloadClientResource
-
-type ServarrClientType = SonarrClient | RadarrClient | LidarrClient | ReadarrClient | ProwlarrClient
-
-type ClientWithRootFolders = {
-  getRootFolders(): Promise<{
-    data?: Sonarr.RootFolderResource[]
-    error?: unknown
-    response: Response
-  }>
-  addRootFolder(
-    path: string,
-  ): Promise<{ data?: Sonarr.RootFolderResource; error?: unknown; response: Response }>
-  deleteRootFolder(id: number): Promise<{ data?: unknown; error?: unknown; response: Response }>
-}
-
-type ClientWithIndexers = {
-  getIndexers(): Promise<{ data?: Sonarr.IndexerResource[]; error?: unknown; response: Response }>
-  addIndexer(
-    indexer: Partial<Sonarr.IndexerResource>,
-  ): Promise<{ data?: Sonarr.IndexerResource; error?: unknown; response: Response }>
-  deleteIndexer(id: number): Promise<{ data?: unknown; error?: unknown; response: Response }>
-}
-
-type ClientWithDownloadClients = {
-  getDownloadClients(): Promise<{
-    data?: Sonarr.DownloadClientResource[]
-    error?: unknown
-    response: Response
-  }>
-  addDownloadClient(
-    client: Partial<Sonarr.DownloadClientResource>,
-  ): Promise<{ data?: Sonarr.DownloadClientResource; error?: unknown; response: Response }>
-  deleteDownloadClient(id: number): Promise<{ data?: unknown; error?: unknown; response: Response }>
-}
-
-type ClientWithHostConfig = {
-  updateHostConfig(
-    id: number,
-    config: Record<string, unknown>,
-  ): Promise<{ data?: unknown; error?: unknown; response: Response }>
-}
-
-type ClientWithApplications = {
-  getApplications(): Promise<{ data?: unknown[]; error?: unknown; response: Response }>
-  addApplication(
-    application: Record<string, unknown>,
-  ): Promise<{ data?: unknown; error?: unknown; response: Response }>
-  deleteApplication(id: number): Promise<{ data?: unknown; error?: unknown; response: Response }>
-}
-
-interface ClientCapabilities {
-  hasRootFolders: boolean
-  hasDownloadClients: boolean
-  hasApplications: boolean
-  hasQualityProfiles: boolean
-  hasCustomFormats: boolean
-  hasReleaseProfiles: boolean
-  hasNamingConfig: boolean
-  hasMediaManagement: boolean
-  hasQualityDefinitions: boolean
-}
+import { ServarrApiClient } from './api-client'
+import { ConfigXmlWriter } from './config-writer'
+import type {
+  ClientCapabilities,
+  ClientWithApplications,
+  ClientWithDownloadClients,
+  ClientWithIndexers,
+  ClientWithRootFolders,
+  DownloadClientResource,
+  IndexerResource,
+  ServarrClientType,
+} from './types'
+import { ServarrUserManager } from './user-manager'
 
 export class ServarrManager {
   private client: ServarrClientType | null = null
@@ -106,6 +37,11 @@ export class ServarrManager {
   private capabilities: ClientCapabilities
   private logDatabaseEnabled: boolean
 
+  // Delegate modules
+  private configWriter: ConfigXmlWriter
+  private apiClient: ServarrApiClient
+  private userManager: ServarrUserManager
+
   constructor(
     config: ServarrConfig,
     options?: { configPath?: string; logDatabaseEnabled?: boolean },
@@ -114,6 +50,10 @@ export class ServarrManager {
     this.configPath = options?.configPath || process.env.SERVARR_CONFIG_PATH || '/config/config.xml'
     this.capabilities = this.getClientCapabilities()
     this.logDatabaseEnabled = options?.logDatabaseEnabled ?? true
+
+    this.configWriter = new ConfigXmlWriter(config, this.configPath, this.logDatabaseEnabled)
+    this.apiClient = new ServarrApiClient(config)
+    this.userManager = new ServarrUserManager(config, this.logDatabaseEnabled)
   }
 
   private getClientCapabilities(): ClientCapabilities {
@@ -259,214 +199,38 @@ export class ServarrManager {
     return 'getDownloadClients' in client
   }
 
-  private hasHostConfig(
-    client: ServarrClientType,
-  ): client is ServarrClientType & ClientWithHostConfig {
-    return 'updateHostConfig' in client
-  }
+  // Note: hasHostConfig is used by userManager.configureDatabase internally
 
-  private async detectServarrType(): Promise<string> {
-    logger.info('Auto-detecting Servarr type...', { url: this.config.url })
-
-    try {
-      const clientConfig = {
-        baseUrl: this.config.url as string,
-        apiKey: this.config.apiKey || '',
-      }
-
-      const servarrTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr']
-
-      for (const type of servarrTypes) {
-        try {
-          let client: ServarrClientType
-
-          switch (type) {
-            case 'sonarr':
-              client = new SonarrClient(clientConfig)
-              break
-            case 'radarr':
-              client = new RadarrClient(clientConfig)
-              break
-            case 'lidarr':
-              client = new LidarrClient(clientConfig)
-              break
-            case 'readarr':
-              client = new ReadarrClient(clientConfig)
-              break
-            case 'prowlarr':
-              client = new ProwlarrClient(clientConfig)
-              break
-            default:
-              continue
-          }
-
-          const status = await client.getSystemStatus()
-          if (
-            status?.data &&
-            typeof status.data === 'object' &&
-            'appName' in status.data &&
-            typeof status.data.appName === 'string'
-          ) {
-            const detectedType = status.data.appName.toLowerCase()
-            logger.info('Detected Servarr type from API', {
-              detectedType,
-              appName: status.data.appName,
-            })
-            return detectedType
-          }
-        } catch (error) {
-          logger.debug('Type detection failed for', {
-            type,
-            error: error instanceof Error ? error.message : String(error),
-          })
-        }
-      }
-
-      logger.debug('TsArr API detection failed, trying direct API call')
-      try {
-        const tempClient = new SonarrClient({
-          baseUrl: this.config.url as string,
-          apiKey: this.config.apiKey || '',
-        })
-        const result = await tempClient.getSystemStatus()
-
-        if (result.data) {
-          const status = result.data as { appName?: string; instanceName?: string }
-          if (status.appName) {
-            const detectedType = status.appName.toLowerCase()
-            logger.info('Detected Servarr type from Tsarr API', {
-              detectedType,
-              appName: status.appName,
-            })
-            return detectedType
-          }
-        }
-      } catch (error) {
-        logger.debug('Tsarr API detection failed', {
-          error: error instanceof Error ? error.message : String(error),
-        })
-      }
-
-      logger.debug('Direct API detection failed, trying URL fallback')
-      const url = (this.config.url || '').toLowerCase()
-
-      for (const type of servarrTypes) {
-        if (url.includes(type)) {
-          logger.info('Detected Servarr type from URL', { detectedType: type })
-          return type
-        }
-      }
-
-      throw new Error('Could not determine application type from TsArr, API, or URL')
-    } catch (error) {
-      logger.error('Failed to auto-detect Servarr type', { error })
-      throw new Error(
-        `Auto-detection failed: ${error instanceof Error ? error.message : String(error)}`,
-      )
-    }
-  }
-
-  private createDatabaseConnection(database?: string): SQL {
-    const mainDbName = database || `${this.config.type}_main`
-    const host = process.env.POSTGRES_HOST || 'postgres'
-    const port = process.env.POSTGRES_PORT || '5432'
-    const password = process.env.POSTGRES_PASSWORD || ''
-    const connectionString = `postgres://${this.config.type}:${password}@${host}:${port}/${mainDbName}`
-
-    logger.debug('Creating database connection', {
-      type: this.config.type,
-      database: mainDbName,
-      connectionString: connectionString.replace(password, '***'),
-    })
-
-    return new SQL(connectionString)
-  }
-
-  private getDatabaseNames(): { main: string; log?: string } {
-    return {
-      main: `${this.config.type}_main`,
-      ...(this.logDatabaseEnabled ? { log: `${this.config.type}_log` } : {}),
-    }
-  }
-
-  private async readExistingApiKey(): Promise<string | null> {
-    try {
-      const configFile = file(this.configPath)
-      if (await configFile.exists()) {
-        const content = await configFile.text()
-
-        const apiKeyMatch = content.match(/<ApiKey>([^<]+)<\/ApiKey>/)
-        if (apiKeyMatch?.[1]) {
-          return apiKeyMatch[1]
-        }
-      }
-    } catch (error) {
-      logger.debug('Could not read existing config.xml', { error, path: this.configPath })
-    }
-    return null
-  }
-
-  private createClient(apiKey: string): ServarrClientType {
-    const { url, type } = this.config
-    const clientConfig = {
-      baseUrl: url as string,
-      apiKey,
-    }
-
-    logger.debug('Creating Tsarr client', {
-      type,
-      url,
-      baseUrl: clientConfig.baseUrl,
-      apiKey: `${apiKey?.substring(0, 8)}...`,
-    })
-
-    switch (type) {
-      case 'sonarr':
-        return new SonarrClient(clientConfig)
-      case 'radarr':
-        return new RadarrClient(clientConfig)
-      case 'lidarr':
-        return new LidarrClient(clientConfig)
-      case 'readarr':
-        return new ReadarrClient(clientConfig)
-      case 'prowlarr':
-        return new ProwlarrClient(clientConfig)
-      case 'auto':
-        throw new Error('Type must be detected before creating client')
-      default:
-        throw new Error(`Unsupported Servarr type: ${type}`)
-    }
-  }
+  // --- Delegated methods ---
 
   async detectType(): Promise<string> {
     if (this.config.type !== 'auto') {
       return this.config.type
     }
 
-    await this.waitForStartup()
-    return await this.detectServarrType()
+    await this.apiClient.waitForStartup(this.apiKey || '')
+    return await this.apiClient.detectServarrType()
   }
 
   async writeConfigurationOnly(servarrConfigApiKey?: string): Promise<void> {
     logger.info('Writing Servarr configuration only (init mode)...')
 
-    // In init mode, service is not running yet, so we can't detect type via API
-    // The type should already be configured via SERVARR_TYPE environment variable
     if (this.config.type === 'auto') {
       throw new Error(
         'SERVARR_TYPE must be explicitly set in init mode, cannot auto-detect when service is not running',
       )
     }
 
-    await this.writeConfigXml(servarrConfigApiKey)
+    const apiKey = servarrConfigApiKey || this.config.apiKey || ''
+    this.apiKey = apiKey
+    await this.configWriter.writeConfigXml(apiKey, servarrConfigApiKey)
     logger.info('Configuration writing completed', { type: this.config.type })
   }
 
   async initializeSidecarMode(): Promise<void> {
     logger.info('Initializing ServarrManager for sidecar mode...', { type: this.config.type })
 
-    // Read API key from existing config.xml (written by init container)
-    const existingApiKey = await this.readExistingApiKey()
+    const existingApiKey = await this.configWriter.readExistingApiKey()
     if (!existingApiKey) {
       throw new Error('No API key found in config.xml - init container may have failed')
     }
@@ -474,19 +238,17 @@ export class ServarrManager {
     this.apiKey = existingApiKey
     logger.info('Using API key from config', { apiKey: `${this.apiKey.slice(0, 8)}...` })
 
-    // Wait for Servarr service to be ready with retry
-    await withRetry(() => this.waitForStartup(), {
+    await withRetry(() => this.apiClient.waitForStartup(this.apiKey || ''), {
       maxAttempts: 3,
       delayMs: 5000,
       operation: 'servarr-service-startup',
     })
 
-    // Wait for database tables to be initialized by Servarr
     logger.info('Waiting for Servarr to initialize database tables...')
     let tablesReady = false
     for (let i = 0; i < 15; i++) {
       try {
-        tablesReady = await this.checkServarrTablesInitialized()
+        tablesReady = await this.userManager.checkServarrTablesInitialized()
         if (tablesReady) break
       } catch (error) {
         logger.debug('Table check failed', { attempt: i + 1, error })
@@ -498,13 +260,11 @@ export class ServarrManager {
       throw new Error('Servarr failed to initialize database tables')
     }
 
-    // Initialize client for API operations
-    this.client = this.createClient(this.apiKey)
+    this.client = this.apiClient.createClient(this.apiKey)
     this.isInitialized = true
 
-    // Create web login user after tables are initialized (only for Servarr types that support it)
     if (this.config.adminPassword) {
-      await this.createInitialUser()
+      await this.userManager.createInitialUser()
     }
 
     logger.info('ServarrManager sidecar initialization completed', { type: this.config.type })
@@ -517,8 +277,8 @@ export class ServarrManager {
     }
 
     if (this.config.type === 'auto') {
-      await this.waitForStartup()
-      const detectedType = await this.detectServarrType()
+      await this.apiClient.waitForStartup(this.apiKey || '')
+      const detectedType = await this.apiClient.detectServarrType()
       const validTypes = ['sonarr', 'radarr', 'lidarr', 'readarr', 'prowlarr'] as const
 
       if (!validTypes.includes(detectedType as (typeof validTypes)[number])) {
@@ -529,18 +289,27 @@ export class ServarrManager {
         ...this.config,
         type: detectedType as (typeof validTypes)[number],
       }
+      this.apiClient.updateConfig(this.config)
     }
 
-    const configChanged = await this.writeConfigXml()
+    // writeConfigXml needs apiKey set; derive it first
+    const selectedApiKey = this.config.apiKey
+    if (!selectedApiKey) {
+      throw new Error(
+        'API key is required. Please provide an API key in the configuration file or environment.',
+      )
+    }
+    this.apiKey = selectedApiKey
 
-    // Skip connectivity checks in init mode
+    const configChanged = await this.configWriter.writeConfigXml(this.apiKey)
+
     const isInitMode = process.argv.includes('--init')
     if (!isInitMode) {
-      await this.waitForStartup()
+      await this.apiClient.waitForStartup(this.apiKey)
 
       if (configChanged) {
-        await this.restartToApplyConfig()
-        await this.waitForStartup()
+        await this.apiClient.restartToApplyConfig(this.client)
+        await this.apiClient.waitForStartup(this.apiKey)
       }
     }
 
@@ -548,9 +317,8 @@ export class ServarrManager {
       if (!this.apiKey) {
         throw new Error('API key is required but not available')
       }
-      this.client = this.createClient(this.apiKey)
+      this.client = this.apiClient.createClient(this.apiKey)
 
-      // Debug: Check what methods are available on the client
       if (this.client) {
         const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(this.client)).filter(
           (name) => {
@@ -561,7 +329,7 @@ export class ServarrManager {
         )
         logger.debug('Available client methods', {
           type: this.config.type,
-          methods: methods.slice(0, 20), // Just show first 20 methods
+          methods: methods.slice(0, 20),
           hasAddDownloadClient: methods.includes('addDownloadClient'),
           hasGetDownloadClients: methods.includes('getDownloadClients'),
         })
@@ -575,444 +343,25 @@ export class ServarrManager {
     }
   }
 
-  private async writeConfigXml(servarrConfigApiKey?: string): Promise<boolean> {
-    // Priority for API key:
-    // 1. API key from loaded servarr configuration (JSON file)
-    // 2. API key from servarr config (environment)
-    let selectedApiKey: string
+  // --- Delegated to userManager ---
 
-    if (servarrConfigApiKey) {
-      selectedApiKey = servarrConfigApiKey
-      logger.info('Using API key from loaded configuration file', {
-        apiKey: `${selectedApiKey.slice(0, 8)}...`,
-      })
-    } else if (this.config.apiKey) {
-      selectedApiKey = this.config.apiKey
-      logger.info('Using API key from environment config', {
-        apiKey: `${selectedApiKey.slice(0, 8)}...`,
-      })
-    } else {
-      throw new Error(
-        'API key is required. Please provide an API key in the configuration file or environment.',
-      )
-    }
-
-    this.apiKey = selectedApiKey
-
-    // Check if existing config.xml has the same API key
-    const existingApiKey = await this.readExistingApiKey()
-    const isApiKeyChanged = !existingApiKey || existingApiKey !== this.apiKey
-
-    if (isApiKeyChanged) {
-      logger.info('API key changed or missing in config.xml, will update', {
-        hadExisting: !!existingApiKey,
-        existingKey: existingApiKey ? `${existingApiKey.slice(0, 8)}...` : 'none',
-        newKey: `${this.apiKey.slice(0, 8)}...`,
-      })
-    }
-
-    logger.info('Writing Servarr config.xml...', {
-      type: this.config.type,
-      configPath: this.configPath,
-      apiKey: `${this.apiKey.slice(0, 8)}...`,
-    })
-
-    const port =
-      this.config.type === 'sonarr'
-        ? 8989
-        : this.config.type === 'radarr'
-          ? 7878
-          : this.config.type === 'lidarr'
-            ? 8686
-            : this.config.type === 'readarr'
-              ? 8787
-              : 9696
-    const authenticationMethod = this.config.authenticationMethod === 'forms' ? 'Forms' : 'Basic'
-    const databases = this.getDatabaseNames()
-    const postgresLogDb = this.logDatabaseEnabled
-      ? `
-  <PostgresLogDb>${databases.log}</PostgresLogDb>`
-      : ''
-    const logDbEnabled = this.logDatabaseEnabled ? 'True' : 'False'
-
-    const configXml = `<Config>
-  <BindAddress>*</BindAddress>
-  <Port>${port}</Port>
-  <SslPort>${port + 1000}</SslPort>
-  <EnableSsl>False</EnableSsl>
-  <LaunchBrowser>False</LaunchBrowser>
-  <ApiKey>${this.apiKey}</ApiKey>
-  <AuthenticationMethod>${authenticationMethod}</AuthenticationMethod>
-  <AuthenticationRequired>Enabled</AuthenticationRequired>
-  <Branch>main</Branch>
-  <LogLevel>info</LogLevel>
-  <LogDbEnabled>${logDbEnabled}</LogDbEnabled>
-  <SslCertPath></SslCertPath>
-  <SslCertPassword></SslCertPassword>
-  <UrlBase></UrlBase>
-  <InstanceName>${process.env.SERVARR_INSTANCE_NAME || this.config.type.charAt(0).toUpperCase() + this.config.type.slice(1)}</InstanceName>
-  <UpdateMechanism>Docker</UpdateMechanism>
-  <AnalyticsEnabled>False</AnalyticsEnabled>
-  <PostgresUser>${this.config.type}</PostgresUser>
-  <PostgresPassword>${process.env.POSTGRES_PASSWORD}</PostgresPassword>
-  <PostgresPort>${process.env.POSTGRES_PORT || 5432}</PostgresPort>
-  <PostgresHost>${process.env.POSTGRES_HOST || 'postgres'}</PostgresHost>
-  <PostgresMainDb>${databases.main}</PostgresMainDb>${postgresLogDb}
-</Config>`
-
-    try {
-      const configFile = file(this.configPath)
-      let configChanged = true
-
-      if (await configFile.exists()) {
-        const existingContent = await configFile.text()
-        configChanged = existingContent !== configXml
-      }
-
-      if (configChanged) {
-        await write(this.configPath, configXml)
-        logger.info('Config.xml written successfully', {
-          type: this.config.type,
-          apiKey: `${this.apiKey.slice(0, 8)}...`,
-          changed: configChanged,
-        })
-      } else {
-        logger.debug('Config.xml unchanged, skipping write')
-      }
-
-      return configChanged
-    } catch (error) {
-      logger.error('Failed to write config.xml', { error, configPath: this.configPath })
-      throw error
-    }
+  verifyPostgreSQLConnection(): Promise<boolean> {
+    return this.userManager.verifyPostgreSQLConnection()
   }
 
-  private async waitForStartup(maxRetries = 30, retryDelay = 2000): Promise<void> {
-    logger.info('Waiting for Servarr to start...', { type: this.config.type, url: this.config.url })
-
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        const tempClient = this.createClient(this.apiKey || '')
-        const result = await tempClient.getSystemStatus()
-
-        if (result.data || result.response.status === 401) {
-          logger.info('Servarr is ready', {
-            type: this.config.type,
-            status: result.response.status,
-          })
-          return
-        }
-
-        logger.debug('Servarr not ready yet', {
-          attempt: i + 1,
-          maxRetries,
-          status: result.response?.status,
-        })
-      } catch (_error) {
-        logger.debug('Servarr not ready yet', { attempt: i + 1, maxRetries, error: String(_error) })
-      }
-
-      if (i < maxRetries - 1) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelay))
-      }
-    }
-
-    throw new Error(`Servarr failed to start after ${maxRetries} attempts`)
+  checkServarrTablesInitialized(): Promise<boolean> {
+    return this.userManager.checkServarrTablesInitialized()
   }
 
-  private async restartToApplyConfig(): Promise<void> {
-    if (!this.apiKey) {
-      throw new Error('API key required for restart')
-    }
-
-    logger.info('Restarting Servarr to apply config changes...', {
-      type: this.config.type,
-    })
-
-    try {
-      const result = await this.client?.restartSystem()
-
-      if (result?.data) {
-        logger.info('Restart command sent successfully')
-        await new Promise((resolve) => setTimeout(resolve, 5000))
-      } else {
-        logger.warn('Failed to restart via API, but continuing...', { error: result?.error })
-      }
-    } catch (error) {
-      logger.warn('Could not restart via API, but continuing...', { error })
-    }
-  }
-
-  async verifyPostgreSQLConnection(): Promise<boolean> {
-    logger.info('Verifying PostgreSQL connection...')
-
-    try {
-      const db = this.createDatabaseConnection()
-      await db`SELECT 1 as test`
-      db.close()
-
-      logger.info('PostgreSQL connection successful', { database: `${this.config.type}_main` })
-      return true
-    } catch (error) {
-      logger.warn('PostgreSQL connection not ready yet', {
-        error: error instanceof Error ? error.message : String(error),
-      })
-      return false
-    }
-  }
-
-  async checkServarrTablesInitialized(): Promise<boolean> {
-    logger.info('Checking if Servarr has initialized database tables...')
-
-    try {
-      const db = this.createDatabaseConnection()
-      const tables = await db`
-        SELECT table_name 
-        FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name IN ('Users', 'Config', 'RootFolders', 'Indexers')
-      `
-      db.close()
-
-      const tableNames = tables.map((t: { table_name: string }) => t.table_name)
-      const requiredTables = ['Users', 'Config']
-      const hasRequiredTables = requiredTables.every((table) => tableNames.includes(table))
-
-      logger.info('Database table check completed', {
-        hasRequiredTables,
-        foundTables: tableNames.length,
-        requiredTables,
-      })
-
-      logger.debug('About to close database connection in checkServarrTablesInitialized')
-      db.close()
-      logger.debug('Database connection closed in checkServarrTablesInitialized')
-
-      return hasRequiredTables
-    } catch (error) {
-      logger.error('Failed to check database tables', { error })
-      return false
-    }
-  }
-
-  async createInitialUser(): Promise<void> {
+  createInitialUser(): Promise<void> {
     if (!this.isInitialized) {
       throw new Error('ServarrManager must be initialized before creating user')
     }
-
-    if (!this.config.adminPassword) {
-      logger.debug('Skipping user creation - no admin password configured')
-      return
-    }
-
-    logger.info('Creating initial admin user...', {
-      username: this.config.adminUser,
-    })
-
-    try {
-      const db = this.createDatabaseConnection()
-
-      try {
-        // Get all users from database to check for duplicates
-        let allUsers =
-          (await db`SELECT "Id", "Identifier", "Username", "Password", "Salt", "Iterations" FROM "Users"`) as DatabaseUser[]
-        const normalizedAdminUser = this.config.adminUser.toLowerCase()
-
-        // Check if the desired admin user already exists
-        let existingUser = allUsers.find(
-          (user) => user.Username.toLowerCase() === normalizedAdminUser,
-        )
-
-        if (!existingUser && allUsers.length > 0) {
-          const userToRename =
-            allUsers.find((user) => user.Username.toLowerCase() === 'admin') ?? allUsers[0]
-
-          if (!userToRename) {
-            throw new Error('Unable to select user for renaming')
-          }
-
-          await db`
-            UPDATE "Users"
-            SET "Username" = ${normalizedAdminUser}
-            WHERE "Id" = ${userToRename.Id}
-          `
-
-          logger.info('Renamed existing admin user to match desired username', {
-            previousUsername: userToRename.Username,
-            newUsername: this.config.adminUser,
-          })
-
-          const renamedUser: DatabaseUser = {
-            ...userToRename,
-            Username: normalizedAdminUser,
-          }
-          existingUser = renamedUser
-          allUsers = allUsers.map((user) => (user.Id === userToRename.Id ? renamedUser : user))
-        }
-
-        if (!existingUser) {
-          // Create new user
-          const userId = crypto.randomUUID()
-          const salt = crypto.getRandomValues(new Uint8Array(16))
-          const saltBase64 = Buffer.from(salt).toString('base64')
-          const hashedPassword = await this.hashPassword(this.config.adminPassword, salt)
-
-          await db`
-            INSERT INTO "Users" ("Identifier", "Username", "Password", "Salt", "Iterations")
-            VALUES (${userId}, ${normalizedAdminUser}, ${hashedPassword}, ${saltBase64}, 10000)
-          `
-
-          logger.info('Initial admin user created successfully', {
-            username: this.config.adminUser,
-            userId,
-          })
-        } else {
-          // User exists - check if password needs updating
-          if (
-            await this.checkPasswordChange(
-              this.config.adminPassword,
-              existingUser.Password,
-              existingUser.Salt,
-            )
-          ) {
-            await this.updateUserPassword(db, this.config.adminUser, this.config.adminPassword)
-            logger.info('Admin user password updated successfully', {
-              username: this.config.adminUser,
-            })
-          } else {
-            logger.info('Admin user already exists', { username: this.config.adminUser })
-          }
-        }
-
-        // Fix for "Sequence contains more than one element" error:
-        // Ensure only one admin user exists to prevent Prowlarr authentication issues
-        if (allUsers.length > 1) {
-          for (const user of allUsers) {
-            if (user.Username.toLowerCase() !== this.config.adminUser.toLowerCase()) {
-              await db`DELETE FROM "Users" WHERE "Id" = ${user.Id}`
-              logger.info('Duplicate admin user removed', {
-                username: user.Username,
-                reason: 'Preventing multiple user conflicts',
-              })
-            }
-          }
-        }
-      } finally {
-        db.close()
-      }
-    } catch (error) {
-      logger.error('Failed to create initial user', { error })
-      throw error
-    }
+    return this.userManager.createInitialUser()
   }
 
-  private async hashPassword(password: string, saltArray: Uint8Array): Promise<string> {
-    const encoder = new TextEncoder()
-    const passwordBytes = encoder.encode(password)
-    const key = await crypto.subtle.importKey('raw', passwordBytes, 'PBKDF2', false, ['deriveBits'])
-    // Create a new Uint8Array backed by a regular ArrayBuffer for PBKDF2 compatibility
-    const salt = new Uint8Array(saltArray.buffer.slice(0)) as Uint8Array<ArrayBuffer>
-    const hashBuffer = await crypto.subtle.deriveBits(
-      {
-        name: 'PBKDF2',
-        salt,
-        iterations: 10000,
-        hash: 'SHA-512',
-      },
-      key,
-      256,
-    )
-    return Buffer.from(hashBuffer).toString('base64')
-  }
-
-  private async checkPasswordChange(
-    newPassword: string,
-    currentHash: string,
-    currentSalt: string,
-  ): Promise<boolean> {
-    try {
-      const saltBuffer = Buffer.from(currentSalt, 'base64')
-      const newHash = await this.hashPassword(newPassword, saltBuffer)
-      return newHash !== currentHash
-    } catch (_error) {
-      // If comparison fails, assume password needs updating for safety
-      return true
-    }
-  }
-
-  private async updateUserPassword(db: SQL, username: string, password: string): Promise<void> {
-    const salt = crypto.getRandomValues(new Uint8Array(16))
-    const saltBase64 = Buffer.from(salt).toString('base64')
-    const hashedPassword = await this.hashPassword(password, salt)
-
-    await db`
-      UPDATE "Users" 
-      SET "Password" = ${hashedPassword}, "Salt" = ${saltBase64}, "Iterations" = 10000
-      WHERE LOWER("Username") = LOWER(${username})
-    `
-  }
-
-  async createInitialUserInInitMode(): Promise<void> {
-    logger.info('Creating initial admin user in init mode...', {
-      username: this.config.adminUser,
-    })
-
-    try {
-      const db = this.createDatabaseConnection()
-
-      const existingUsers =
-        await db`SELECT * FROM "Users" WHERE LOWER("Username") = LOWER(${this.config.adminUser})`
-
-      if (existingUsers.length > 0) {
-        logger.info('Admin user already exists', { username: this.config.adminUser })
-        logger.debug('Closing database connection after user check')
-        try {
-          db.close()
-          logger.debug('Database connection closed successfully')
-        } catch (closeError) {
-          logger.warn('Error closing database connection', { closeError })
-        }
-        logger.debug('Returning from createInitialUserInInitMode')
-        return
-      }
-
-      const userId = crypto.randomUUID()
-      const salt = crypto.getRandomValues(new Uint8Array(16))
-      const saltBase64 = Buffer.from(salt).toString('base64')
-
-      const encoder = new TextEncoder()
-      const passwordBytes = encoder.encode(this.config.adminPassword)
-      const key = await crypto.subtle.importKey('raw', passwordBytes, 'PBKDF2', false, [
-        'deriveBits',
-      ])
-      const hashBuffer = await crypto.subtle.deriveBits(
-        {
-          name: 'PBKDF2',
-          salt: salt,
-          iterations: 10000,
-          hash: 'SHA-512',
-        },
-        key,
-        256,
-      )
-
-      const hashedPassword = Buffer.from(hashBuffer).toString('base64')
-
-      await db`
-        INSERT INTO "Users" ("Identifier", "Username", "Password", "Salt", "Iterations")
-        VALUES (${userId}, ${this.config.adminUser.toLowerCase()}, ${hashedPassword}, ${saltBase64}, 10000)
-      `
-
-      db.close()
-
-      logger.info('Initial admin user created successfully in init mode', {
-        username: this.config.adminUser,
-        userId,
-      })
-    } catch (error) {
-      logger.error('Failed to create initial user in init mode', { error })
-      throw error
-    }
+  createInitialUserInInitMode(): Promise<void> {
+    return this.userManager.createInitialUserInInitMode()
   }
 
   async configureDatabase(postgresConfig: PostgresConfig): Promise<void> {
@@ -1020,65 +369,18 @@ export class ServarrManager {
       throw new Error('ServarrManager must be initialized before configuring database')
     }
 
-    logger.info('Configuring Servarr database connection...')
-    const databases = this.getDatabaseNames()
-
-    const dbConfig: Record<string, string | number> = {
-      databaseType: 'postgresql',
-      host: postgresConfig.host,
-      port: postgresConfig.port,
-      database: databases.main,
-      user: this.config.type,
-      password: postgresConfig.password,
-    }
-
-    if (databases.log) {
-      dbConfig.logDatabase = databases.log
-    }
-
-    try {
-      // Use Tsarr updateHostConfig method for database configuration
-      if (!this.client || !('updateHostConfig' in this.client)) {
-        logger.debug('updateHostConfig not supported for this Servarr type')
-        throw new Error('Database configuration not supported for this Servarr type')
-      }
-
-      if (!this.hasHostConfig(this.client)) {
-        throw new Error('Host config not supported by this client')
-      }
-
-      const result = await this.client.updateHostConfig(1, dbConfig)
-      this.handleTsarrResponse(result)
-
-      logger.info('Database configuration updated')
-
-      await this.restartServarr()
-    } catch (error) {
-      logger.error('Failed to configure database', { error })
-      throw error
-    }
+    await this.userManager.configureDatabase(postgresConfig, this.client, this.apiKey)
+    // After restart, wait for startup
+    await this.apiClient.waitForStartup(this.apiKey)
   }
 
-  private async restartServarr(): Promise<void> {
-    logger.info('Restarting Servarr to apply database configuration...')
+  // --- Delegated to apiClient ---
 
-    if (!this.apiKey) {
-      throw new Error('API key not available for restart')
-    }
-
-    try {
-      await this.client?.restartSystem()
-
-      await new Promise((resolve) => setTimeout(resolve, 5000))
-
-      await this.waitForStartup()
-
-      logger.info('Servarr restarted successfully')
-    } catch (error) {
-      logger.error('Failed to restart Servarr', { error })
-      throw error
-    }
+  testConnection(): Promise<boolean> {
+    return this.apiClient.testConnection(this.client, this.apiKey, this.isInitialized)
   }
+
+  // --- Public accessors ---
 
   getClient(): ServarrClientType {
     if (!this.client) {
@@ -1102,38 +404,11 @@ export class ServarrManager {
     return this.isInitialized && this.client !== null && this.apiKey !== null
   }
 
-  async testConnection(): Promise<boolean> {
-    if (!this.isInitialized || !this.apiKey) {
-      logger.debug('testConnection failed: not initialized or no API key')
-      return false
-    }
-
-    try {
-      const result = await this.client?.getSystemStatus()
-
-      if (!result) {
-        logger.warn('No result from system status call')
-        return false
-      }
-
-      logger.debug('testConnection result', {
-        success: !!result.data,
-        hasError: !!result.error,
-        apiKey: `${this.apiKey.slice(0, 8)}...`,
-      })
-
-      if (result.error) {
-        logger.warn('API connection test failed', {
-          error: result.error,
-        })
-      }
-
-      return !!result.data
-    } catch (error) {
-      logger.error('testConnection exception', { error })
-      return false
-    }
+  getCapabilities(): ClientCapabilities {
+    return this.capabilities
   }
+
+  // --- Resource CRUD methods (use internal client + handleTsarrResponse) ---
 
   async getRootFolders(): Promise<RootFolder[]> {
     if (!this.isInitialized || !this.apiKey) {
@@ -1202,7 +477,7 @@ export class ServarrManager {
       }
 
       const result = await this.client.addRootFolder(rootFolder.path)
-      this.handleTsarrResponse(result) // This will throw if there's an error
+      this.handleTsarrResponse(result)
 
       logger.info('Root folder added successfully', { path: rootFolder.path })
     } catch (error) {
@@ -1367,7 +642,7 @@ export class ServarrManager {
       })
 
       const result = await this.client.addIndexer(tsarrIndexer)
-      this.handleTsarrResponse(result) // This will throw if there's an error
+      this.handleTsarrResponse(result)
 
       logger.info('Indexer added successfully', { name: indexer.name })
     } catch (error) {
@@ -2125,7 +1400,6 @@ export class ServarrManager {
     logger.info('Updating naming config...')
 
     try {
-      // Get current config to merge with updates
       const current = await this.getNamingConfig()
       const merged = { ...current, ...namingConfig, id: 1 }
 
@@ -2179,7 +1453,6 @@ export class ServarrManager {
     logger.info('Updating media management config...')
 
     try {
-      // Get current config to merge with updates
       const current = await this.getMediaManagementConfig()
       const merged = { ...current, ...mediaConfig, id: 1 }
 
@@ -2222,7 +1495,6 @@ export class ServarrManager {
 
       const definitions = await this.fetchApi<ApiQualityDefinition[]>('/qualitydefinition')
 
-      // Map API response to our schema format
       return (definitions || []).map((def) => ({
         quality: def.quality?.name || '',
         title: def.title,
@@ -2260,7 +1532,6 @@ export class ServarrManager {
         preferredSize: number
       }
 
-      // Get all definitions to find the one we need to update
       const definitions = await this.fetchApi<ApiQualityDefinition[]>('/qualitydefinition')
       const definition = definitions?.find(
         (def) => def.quality?.name?.toLowerCase() === qualityName.toLowerCase(),
@@ -2270,7 +1541,6 @@ export class ServarrManager {
         throw new Error(`Quality definition not found: ${qualityName}`)
       }
 
-      // Update the definition with new values
       const updated = {
         ...definition,
         minSize: updates.minSize ?? definition.minSize,
@@ -2290,7 +1560,6 @@ export class ServarrManager {
     }
   }
 
-  // Bulk update quality definitions
   async updateQualityDefinitions(definitions: QualityDefinition[]): Promise<void> {
     if (!this.isInitialized || !this.apiKey) {
       throw new Error('ServarrManager not initialized')
@@ -2307,10 +1576,5 @@ export class ServarrManager {
     }
 
     logger.info('Quality definitions updated successfully', { count: definitions.length })
-  }
-
-  // Expose capabilities for steps to check
-  getCapabilities(): ClientCapabilities {
-    return this.capabilities
   }
 }

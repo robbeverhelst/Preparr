@@ -6,6 +6,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class RootFoldersStep extends ServarrStep {
   readonly name = 'root-folders'
@@ -21,11 +23,11 @@ export class RootFoldersStep extends ServarrStep {
     return this.client.isReady()
   }
 
-  async readCurrentState(context: StepContext): Promise<RootFolder[]> {
+  async readCurrentState(_context: StepContext): Promise<RootFolder[]> {
     try {
       return await this.client.getRootFolders()
     } catch (error) {
-      context.logger.warn('Failed to read current root folders', { error })
+      logger.warn('Failed to read current root folders', { error })
       return []
     }
   }
@@ -33,11 +35,11 @@ export class RootFoldersStep extends ServarrStep {
   protected getDesiredState(context: StepContext): RootFolder[] {
     const config = context.config.app
     if (!config || !config.rootFolders) {
-      context.logger.warn('No configuration or root folders found in context for root folders step')
+      logger.warn('No configuration or root folders found in context for root folders step')
       return []
     }
 
-    context.logger.info('Root folders desired state loaded', {
+    logger.info('Root folders desired state loaded', {
       count: config.rootFolders.length,
       paths: config.rootFolders.map((f) => f.path),
     })
@@ -85,7 +87,7 @@ export class RootFoldersStep extends ServarrStep {
     return changes
   }
 
-  async executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult> {
+  async executeChanges(changes: ChangeRecord[], _context: StepContext): Promise<StepResult> {
     const results: ChangeRecord[] = []
     const errors: Error[] = []
     const warnings: Warning[] = []
@@ -106,7 +108,7 @@ export class RootFoldersStep extends ServarrStep {
             type: 'create',
           })
 
-          context.logger.info('Root folder added successfully', {
+          logger.info('Root folder added successfully', {
             path: folder.path,
           })
         } else if (change.type === 'delete') {
@@ -116,14 +118,14 @@ export class RootFoldersStep extends ServarrStep {
             type: 'delete',
           })
 
-          context.logger.info('Root folder removed successfully', {
+          logger.info('Root folder removed successfully', {
             path: change.identifier,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to manage root folder', {
+        logger.error('Failed to manage root folder', {
           error: stepError.message,
           change: change.identifier,
           path: change.identifier,
@@ -149,7 +151,7 @@ export class RootFoldersStep extends ServarrStep {
 
       return JSON.stringify(currentPaths) === JSON.stringify(desiredPaths)
     } catch (error) {
-      context.logger.debug('Root folders verification failed', { error })
+      logger.debug('Root folders verification failed', { error })
       return false
     }
   }

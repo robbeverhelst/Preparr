@@ -1,5 +1,7 @@
 import type { QualityDefinition } from '@/config/schema'
 import { type ChangeRecord, ServarrStep, type StepContext, type StepResult } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class QualityDefinitionsStep extends ServarrStep {
   readonly name = 'quality-definitions'
@@ -16,7 +18,7 @@ export class QualityDefinitionsStep extends ServarrStep {
     // Check if quality definitions are supported
     const capabilities = this.client.getCapabilities()
     if (!capabilities.hasQualityDefinitions) {
-      context.logger.debug('Quality definitions not supported for this Servarr type')
+      logger.debug('Quality definitions not supported for this Servarr type')
       return false
     }
 
@@ -24,25 +26,25 @@ export class QualityDefinitionsStep extends ServarrStep {
 
     // Skip if no quality definitions defined
     if (!config?.qualityDefinitions || config.qualityDefinitions.length === 0) {
-      context.logger.debug('No quality definitions defined in config, skipping')
+      logger.debug('No quality definitions defined in config, skipping')
       return false
     }
 
     return true
   }
 
-  async readCurrentState(context: StepContext): Promise<QualityDefinition[]> {
+  async readCurrentState(_context: StepContext): Promise<QualityDefinition[]> {
     try {
       return await this.client.getQualityDefinitions()
     } catch (error) {
-      context.logger.warn('Failed to read current quality definitions', { error })
+      logger.warn('Failed to read current quality definitions', { error })
       return []
     }
   }
 
   protected getDesiredState(context: StepContext): QualityDefinition[] {
     const config = context.config.app
-    context.logger.debug('Getting desired quality definitions state', {
+    logger.debug('Getting desired quality definitions state', {
       hasConfig: !!config,
       hasQualityDefinitions: !!config?.qualityDefinitions,
       qualityDefinitionCount: config?.qualityDefinitions?.length || 0,
@@ -58,7 +60,7 @@ export class QualityDefinitionsStep extends ServarrStep {
   compareAndPlan(
     current: QualityDefinition[],
     desired: QualityDefinition[],
-    context: StepContext,
+    _context: StepContext,
   ): ChangeRecord[] {
     const changes: ChangeRecord[] = []
     const currentByQuality = new Map(current.map((qd) => [qd.quality.toLowerCase(), qd]))
@@ -68,7 +70,7 @@ export class QualityDefinitionsStep extends ServarrStep {
       const currentDef = currentByQuality.get(desiredDef.quality.toLowerCase())
 
       if (!currentDef) {
-        context.logger.warn('Quality definition not found, skipping', {
+        logger.warn('Quality definition not found, skipping', {
           quality: desiredDef.quality,
         })
         continue
@@ -126,14 +128,14 @@ export class QualityDefinitionsStep extends ServarrStep {
           })
 
           results.push({ ...change, type: 'update' })
-          context.logger.info('Quality definition updated successfully', {
+          logger.info('Quality definition updated successfully', {
             quality: change.identifier,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to update quality definition', {
+        logger.error('Failed to update quality definition', {
           error: stepError.message,
           quality: change.identifier,
         })
@@ -174,7 +176,7 @@ export class QualityDefinitionsStep extends ServarrStep {
 
       return true
     } catch (error) {
-      context.logger.debug('Quality definitions verification failed', { error })
+      logger.debug('Quality definitions verification failed', { error })
       return false
     }
   }

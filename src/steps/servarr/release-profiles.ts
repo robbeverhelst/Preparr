@@ -6,6 +6,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class ReleaseProfilesStep extends ServarrStep {
   readonly name = 'release-profiles'
@@ -22,7 +24,7 @@ export class ReleaseProfilesStep extends ServarrStep {
     // Only supported for Sonarr
     const capabilities = this.client.getCapabilities()
     if (!capabilities.hasReleaseProfiles) {
-      context.logger.debug('Release profiles not supported for this Servarr type (Sonarr only)')
+      logger.debug('Release profiles not supported for this Servarr type (Sonarr only)')
       return false
     }
 
@@ -30,25 +32,25 @@ export class ReleaseProfilesStep extends ServarrStep {
 
     // Skip if no release profiles defined
     if (!config?.releaseProfiles || config.releaseProfiles.length === 0) {
-      context.logger.debug('No release profiles defined in config, skipping')
+      logger.debug('No release profiles defined in config, skipping')
       return false
     }
 
     return true
   }
 
-  async readCurrentState(context: StepContext): Promise<ReleaseProfile[]> {
+  async readCurrentState(_context: StepContext): Promise<ReleaseProfile[]> {
     try {
       return await this.client.getReleaseProfiles()
     } catch (error) {
-      context.logger.warn('Failed to read current release profiles', { error })
+      logger.warn('Failed to read current release profiles', { error })
       return []
     }
   }
 
   protected getDesiredState(context: StepContext): ReleaseProfile[] {
     const config = context.config.app
-    context.logger.debug('Getting desired release profile state', {
+    logger.debug('Getting desired release profile state', {
       hasConfig: !!config,
       hasReleaseProfiles: !!config?.releaseProfiles,
       releaseProfileCount: config?.releaseProfiles?.length || 0,
@@ -166,7 +168,7 @@ export class ReleaseProfilesStep extends ServarrStep {
 
           await this.client.addReleaseProfile(desiredProfile)
           results.push({ ...change, type: 'create' })
-          context.logger.info('Release profile added successfully', { name: desiredProfile.name })
+          logger.info('Release profile added successfully', { name: desiredProfile.name })
         } else if (change.type === 'update') {
           const desiredProfile = desiredProfiles.find((rp) => rp.name === change.identifier)
           const existingProfile = currentByName.get(change.identifier)
@@ -177,7 +179,7 @@ export class ReleaseProfilesStep extends ServarrStep {
 
           await this.client.updateReleaseProfile(existingProfile.id, desiredProfile)
           results.push({ ...change, type: 'update' })
-          context.logger.info('Release profile updated successfully', { name: desiredProfile.name })
+          logger.info('Release profile updated successfully', { name: desiredProfile.name })
         } else if (change.type === 'delete') {
           const id = change.details?.id as number | undefined
           if (!id) {
@@ -186,12 +188,12 @@ export class ReleaseProfilesStep extends ServarrStep {
 
           await this.client.deleteReleaseProfile(id)
           results.push({ ...change, type: 'delete' })
-          context.logger.info('Release profile deleted successfully', { name: change.identifier })
+          logger.info('Release profile deleted successfully', { name: change.identifier })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to manage release profile', {
+        logger.error('Failed to manage release profile', {
           error: stepError.message,
           change: change.identifier,
         })
@@ -215,7 +217,7 @@ export class ReleaseProfilesStep extends ServarrStep {
 
       return JSON.stringify(currentNames) === JSON.stringify(desiredNames)
     } catch (error) {
-      context.logger.debug('Release profiles verification failed', { error })
+      logger.debug('Release profiles verification failed', { error })
       return false
     }
   }

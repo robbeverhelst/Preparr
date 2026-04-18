@@ -6,6 +6,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class BazarrProvidersStep extends BazarrStep {
   readonly name = 'bazarr-providers'
@@ -21,11 +23,11 @@ export class BazarrProvidersStep extends BazarrStep {
     return this.getProvidersConfig(context).length > 0
   }
 
-  async readCurrentState(context: StepContext): Promise<BazarrProvider[]> {
+  async readCurrentState(_context: StepContext): Promise<BazarrProvider[]> {
     try {
       return await this.client.getProviders()
     } catch (error) {
-      context.logger.debug('Failed to read Bazarr providers state', { error })
+      logger.debug('Failed to read Bazarr providers state', { error })
       return []
     }
   }
@@ -105,13 +107,13 @@ export class BazarrProvidersStep extends BazarrStep {
     try {
       if (changes.length > 0) {
         const desired = this.getDesiredState(context)
-        context.logger.info('Configuring Bazarr subtitle providers...', {
+        logger.info('Configuring Bazarr subtitle providers...', {
           providerCount: desired.length,
         })
 
         await this.client.configureProviders(desired)
 
-        context.logger.info('Bazarr subtitle providers configured successfully', {
+        logger.info('Bazarr subtitle providers configured successfully', {
           providers: desired.map((p) => p.name).join(', '),
           enabledCount: desired.filter((p) => p.enabled).length,
         })
@@ -124,9 +126,9 @@ export class BazarrProvidersStep extends BazarrStep {
         warnings,
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error))
+      const err = toError(error)
       errors.push(err)
-      context.logger.error('Failed to configure Bazarr subtitle providers', {
+      logger.error('Failed to configure Bazarr subtitle providers', {
         error: err.message,
       })
       return {

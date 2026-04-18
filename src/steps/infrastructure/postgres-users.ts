@@ -5,6 +5,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class PostgresUsersStep extends ConfigurationStep {
   readonly name = 'postgres-users'
@@ -14,12 +16,12 @@ export class PostgresUsersStep extends ConfigurationStep {
 
   validatePrerequisites(context: StepContext): boolean {
     if (context.servarrType === 'qbittorrent') {
-      context.logger.debug('Skipping PostgreSQL user provisioning for qBittorrent')
+      logger.debug('Skipping PostgreSQL user provisioning for qBittorrent')
       return false
     }
     // Skip if provisioning is disabled (for pre-provisioned databases)
     if (context.config.postgres.skipProvisioning) {
-      context.logger.info('PostgreSQL user provisioning skipped (POSTGRES_SKIP_PROVISIONING=true)')
+      logger.info('PostgreSQL user provisioning skipped (POSTGRES_SKIP_PROVISIONING=true)')
       return false
     }
     return context.executionMode === 'init'
@@ -60,7 +62,7 @@ export class PostgresUsersStep extends ConfigurationStep {
       }
       return { users }
     } catch (error) {
-      context.logger.debug('Failed to check existing users', { error })
+      logger.debug('Failed to check existing users', { error })
       return { users: [] }
     }
   }
@@ -124,7 +126,7 @@ export class PostgresUsersStep extends ConfigurationStep {
             type: 'create',
           })
 
-          context.logger.info('PostgreSQL user created successfully', {
+          logger.info('PostgreSQL user created successfully', {
             username,
             servarrType: context.servarrType,
           })
@@ -141,16 +143,16 @@ export class PostgresUsersStep extends ConfigurationStep {
             type: 'update',
           })
 
-          context.logger.info('PostgreSQL permissions granted successfully', {
+          logger.info('PostgreSQL permissions granted successfully', {
             username,
             databases,
             servarrType: context.servarrType,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to manage PostgreSQL user/permissions', {
+        logger.error('Failed to manage PostgreSQL user/permissions', {
           error: stepError.message,
           change: change.identifier,
           identifier: change.identifier,
@@ -175,7 +177,7 @@ export class PostgresUsersStep extends ConfigurationStep {
       }
       return true
     } catch (error) {
-      context.logger.debug('PostgreSQL user verification failed', { error })
+      logger.debug('PostgreSQL user verification failed', { error })
       return false
     }
   }

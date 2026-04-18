@@ -6,6 +6,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class BazarrLanguagesStep extends BazarrStep {
   readonly name = 'bazarr-languages'
@@ -21,11 +23,11 @@ export class BazarrLanguagesStep extends BazarrStep {
     return this.getLanguagesConfig(context).length > 0
   }
 
-  async readCurrentState(context: StepContext): Promise<BazarrLanguage[]> {
+  async readCurrentState(_context: StepContext): Promise<BazarrLanguage[]> {
     try {
       return await this.client.getLanguages()
     } catch (error) {
-      context.logger.debug('Failed to read Bazarr languages state', { error })
+      logger.debug('Failed to read Bazarr languages state', { error })
       return []
     }
   }
@@ -81,13 +83,13 @@ export class BazarrLanguagesStep extends BazarrStep {
     try {
       if (changes.length > 0) {
         const desired = this.getDesiredState(context)
-        context.logger.info('Configuring Bazarr languages...', {
+        logger.info('Configuring Bazarr languages...', {
           languageCount: desired.length,
         })
 
         await this.client.configureLanguages(desired)
 
-        context.logger.info('Bazarr languages configured successfully', {
+        logger.info('Bazarr languages configured successfully', {
           languages: desired.map((l) => l.code).join(', '),
         })
       }
@@ -99,9 +101,9 @@ export class BazarrLanguagesStep extends BazarrStep {
         warnings,
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error))
+      const err = toError(error)
       errors.push(err)
-      context.logger.error('Failed to configure Bazarr languages', { error: err.message })
+      logger.error('Failed to configure Bazarr languages', { error: err.message })
       return {
         success: false,
         changes,

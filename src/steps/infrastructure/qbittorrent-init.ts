@@ -8,6 +8,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class QBittorrentInitStep extends ConfigurationStep {
   readonly name = 'qbittorrent-init'
@@ -22,7 +24,7 @@ export class QBittorrentInitStep extends ConfigurationStep {
     }
 
     if (context.servarrType !== 'qbittorrent') {
-      context.logger.debug('Skipping qBittorrent-init step for non-qBittorrent type', {
+      logger.debug('Skipping qBittorrent-init step for non-qBittorrent type', {
         servarrType: context.servarrType,
       })
       return false
@@ -32,7 +34,7 @@ export class QBittorrentInitStep extends ConfigurationStep {
   }
 
   async readCurrentState(
-    context: StepContext,
+    _context: StepContext,
   ): Promise<{ configExists: boolean; username?: string; downloadsPath?: string }> {
     try {
       const configPath = '/config/qBittorrent/qBittorrent.conf'
@@ -61,7 +63,7 @@ export class QBittorrentInitStep extends ConfigurationStep {
       }
       return state
     } catch (error) {
-      context.logger.debug('Failed to check qBittorrent config file', { error })
+      logger.debug('Failed to check qBittorrent config file', { error })
       return { configExists: false }
     }
   }
@@ -124,7 +126,7 @@ export class QBittorrentInitStep extends ConfigurationStep {
             type: 'create',
           })
 
-          context.logger.info('qBittorrent configuration file created successfully')
+          logger.info('qBittorrent configuration file created successfully')
         } else if (change.type === 'update' && change.details?.action === 'update-credentials') {
           await this.createQBittorrentConfig(context)
 
@@ -133,12 +135,12 @@ export class QBittorrentInitStep extends ConfigurationStep {
             type: 'update',
           })
 
-          context.logger.info('qBittorrent configuration file updated successfully')
+          logger.info('qBittorrent configuration file updated successfully')
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to create qBittorrent configuration', {
+        logger.error('Failed to create qBittorrent configuration', {
           error: stepError.message,
         })
       }
@@ -152,13 +154,13 @@ export class QBittorrentInitStep extends ConfigurationStep {
     }
   }
 
-  async verifySuccess(context: StepContext): Promise<boolean> {
+  async verifySuccess(_context: StepContext): Promise<boolean> {
     try {
       const configPath = '/config/qBittorrent/qBittorrent.conf'
       const configFile = file(configPath)
       return await configFile.exists()
     } catch (error) {
-      context.logger.debug('qBittorrent config verification failed', { error })
+      logger.debug('qBittorrent config verification failed', { error })
       return false
     }
   }
@@ -169,7 +171,7 @@ export class QBittorrentInitStep extends ConfigurationStep {
     const password = process.env.QBITTORRENT_PASSWORD || 'adminpass'
     const { downloadsPath, tempPath } = this.getDownloadPaths()
 
-    context.logger.info('Creating qBittorrent configuration', { username })
+    logger.info('Creating qBittorrent configuration', { username })
 
     const passwordHash = this.generatePBKDF2Hash(password, context)
 
@@ -229,9 +231,9 @@ WebUI\\Password_PBKDF2=${passwordHash}
       if (exitCode !== 0) {
         throw new Error(`mkdir -p ${configDir} exited with code ${exitCode}`)
       }
-      context.logger.debug('qBittorrent directory created successfully')
+      logger.debug('qBittorrent directory created successfully')
     } catch (error) {
-      context.logger.error('Failed to create qBittorrent directory:', { error: String(error) })
+      logger.error('Failed to create qBittorrent directory:', { error: String(error) })
       throw error
     }
 
@@ -255,7 +257,7 @@ WebUI\\Password_PBKDF2=${passwordHash}
     return normalized.endsWith('/') ? normalized : `${normalized}/`
   }
 
-  private generatePBKDF2Hash(password: string, context: StepContext): string {
+  private generatePBKDF2Hash(password: string, _context: StepContext): string {
     // Use Node's crypto module for PBKDF2
     const salt = crypto.randomBytes(16)
     const iterations = 100000
@@ -263,7 +265,7 @@ WebUI\\Password_PBKDF2=${passwordHash}
 
     const hash = crypto.pbkdf2Sync(password, salt, iterations, keyLength, 'sha512')
 
-    context.logger.debug('Generated PBKDF2 hash for qBittorrent', { iterations })
+    logger.debug('Generated PBKDF2 hash for qBittorrent', { iterations })
 
     const encodedSalt = salt.toString('base64')
     const encodedHash = hash.toString('base64')

@@ -5,15 +5,35 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
+
+interface BazarrServiceState {
+  enabled: boolean
+  host: string
+  port: string
+  basePath: string
+  ssl: boolean
+  apiKey: string
+}
 
 interface BazarrIntegrationState {
-  sonarrConfigured: boolean
-  radarrConfigured: boolean
+  sonarr: BazarrServiceState
+  radarr: BazarrServiceState
 }
 
 interface BazarrIntegrationDesired {
   sonarr?: { url: string; apiKey: string }
   radarr?: { url: string; apiKey: string }
+}
+
+const EMPTY_SERVICE_STATE: BazarrServiceState = {
+  enabled: false,
+  host: '',
+  port: '',
+  basePath: '',
+  ssl: false,
+  apiKey: '',
 }
 
 export class BazarrIntegrationStep extends BazarrStep {
@@ -42,19 +62,34 @@ export class BazarrIntegrationStep extends BazarrStep {
     return !!desired.sonarr || !!desired.radarr
   }
 
-  async readCurrentState(context: StepContext): Promise<BazarrIntegrationState> {
+  async readCurrentState(_context: StepContext): Promise<BazarrIntegrationState> {
     try {
       const settings = await this.client.getSettings()
-      // In Bazarr, the enabled flag is under general.use_sonarr / general.use_radarr
-      const generalSettings = settings.general as Record<string, unknown> | undefined
+      const general = settings.general as Record<string, unknown> | undefined
+      const sonarr = settings.sonarr as Record<string, unknown> | undefined
+      const radarr = settings.radarr as Record<string, unknown> | undefined
 
       return {
-        sonarrConfigured: generalSettings?.use_sonarr === true,
-        radarrConfigured: generalSettings?.use_radarr === true,
+        sonarr: this.toServiceState(general?.use_sonarr === true, sonarr),
+        radarr: this.toServiceState(general?.use_radarr === true, radarr),
       }
     } catch (error) {
-      context.logger.debug('Failed to read Bazarr integration state', { error })
-      return { sonarrConfigured: false, radarrConfigured: false }
+      logger.debug('Failed to read Bazarr integration state', { error })
+      return { sonarr: EMPTY_SERVICE_STATE, radarr: EMPTY_SERVICE_STATE }
+    }
+  }
+
+  private toServiceState(
+    enabled: boolean,
+    settings: Record<string, unknown> | undefined,
+  ): BazarrServiceState {
+    return {
+      enabled,
+      host: String(settings?.ip ?? ''),
+      port: String(settings?.port ?? ''),
+      basePath: String(settings?.base_url ?? '/'),
+      ssl: settings?.ssl === true,
+      apiKey: String(settings?.apikey ?? ''),
     }
   }
 
@@ -68,7 +103,7 @@ export class BazarrIntegrationStep extends BazarrStep {
   ): ChangeRecord[] {
     const changes: ChangeRecord[] = []
 
-    if (desired.sonarr && !current.sonarrConfigured) {
+    if (desired.sonarr && this.serviceDiffers(current.sonarr, desired.sonarr)) {
       changes.push({
         type: 'update',
         resource: 'bazarr-integration',
@@ -77,7 +112,7 @@ export class BazarrIntegrationStep extends BazarrStep {
       })
     }
 
-    if (desired.radarr && !current.radarrConfigured) {
+    if (desired.radarr && this.serviceDiffers(current.radarr, desired.radarr)) {
       changes.push({
         type: 'update',
         resource: 'bazarr-integration',
@@ -87,6 +122,22 @@ export class BazarrIntegrationStep extends BazarrStep {
     }
 
     return changes
+  }
+
+  private serviceDiffers(
+    current: BazarrServiceState,
+    desired: { url: string; apiKey: string },
+  ): boolean {
+    if (!current.enabled) return true
+
+    const expected = this.client.parseServiceUrl(desired.url)
+    return (
+      current.host !== expected.host ||
+      current.port !== expected.port ||
+      current.basePath !== expected.basePath ||
+      current.ssl !== expected.ssl ||
+      current.apiKey !== desired.apiKey
+    )
   }
 
   async executeChanges(changes: ChangeRecord[], context: StepContext): Promise<StepResult> {
@@ -102,21 +153,21 @@ export class BazarrIntegrationStep extends BazarrStep {
     try {
       for (const change of changes) {
         if (change.identifier === 'sonarr' && desired.sonarr) {
-          context.logger.info('Configuring Bazarr Sonarr integration...', {
+          logger.info('Configuring Bazarr Sonarr integration...', {
             url: desired.sonarr.url,
           })
           await this.client.configureSonarrIntegration(desired.sonarr.url, desired.sonarr.apiKey)
         }
 
         if (change.identifier === 'radarr' && desired.radarr) {
-          context.logger.info('Configuring Bazarr Radarr integration...', {
+          logger.info('Configuring Bazarr Radarr integration...', {
             url: desired.radarr.url,
           })
           await this.client.configureRadarrIntegration(desired.radarr.url, desired.radarr.apiKey)
         }
       }
 
-      context.logger.info('Bazarr integrations configured successfully')
+      logger.info('Bazarr integrations configured successfully')
 
       return {
         success: true,
@@ -125,9 +176,9 @@ export class BazarrIntegrationStep extends BazarrStep {
         warnings,
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error))
+      const err = toError(error)
       errors.push(err)
-      context.logger.error('Failed to configure Bazarr integrations', { error: err.message })
+      logger.error('Failed to configure Bazarr integrations', { error: err.message })
       return {
         success: false,
         changes,
@@ -139,18 +190,15 @@ export class BazarrIntegrationStep extends BazarrStep {
 
   async verifySuccess(context: StepContext): Promise<boolean> {
     try {
-      const settings = await this.client.getSettings()
       const desired = this.getDesiredState(context)
+      const current = await this.readCurrentState(context)
 
-      // In Bazarr, the enabled flag is under general.use_sonarr / general.use_radarr
-      const generalSettings = settings.general as Record<string, unknown> | undefined
-
-      if (desired.sonarr) {
-        if (!generalSettings?.use_sonarr) return false
+      if (desired.sonarr && this.serviceDiffers(current.sonarr, desired.sonarr)) {
+        return false
       }
 
-      if (desired.radarr) {
-        if (!generalSettings?.use_radarr) return false
+      if (desired.radarr && this.serviceDiffers(current.radarr, desired.radarr)) {
+        return false
       }
 
       return true

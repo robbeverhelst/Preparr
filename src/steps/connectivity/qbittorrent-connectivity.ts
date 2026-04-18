@@ -5,6 +5,8 @@ import {
   type StepResult,
   Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class QBittorrentConnectivityStep extends ConfigurationStep {
   readonly name = 'qbittorrent-connectivity'
@@ -30,7 +32,7 @@ export class QBittorrentConnectivityStep extends ConfigurationStep {
 
       return { connected, authenticated }
     } catch (error) {
-      context.logger.debug('qBittorrent connection test failed', { error })
+      logger.debug('qBittorrent connection test failed', { error })
       return { connected: false, authenticated: false }
     }
   }
@@ -91,7 +93,7 @@ export class QBittorrentConnectivityStep extends ConfigurationStep {
                 ...change,
                 type: 'create',
               })
-              context.logger.info('qBittorrent connection established successfully')
+              logger.info('qBittorrent connection established successfully')
             } else {
               errors.push(new Error('Failed to establish qBittorrent connection'))
             }
@@ -104,13 +106,13 @@ export class QBittorrentConnectivityStep extends ConfigurationStep {
             // The authentication would be handled by the qBittorrent client
             // This is more of a verification step
             results.push(change)
-            context.logger.info('qBittorrent authentication verified')
+            logger.info('qBittorrent authentication verified')
           }
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('qBittorrent connection failed', {
+        logger.error('qBittorrent connection failed', {
           error: stepError.message,
           details: change.details,
         })
@@ -132,7 +134,7 @@ export class QBittorrentConnectivityStep extends ConfigurationStep {
       }
       return await context.qbittorrentClient.testConnection()
     } catch (error) {
-      context.logger.debug('qBittorrent verification failed', { error })
+      logger.debug('qBittorrent verification failed', { error })
       return false
     }
   }

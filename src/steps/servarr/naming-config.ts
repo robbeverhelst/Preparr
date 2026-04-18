@@ -1,5 +1,7 @@
 import type { NamingConfig } from '@/config/schema'
 import { type ChangeRecord, ServarrStep, type StepContext, type StepResult } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class NamingConfigStep extends ServarrStep {
   readonly name = 'naming-config'
@@ -16,7 +18,7 @@ export class NamingConfigStep extends ServarrStep {
     // Check if naming config is supported
     const capabilities = this.client.getCapabilities()
     if (!capabilities.hasNamingConfig) {
-      context.logger.debug('Naming config not supported for this Servarr type')
+      logger.debug('Naming config not supported for this Servarr type')
       return false
     }
 
@@ -24,25 +26,25 @@ export class NamingConfigStep extends ServarrStep {
 
     // Skip if no naming config defined
     if (!config?.naming) {
-      context.logger.debug('No naming config defined, skipping')
+      logger.debug('No naming config defined, skipping')
       return false
     }
 
     return true
   }
 
-  async readCurrentState(context: StepContext): Promise<NamingConfig | null> {
+  async readCurrentState(_context: StepContext): Promise<NamingConfig | null> {
     try {
       return await this.client.getNamingConfig()
     } catch (error) {
-      context.logger.warn('Failed to read current naming config', { error })
+      logger.warn('Failed to read current naming config', { error })
       return null
     }
   }
 
   protected getDesiredState(context: StepContext): NamingConfig | null {
     const config = context.config.app
-    context.logger.debug('Getting desired naming config state', {
+    logger.debug('Getting desired naming config state', {
       hasConfig: !!config,
       hasNaming: !!config?.naming,
     })
@@ -53,7 +55,7 @@ export class NamingConfigStep extends ServarrStep {
   compareAndPlan(
     current: NamingConfig | null,
     desired: NamingConfig | null,
-    context: StepContext,
+    _context: StepContext,
   ): ChangeRecord[] {
     const changes: ChangeRecord[] = []
 
@@ -87,7 +89,7 @@ export class NamingConfigStep extends ServarrStep {
           fieldCount: changedFields.length,
         },
       })
-      context.logger.debug('Naming config changes detected', { changedFields })
+      logger.debug('Naming config changes detected', { changedFields })
     }
 
     return changes
@@ -104,14 +106,14 @@ export class NamingConfigStep extends ServarrStep {
         if (change.type === 'update' && desired) {
           await this.client.updateNamingConfig(desired)
           results.push({ ...change, type: 'update' })
-          context.logger.info('Naming config updated successfully', {
+          logger.info('Naming config updated successfully', {
             changedFields: change.details?.changedFields,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to update naming config', {
+        logger.error('Failed to update naming config', {
           error: stepError.message,
         })
       }
@@ -143,7 +145,7 @@ export class NamingConfigStep extends ServarrStep {
 
       return true
     } catch (error) {
-      context.logger.debug('Naming config verification failed', { error })
+      logger.debug('Naming config verification failed', { error })
       return false
     }
   }

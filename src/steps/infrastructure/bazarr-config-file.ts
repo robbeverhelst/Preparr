@@ -6,6 +6,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 const BAZARR_CONFIG_PATH = '/config/config/config.yaml'
 
@@ -31,7 +33,7 @@ export class BazarrConfigFileStep extends ConfigurationStep {
         return { configExists: true, hasApiKey }
       }
     } catch (error) {
-      _context.logger.debug('Failed to check Bazarr config file', { error })
+      logger.debug('Failed to check Bazarr config file', { error })
     }
     return { configExists: false, hasApiKey: false }
   }
@@ -76,14 +78,14 @@ export class BazarrConfigFileStep extends ConfigurationStep {
         if (change.type === 'create' || change.type === 'update') {
           await this.writeBazarrConfig(context)
           results.push({ ...change, type: 'create' })
-          context.logger.info('Bazarr configuration file written successfully', {
+          logger.info('Bazarr configuration file written successfully', {
             path: BAZARR_CONFIG_PATH,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to write Bazarr configuration file', {
+        logger.error('Failed to write Bazarr configuration file', {
           error: stepError.message,
         })
       }
@@ -154,7 +156,7 @@ postgresql:
     }
 
     await write(BAZARR_CONFIG_PATH, configYaml)
-    context.logger.info('Wrote Bazarr config.yaml', {
+    logger.info('Wrote Bazarr config.yaml', {
       path: BAZARR_CONFIG_PATH,
       apiKey: `${apiKey.slice(0, 8)}...`,
       postgresHost,

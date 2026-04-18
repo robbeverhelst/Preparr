@@ -1,6 +1,7 @@
 import type { Config } from '@/config/schema'
 import type { ConfigurationEngine } from '@/core/engine'
 import type { StepContext } from '@/core/step'
+import { toError } from '@/utils/errors'
 import { logger } from '@/utils/logger'
 import { withRetry } from '@/utils/retry'
 
@@ -18,7 +19,7 @@ export class ReconciliationManager {
   private state: ReconciliationState
 
   constructor(
-    private context: StepContext,
+    private baseContext: StepContext,
     private engine: ConfigurationEngine,
     private loadConfiguration: () => Promise<Config>,
   ) {
@@ -33,27 +34,24 @@ export class ReconciliationManager {
 
   async start(): Promise<void> {
     logger.info('Starting reconciliation manager', {
-      configWatch: this.context.config.configWatch,
-      reconcileInterval: this.context.config.configReconcileInterval,
+      configWatch: this.baseContext.config.configWatch,
+      reconcileInterval: this.baseContext.config.configReconcileInterval,
     })
 
-    // Start periodic reconciliation
-    if (this.context.config.configReconcileInterval > 0) {
+    if (this.baseContext.config.configReconcileInterval > 0) {
       this.intervalId = setInterval(
         () => this.runReconciliation(),
-        this.context.config.configReconcileInterval * 1000,
+        this.baseContext.config.configReconcileInterval * 1000,
       )
       logger.info('Periodic reconciliation started', {
-        intervalSeconds: this.context.config.configReconcileInterval,
+        intervalSeconds: this.baseContext.config.configReconcileInterval,
       })
     }
 
-    // Start configuration file watching if enabled
-    if (this.context.config.configWatch && this.context.config.configPath) {
+    if (this.baseContext.config.configWatch && this.baseContext.config.configPath) {
       this.startConfigWatching()
     }
 
-    // Run initial reconciliation
     await this.runReconciliation()
   }
 
@@ -73,7 +71,7 @@ export class ReconciliationManager {
 
   private startConfigWatching(): void {
     logger.info('Starting configuration file watching', {
-      configPath: this.context.config.configPath,
+      configPath: this.baseContext.config.configPath,
     })
 
     // Use polling-based watching (Bun's file watching is still experimental)
@@ -122,21 +120,19 @@ export class ReconciliationManager {
         lastReconciliation: this.state.lastReconciliation.toISOString(),
       })
 
-      // Reload configuration with error tolerance
-      let config: Config | undefined
+      // Reload configuration — create fresh context per cycle (immutable)
+      let config: Config
       try {
         config = await this.loadConfiguration()
-        // Update context with new unified configuration
-        this.context.config = config
         this.state.lastConfigHash = this.calculateConfigHash(config)
       } catch (error) {
         logger.warn('Failed to reload configuration, continuing with existing config', { error })
-        // Continue with existing config rather than failing the entire reconciliation
-        config = this.context.config
+        config = this.baseContext.config
       }
 
-      // Run configuration engine with retry for critical operations
-      const result = await withRetry(() => this.engine.execute('sidecar'), {
+      const cycleContext: StepContext = { ...this.baseContext, config }
+
+      const result = await withRetry(() => this.engine.execute('sidecar', cycleContext), {
         maxAttempts: 2,
         delayMs: 2000,
         operation: `reconciliation-cycle-${this.state.reconciliationCount + 1}`,
@@ -174,14 +170,14 @@ export class ReconciliationManager {
       }
     } catch (error) {
       this.state.errors++
-      this.state.lastError = error as Error
+      this.state.lastError = toError(error)
 
       const duration = Date.now() - startTime
 
       logger.error('Reconciliation cycle failed', {
         cycle: this.state.reconciliationCount + 1,
         duration,
-        error: error instanceof Error ? error.message : String(error),
+        error: this.state.lastError.message,
       })
     }
   }

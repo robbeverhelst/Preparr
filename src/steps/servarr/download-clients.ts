@@ -6,6 +6,8 @@ import {
   type StepResult,
   type Warning,
 } from '@/core/step'
+import { toError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
 
 export class DownloadClientsStep extends ServarrStep {
   readonly name = 'download-clients'
@@ -25,16 +27,16 @@ export class DownloadClientsStep extends ServarrStep {
   async readCurrentState(context: StepContext): Promise<DownloadClient[]> {
     // In init mode, Servarr won't be running yet, so no download clients exist
     if (context.executionMode === 'init') {
-      context.logger.info('Init mode: no existing download clients')
+      logger.info('Init mode: no existing download clients')
       return []
     }
     try {
-      context.logger.info('Reading current download clients...')
+      logger.info('Reading current download clients...')
       const result = await this.client.getDownloadClients()
-      context.logger.info('Current download clients read', { count: result.length })
+      logger.info('Current download clients read', { count: result.length })
       return result
     } catch (error) {
-      context.logger.warn('Failed to read current download clients', {
+      logger.warn('Failed to read current download clients', {
         error: error instanceof Error ? error.message : String(error),
       })
       return []
@@ -218,7 +220,7 @@ export class DownloadClientsStep extends ServarrStep {
           const client = desiredClients.find((c) => c.name === change.identifier)
 
           if (client) {
-            context.logger.info('About to call addDownloadClient', {
+            logger.info('About to call addDownloadClient', {
               clientName: client.name,
               hasServarrClient: !!context.servarrClient,
               servarrClientType: this.client.constructor?.name,
@@ -231,12 +233,12 @@ export class DownloadClientsStep extends ServarrStep {
                 type: 'create',
               })
 
-              context.logger.info('Download client added successfully', {
+              logger.info('Download client added successfully', {
                 name: client.name,
                 implementation: client.implementation,
               })
             } catch (innerError) {
-              context.logger.error('Direct error from addDownloadClient', {
+              logger.error('Direct error from addDownloadClient', {
                 error: innerError,
                 errorType: typeof innerError,
                 errorMessage: innerError instanceof Error ? innerError.message : String(innerError),
@@ -255,7 +257,7 @@ export class DownloadClientsStep extends ServarrStep {
           const client = desiredClients.find((c) => c.name === change.identifier)
 
           if (client) {
-            context.logger.info('About to update download client', {
+            logger.info('About to update download client', {
               clientName: client.name,
               reason: change.details?.reason,
             })
@@ -271,13 +273,13 @@ export class DownloadClientsStep extends ServarrStep {
                 type: 'update',
               })
 
-              context.logger.info('Download client updated successfully', {
+              logger.info('Download client updated successfully', {
                 name: client.name,
                 implementation: client.implementation,
                 reason: change.details?.reason,
               })
             } catch (innerError) {
-              context.logger.error('Direct error from updateDownloadClient', {
+              logger.error('Direct error from updateDownloadClient', {
                 error: innerError,
                 errorType: typeof innerError,
                 errorMessage: innerError instanceof Error ? innerError.message : String(innerError),
@@ -297,14 +299,14 @@ export class DownloadClientsStep extends ServarrStep {
             type: 'delete',
           })
 
-          context.logger.info('Download client removed successfully', {
+          logger.info('Download client removed successfully', {
             name: change.identifier,
           })
         }
       } catch (error) {
-        const stepError = error instanceof Error ? error : new Error(String(error))
+        const stepError = toError(error)
         errors.push(stepError)
-        context.logger.error('Failed to manage download client', {
+        logger.error('Failed to manage download client', {
           error: stepError.message,
           change: change.identifier,
           details: change.details,
@@ -341,7 +343,7 @@ export class DownloadClientsStep extends ServarrStep {
       for (const [name, desiredClient] of desiredMap) {
         const currentClient = currentMap.get(name)
         if (!currentClient || this.clientNeedsUpdate(currentClient, desiredClient)) {
-          context.logger.info('Download client verification failed', {
+          logger.info('Download client verification failed', {
             name,
             reason: !currentClient ? 'Client not found' : 'Configuration mismatch',
           })
@@ -351,7 +353,7 @@ export class DownloadClientsStep extends ServarrStep {
 
       return true
     } catch (error) {
-      context.logger.info('Download clients verification failed', { error })
+      logger.info('Download clients verification failed', { error })
       return false
     }
   }
