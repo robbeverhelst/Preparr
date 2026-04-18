@@ -1,3 +1,5 @@
+## [0.19.6](https://github.com/robbeverhelst/Preparr/compare/v0.19.5...v0.19.6) (2026-04-18)
+
 ## [0.19.5](https://github.com/robbeverhelst/Preparr/compare/v0.19.4...v0.19.5) (2026-04-15)
 
 
