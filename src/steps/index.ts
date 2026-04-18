@@ -3,6 +3,7 @@ import { BazarrIntegrationStep } from './bazarr/bazarr-integration'
 import { BazarrLanguageProfilesStep } from './bazarr/bazarr-language-profiles'
 import { BazarrLanguagesStep } from './bazarr/bazarr-languages'
 import { BazarrProvidersStep } from './bazarr/bazarr-providers'
+import { BazarrSubtitleDefaultsStep } from './bazarr/bazarr-subtitle-defaults'
 import { BazarrConnectivityStep } from './connectivity/bazarr-connectivity'
 import { PostgresConnectivityStep } from './connectivity/postgres-connectivity'
 import { QBittorrentConnectivityStep } from './connectivity/qbittorrent-connectivity'
@@ -59,4 +60,5 @@ export const allSteps: ConfigurationStep[] = [
   new BazarrLanguagesStep(),
   new BazarrProvidersStep(),
   new BazarrLanguageProfilesStep(),
+  new BazarrSubtitleDefaultsStep(),
 ]

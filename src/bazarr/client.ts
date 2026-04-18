@@ -139,7 +139,10 @@ export class BazarrManager {
   async testConnection(): Promise<boolean> {
     try {
       const response = await this.apiGet('/system/status')
-      return response.ok || response.status === 401
+      if (response.status === 401) {
+        logger.warn('Bazarr rejected the API key (HTTP 401)')
+      }
+      return response.ok
     } catch (error) {
       logger.debug('Bazarr connection test failed', { error })
       return false
@@ -188,7 +191,7 @@ export class BazarrManager {
    * Parse a service URL into host, port, base_url, and ssl components
    * that match Bazarr's settings structure.
    */
-  private parseServiceUrl(serviceUrl: string): {
+  parseServiceUrl(serviceUrl: string): {
     host: string
     port: string
     basePath: string
