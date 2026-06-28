@@ -55,7 +55,7 @@
   "homepage": "https://github.com/robbeverhelst/Preparr#readme",
   "dependencies": {
     "tsarr": "^2.7.0",
-    "zod": "^4.3.6"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
