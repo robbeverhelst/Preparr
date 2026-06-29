@@ -43,7 +43,7 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@v4
         with:
-          version: v3.16.0
+          version: v3.21.2
 
       - name: Set deployment variables
         run: |
