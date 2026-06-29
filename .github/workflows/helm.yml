@@ -39,7 +39,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
         with:
-          version: v3.16.0
+          version: v3.21.2
 
       - name: Lint Helm chart
         run: helm lint ./helm/preparr
@@ -74,7 +74,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
         with:
-          version: v3.16.0
+          version: v3.21.2
 
       - name: Get latest version
         id: version
