@@ -2,7 +2,7 @@ apiVersion: v2
 name: preparr
 description: Complete Infrastructure as Code for Servarr applications using Helm. Deploy your entire media stack (Prowlarr, Sonarr, Radarr, qBittorrent) with zero manual configuration - PrepArr automates user creation, API keys, service linking, and configuration management.
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "0.1.10"
 keywords:
   - servarr

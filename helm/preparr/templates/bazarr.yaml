@@ -325,6 +325,9 @@ spec:
             port: 6767
           initialDelaySeconds: 30
           periodSeconds: 10
+      {{- with .Values.bazarr.extraContainers }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       volumes:
       - name: bazarr-config-volume
         emptyDir: {}

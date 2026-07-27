@@ -131,6 +131,9 @@ spec:
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 10
+      {{- with .Values.qbittorrent.extraContainers }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       volumes:
       - name: qbittorrent-config-volume
         {{- if .Values.qbittorrent.configStorage.enabled }}
