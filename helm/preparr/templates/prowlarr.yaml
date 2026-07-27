@@ -232,6 +232,9 @@ spec:
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
+      {{- with .Values.prowlarr.extraContainers }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       volumes:
       - name: prowlarr-config-volume
         emptyDir: {}
