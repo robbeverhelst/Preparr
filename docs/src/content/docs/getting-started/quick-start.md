@@ -158,6 +158,6 @@ Now if you edit `sonarr-config.json`, the sidecar detects the change and applies
 
 ## Next steps
 
-- [Core Concepts](/Preparr/getting-started/concepts/) -- Understand how PrepArr works
-- [Multi-Service Stack](/Preparr/guides/multi-service-stack/) -- Add Radarr, Prowlarr, and qBittorrent
-- [Configuration Overview](/Preparr/configuration/overview/) -- Explore all configuration options
+- [Core Concepts](/getting-started/concepts/) -- Understand how PrepArr works
+- [Multi-Service Stack](/guides/multi-service-stack/) -- Add Radarr, Prowlarr, and qBittorrent
+- [Configuration Overview](/configuration/overview/) -- Explore all configuration options

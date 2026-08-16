@@ -228,12 +228,12 @@ Use the Helm chart or manual manifests with init containers + sidecars + ConfigM
 
 ## 📖 Documentation
 
-Full documentation is available at **[robbeverhelst.github.io/Preparr](https://robbeverhelst.github.io/Preparr)**.
+Full documentation is available at **[preparr.robbeverhelst.com](https://preparr.robbeverhelst.com)**.
 
-- **[Quick Start](https://robbeverhelst.github.io/Preparr/getting-started/quick-start/)** - Get up and running
-- **[Deployment Guides](https://robbeverhelst.github.io/Preparr/deployment/docker-compose/)** - Docker Compose, Kubernetes, Helm
-- **[Configuration Reference](https://robbeverhelst.github.io/Preparr/configuration/overview/)** - All configuration options
-- **[Troubleshooting](https://robbeverhelst.github.io/Preparr/troubleshooting/)** - Common issues and solutions
+- **[Quick Start](https://preparr.robbeverhelst.com/getting-started/quick-start/)** - Get up and running
+- **[Deployment Guides](https://preparr.robbeverhelst.com/deployment/docker-compose/)** - Docker Compose, Kubernetes, Helm
+- **[Configuration Reference](https://preparr.robbeverhelst.com/configuration/overview/)** - All configuration options
+- **[Troubleshooting](https://preparr.robbeverhelst.com/troubleshooting/)** - Common issues and solutions
 
 ## 🤝 Contributing
 

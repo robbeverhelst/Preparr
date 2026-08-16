@@ -144,4 +144,4 @@ The sidecar then takes over to configure languages, providers, and integrations 
 | `BAZARR_URL` | Bazarr base URL (default: `http://localhost:6767` in standalone mode) |
 | `BAZARR_API_KEY` | Bazarr API key for authentication |
 
-See [Environment Variables](/Preparr/configuration/environment-variables/) for the full list.
+See [Environment Variables](/configuration/environment-variables/) for the full list.

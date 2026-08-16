@@ -51,7 +51,7 @@ resources:
 
 ## Monitoring
 
-- Enable [health endpoints](/Preparr/guides/monitoring/) on all sidecars
+- Enable [health endpoints](/guides/monitoring/) on all sidecars
 - Configure liveness and readiness probes in your orchestrator
 - Set up alerting on unhealthy sidecars
 - Use `LOG_LEVEL=info` or `warn` in production (not `debug`)

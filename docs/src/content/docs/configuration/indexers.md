@@ -15,7 +15,7 @@ When using Prowlarr to manage indexers centrally, set `prowlarrSync: true` in yo
 }
 ```
 
-This tells the sidecar to skip indexer management entirely, preventing conflicts with Prowlarr's indexer synchronization. See the [Prowlarr Sync guide](/Preparr/guides/prowlarr-sync/) for the full setup.
+This tells the sidecar to skip indexer management entirely, preventing conflicts with Prowlarr's indexer synchronization. See the [Prowlarr Sync guide](/guides/prowlarr-sync/) for the full setup.
 
 ## Manual Indexer Configuration
 

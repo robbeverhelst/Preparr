@@ -55,18 +55,18 @@ downloadClients: [...]
 |----------|------|-------------|
 | `apiKey` | string | 32-character hex API key. Auto-generated if not provided. |
 | `prowlarrSync` | boolean | Enable Prowlarr indexer sync. Default: `false`. |
-| `rootFolders` | array | [Root folder definitions](/Preparr/configuration/root-folders/) |
-| `qualityProfiles` | array | [Quality profile definitions](/Preparr/configuration/quality-profiles/) |
-| `customFormats` | array | [Custom format definitions](/Preparr/configuration/custom-formats/) |
-| `downloadClients` | array | [Download client definitions](/Preparr/configuration/download-clients/) |
-| `indexers` | array | [Indexer definitions](/Preparr/configuration/indexers/) |
+| `rootFolders` | array | [Root folder definitions](/configuration/root-folders/) |
+| `qualityProfiles` | array | [Quality profile definitions](/configuration/quality-profiles/) |
+| `customFormats` | array | [Custom format definitions](/configuration/custom-formats/) |
+| `downloadClients` | array | [Download client definitions](/configuration/download-clients/) |
+| `indexers` | array | [Indexer definitions](/configuration/indexers/) |
 | `applications` | array | Prowlarr application sync configs |
-| `mediaManagement` | object | [Media management settings](/Preparr/configuration/media-management/) |
-| `naming` | object | [Naming conventions](/Preparr/configuration/naming/) |
+| `mediaManagement` | object | [Media management settings](/configuration/media-management/) |
+| `naming` | object | [Naming conventions](/configuration/naming/) |
 | `qualityDefinitions` | array | Quality size limits |
 | `releaseProfiles` | array | Release scoring (Sonarr only) |
 | `qbittorrent` | object | qBittorrent-specific settings |
-| `bazarr` | object | [Bazarr subtitle manager settings](/Preparr/configuration/bazarr/) |
+| `bazarr` | object | [Bazarr subtitle manager settings](/configuration/bazarr/) |
 
 ## How Reconciliation Works
 
