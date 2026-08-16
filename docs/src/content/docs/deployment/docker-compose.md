@@ -112,7 +112,7 @@ Docker Compose `depends_on` conditions enforce the correct order:
 
 ## Multi-Service Setup
 
-For a full Prowlarr + Sonarr + Radarr + qBittorrent stack, see the [Multi-Service Stack guide](/Preparr/guides/multi-service-stack/).
+For a full Prowlarr + Sonarr + Radarr + qBittorrent stack, see the [Multi-Service Stack guide](/guides/multi-service-stack/).
 
 ## Common Operations
 

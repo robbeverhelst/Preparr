@@ -2,10 +2,19 @@ import { defineConfig } from 'astro/config'
 import starlight from '@astrojs/starlight'
 
 export default defineConfig({
-  site: 'https://robbeverhelst.github.io',
-  base: '/Preparr',
+  site: 'https://preparr.robbeverhelst.com',
   integrations: [
     starlight({
+      head: [
+        {
+          tag: 'script',
+          attrs: {
+            src: 'https://analytics.robbeverhelst.be/script.js',
+            'data-website-id': '3c20f066-4236-45b1-822c-0aa282a4c5d5',
+            defer: true,
+          },
+        },
+      ],
       title: 'PrepArr',
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/robbeverhelst/Preparr' },

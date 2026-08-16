@@ -44,7 +44,7 @@ description: Complete reference for all PrepArr environment variables
 
 ## Notes
 
-- All environment variables can also be set via [CLI flags](/Preparr/reference/cli/) using kebab-case (e.g., `--postgres-host`)
+- All environment variables can also be set via [CLI flags](/reference/cli/) using kebab-case (e.g., `--postgres-host`)
 - `SERVARR_ADMIN_PASSWORD` is only required for Servarr types (sonarr, radarr, prowlarr, etc.), not for bazarr or qbittorrent
 - `SERVARR_TYPE=auto` attempts to detect the service type from the URL
 - When `SERVARR_TYPE=bazarr`, PrepArr manages Bazarr's `config.yaml` (not `config.xml`) and uses `BAZARR_URL`/`BAZARR_API_KEY` for API access

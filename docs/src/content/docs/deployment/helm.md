@@ -178,4 +178,4 @@ kubectl port-forward -n preparr svc/radarr 7878:7878
 kubectl port-forward -n preparr svc/prowlarr 9696:9696
 ```
 
-For the full list of configurable parameters, see the [Helm Values Reference](/Preparr/reference/helm-values/).
+For the full list of configurable parameters, see the [Helm Values Reference](/reference/helm-values/).

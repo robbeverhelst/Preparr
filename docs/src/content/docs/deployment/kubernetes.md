@@ -3,7 +3,7 @@ title: Kubernetes
 description: Deploy PrepArr with raw Kubernetes manifests using init containers and sidecars
 ---
 
-For most Kubernetes deployments, the [Helm chart](/Preparr/deployment/helm/) is recommended. This guide covers raw manifest deployment for users who prefer direct control.
+For most Kubernetes deployments, the [Helm chart](/deployment/helm/) is recommended. This guide covers raw manifest deployment for users who prefer direct control.
 
 ## Prerequisites
 

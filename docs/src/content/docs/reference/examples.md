@@ -300,4 +300,4 @@ volumes:
   - ./my-sonarr-config.json:/config/sonarr-config.json:ro
 ```
 
-See the [Quick Start](/Preparr/getting-started/quick-start/) guide for a complete walkthrough.
+See the [Quick Start](/getting-started/quick-start/) guide for a complete walkthrough.
