@@ -1,3 +1,10 @@
+## [0.19.7](https://github.com/robbeverhelst/Preparr/compare/v0.19.6...v0.19.7) (2026-08-17)
+
+
+### Bug Fixes
+
+* **helm:** honour extraContainers for prowlarr, qbittorrent and bazarr ([#134](https://github.com/robbeverhelst/Preparr/issues/134)) ([714c34a](https://github.com/robbeverhelst/Preparr/commit/714c34a53959848ed2fb666bec249068f6d78ed7))
+
 ## [0.19.6](https://github.com/robbeverhelst/Preparr/compare/v0.19.5...v0.19.6) (2026-04-18)
 
 ## [0.19.5](https://github.com/robbeverhelst/Preparr/compare/v0.19.4...v0.19.5) (2026-04-15)
