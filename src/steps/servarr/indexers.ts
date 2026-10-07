@@ -65,7 +65,7 @@ export class IndexersStep extends ServarrStep {
       indexerNames: config?.indexers?.map((i) => i.name) || [],
     })
 
-    if (!config || !config.indexers) {
+    if (!config?.indexers) {
       logger.warn('No configuration or indexers found in context')
       return []
     }
