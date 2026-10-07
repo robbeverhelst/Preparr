@@ -93,7 +93,7 @@ describe('Bazarr Integration', () => {
       const sonarrSettings = result.data?.sonarr as Record<string, unknown> | undefined
       expect(sonarrSettings?.apikey).toBeDefined()
       expect(typeof sonarrSettings?.apikey).toBe('string')
-      expect((sonarrSettings?.apikey as string).length).toBeGreaterThan(0)
+      expect(String(sonarrSettings?.apikey).length).toBeGreaterThan(0)
     })
   })
 
@@ -132,7 +132,7 @@ describe('Bazarr Integration', () => {
       const radarrSettings = result.data?.radarr as Record<string, unknown> | undefined
       expect(radarrSettings?.apikey).toBeDefined()
       expect(typeof radarrSettings?.apikey).toBe('string')
-      expect((radarrSettings?.apikey as string).length).toBeGreaterThan(0)
+      expect(String(radarrSettings?.apikey).length).toBeGreaterThan(0)
     })
   })
 

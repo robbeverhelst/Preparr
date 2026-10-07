@@ -34,7 +34,7 @@ export class RootFoldersStep extends ServarrStep {
 
   protected getDesiredState(context: StepContext): RootFolder[] {
     const config = context.config.app
-    if (!config || !config.rootFolders) {
+    if (!config?.rootFolders) {
       logger.warn('No configuration or root folders found in context for root folders step')
       return []
     }
