@@ -157,7 +157,7 @@ describe('loadEnvironmentConfig', () => {
 
   test('ignores undefined values', () => {
     process.env.POSTGRES_PORT = '5432'
-    process.env.POSTGRES_HOST = undefined
+    delete process.env.POSTGRES_HOST
 
     const config = loadEnvironmentConfig()
 
