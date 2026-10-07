@@ -71,7 +71,7 @@ export class ServarrManager {
     }
   }
 
-  private handleTsarrResponse<T>(result: { data?: T; error?: unknown; response: Response }): T {
+  private handleTsarrResponse<T>(result: { data?: T; error?: unknown; response?: Response }): T {
     if (result.error) {
       const errorMessage =
         result.error instanceof Error
@@ -83,7 +83,7 @@ export class ServarrManager {
     }
 
     if (!result.data) {
-      if (result.response.status >= 400) {
+      if (result.response && result.response.status >= 400) {
         throw new Error(`HTTP ${result.response.status}: ${result.response.statusText}`)
       }
       throw new Error('No data returned from API')
@@ -586,7 +586,7 @@ export class ServarrManager {
       }
 
       const result = await this.client.getIndexers()
-      const indexers = this.handleTsarrResponse(result)
+      const indexers = this.handleTsarrResponse<IndexerResource[]>(result)
 
       if (!indexers) return []
 
@@ -718,7 +718,7 @@ export class ServarrManager {
         throw new Error('Client not initialized')
       }
       const result = await this.client.getIndexers()
-      const indexers = this.handleTsarrResponse(result)
+      const indexers = this.handleTsarrResponse<IndexerResource[]>(result)
 
       if (!indexers) {
         logger.debug('No indexers found')
@@ -905,7 +905,7 @@ export class ServarrManager {
         throw new Error('Client not initialized')
       }
       const result = await this.client.getDownloadClients()
-      const clients = this.handleTsarrResponse(result)
+      const clients = this.handleTsarrResponse<DownloadClientResource[]>(result)
 
       if (!clients) {
         logger.debug('No download clients found')

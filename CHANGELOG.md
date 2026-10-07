@@ -1,3 +1,10 @@
+## [0.19.8](https://github.com/robbeverhelst/Preparr/compare/v0.19.7...v0.19.8) (2026-10-07)
+
+
+### Bug Fixes
+
+* **docs:** upgrade Astro to v7 for Starlight 0.42 ([#148](https://github.com/robbeverhelst/Preparr/issues/148)) ([3f65d28](https://github.com/robbeverhelst/Preparr/commit/3f65d287a903354bb7d70a0c42662cd609010589))
+
 ## [0.19.7](https://github.com/robbeverhelst/Preparr/compare/v0.19.6...v0.19.7) (2026-08-17)
 
 
