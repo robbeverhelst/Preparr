@@ -16,17 +16,16 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: e2e-tests
+  group: e2e-tests-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   e2e:
     if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'renovate/')
     runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || 'arc-preparr' }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: read
-      packages: write
 
     steps:
       - name: Checkout
@@ -47,15 +46,11 @@ jobs:
 
       - name: Set deployment variables
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            PR_NUM="${{ github.event.pull_request.number }}"
-            echo "IMAGE_TAG=pr-${PR_NUM}" >> $GITHUB_ENV
-            echo "RELEASE_NAME=preparr-pr-${PR_NUM}" >> $GITHUB_ENV
-          else
-            echo "IMAGE_TAG=sha-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-            echo "RELEASE_NAME=preparr-e2e" >> $GITHUB_ENV
-          fi
+          echo "IMAGE_REPOSITORY=preparr-e2e/preparr" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+          echo "RELEASE_NAME=preparr-e2e" >> $GITHUB_ENV
           echo "NAMESPACE=preparr-test" >> $GITHUB_ENV
+          echo "KIND_CLUSTER=preparr-e2e" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: bun install
@@ -63,32 +58,46 @@ jobs:
       - name: Build PrepArr
         run: bun run build
 
-      - name: Build and push Docker image
-        run: |
-          docker build -t ghcr.io/robbeverhelst/preparr:${{ env.IMAGE_TAG }} .
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/robbeverhelst/preparr:${{ env.IMAGE_TAG }}
-          echo "Docker image built and pushed: ghcr.io/robbeverhelst/preparr:${{ env.IMAGE_TAG }}"
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: ${{ env.KIND_CLUSTER }}
+          wait: 180s
 
-      - name: Clean up stale resources
+      - name: Build PrepArr image and load into kind
         run: |
-          echo "Cleaning up any stale Helm releases in ${{ env.NAMESPACE }}..."
-          for release in $(helm list -n ${{ env.NAMESPACE }} -q 2>/dev/null); do
-            echo "Uninstalling stale release: $release"
-            helm uninstall "$release" -n ${{ env.NAMESPACE }} --wait --no-hooks || true
-          done
-          kubectl delete pod,replicaset,deploy,statefulset,job,svc,configmap,pvc --all -n ${{ env.NAMESPACE }} --wait 2>/dev/null || true
-          echo "Waiting for all pods to terminate..."
-          kubectl wait --for=delete pod --all -n ${{ env.NAMESPACE }} --timeout=60s 2>/dev/null || true
-          echo "Namespace cleaned"
+          docker build -t ${{ env.IMAGE_REPOSITORY }}:${{ env.IMAGE_TAG }} .
+          kind load docker-image ${{ env.IMAGE_REPOSITORY }}:${{ env.IMAGE_TAG }} --name ${{ env.KIND_CLUSTER }}
+
+      - name: Build E2E runner image and load into kind
+        run: |
+          # The E2E suite talks to services over in-cluster DNS, so it runs as a Job inside kind
+          ctx=$(mktemp -d)
+          mkdir -p "$ctx/tests"
+          cp -r tests/e2e "$ctx/tests/e2e"
+          cp package.json "$ctx/"
+          cp "$(command -v kubectl)" "$ctx/kubectl"
+          cat > "$ctx/Dockerfile" <<'EOF'
+          FROM oven/bun:1-alpine
+          WORKDIR /app
+          COPY package.json ./
+          COPY tests ./tests
+          COPY kubectl /usr/local/bin/kubectl
+          CMD ["bun", "run", "test:e2e"]
+          EOF
+          docker build -t preparr-e2e/runner:${{ env.IMAGE_TAG }} "$ctx"
+          kind load docker-image preparr-e2e/runner:${{ env.IMAGE_TAG }} --name ${{ env.KIND_CLUSTER }}
 
       - name: Deploy stack via Helm
         run: |
           helm upgrade --install ${{ env.RELEASE_NAME }} ./helm/preparr \
             -f helm/preparr/values-e2e.yaml \
+            --set preparr.image.repository=${{ env.IMAGE_REPOSITORY }} \
             --set preparr.image.tag=${{ env.IMAGE_TAG }} \
+            --set preparr.image.pullPolicy=IfNotPresent \
             --set global.namespace=${{ env.NAMESPACE }} \
             --namespace ${{ env.NAMESPACE }} \
+            --create-namespace \
             --wait \
             --timeout 25m
           echo "Helm deployment completed. Current pod status:"
@@ -117,44 +126,60 @@ jobs:
           echo "All pods ready"
 
       - name: Run E2E tests
-        run: bun run test:e2e
-        env:
-          E2E_NAMESPACE: ${{ env.NAMESPACE }}
+        run: |
+          kubectl create serviceaccount e2e-runner -n ${{ env.NAMESPACE }}
+          kubectl create clusterrolebinding e2e-runner --clusterrole=cluster-admin --serviceaccount=${{ env.NAMESPACE }}:e2e-runner
+          cat <<EOF | kubectl apply -f -
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: e2e-runner
+            namespace: ${{ env.NAMESPACE }}
+          spec:
+            backoffLimit: 0
+            activeDeadlineSeconds: 1500
+            template:
+              spec:
+                serviceAccountName: e2e-runner
+                restartPolicy: Never
+                containers:
+                  - name: e2e
+                    image: preparr-e2e/runner:${{ env.IMAGE_TAG }}
+                    imagePullPolicy: Never
+                    env:
+                      - name: E2E_NAMESPACE
+                        value: ${{ env.NAMESPACE }}
+          EOF
+          until kubectl get pod -l job-name=e2e-runner -n ${{ env.NAMESPACE }} -o name | grep -q .; do sleep 2; done
+          kubectl wait --for=condition=ready pod -l job-name=e2e-runner -n ${{ env.NAMESPACE }} --timeout=120s || true
+          kubectl logs -f job/e2e-runner -n ${{ env.NAMESPACE }} || true
+          until status=$(kubectl get job e2e-runner -n ${{ env.NAMESPACE }} -o jsonpath='{.status.succeeded}{.status.failed}'); [ -n "$status" ]; do sleep 5; done
+          kubectl logs job/e2e-runner -n ${{ env.NAMESPACE }} --tail=20 || true
+          [ "$(kubectl get job e2e-runner -n ${{ env.NAMESPACE }} -o jsonpath='{.status.succeeded}')" = "1" ]
 
       - name: Collect logs on failure
         if: failure()
         run: |
-          mkdir -p ./e2e-logs
-
-          echo "Collecting PrepArr sidecar logs..."
+          # Printed to the job log; CI must not upload Actions artifacts
           for app in sonarr radarr prowlarr bazarr; do
-            kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-init --tail=500 > ./e2e-logs/${app}-preparr-init.log 2>&1 || true
-            kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c preparr-sidecar --tail=500 > ./e2e-logs/${app}-preparr-sidecar.log 2>&1 || true
-            kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c $app --tail=200 > ./e2e-logs/${app}-app.log 2>&1 || true
+            for c in preparr-init preparr-sidecar $app; do
+              echo "::group::$app / $c"
+              kubectl logs -n ${{ env.NAMESPACE }} -l app=$app -c $c --tail=300 2>&1 || true
+              echo "::endgroup::"
+            done
           done
+          for target in "app=postgres" "app=qbittorrent -c preparr-init" "app=qbittorrent -c qbittorrent"; do
+            echo "::group::$target"
+            kubectl logs -n ${{ env.NAMESPACE }} -l $target --tail=200 2>&1 || true
+            echo "::endgroup::"
+          done
+          echo "::group::pod descriptions"
+          kubectl describe pods -n ${{ env.NAMESPACE }} 2>&1 || true
+          echo "::endgroup::"
+          echo "::group::events"
+          kubectl get events -n ${{ env.NAMESPACE }} --sort-by='.lastTimestamp' 2>&1 || true
+          echo "::endgroup::"
 
-          echo "Collecting infrastructure logs..."
-          kubectl logs -n ${{ env.NAMESPACE }} -l app=postgres --tail=200 > ./e2e-logs/postgres.log 2>&1 || true
-          kubectl logs -n ${{ env.NAMESPACE }} -l app=qbittorrent -c preparr-init --tail=500 > ./e2e-logs/qbittorrent-preparr-init.log 2>&1 || true
-          kubectl logs -n ${{ env.NAMESPACE }} -l app=qbittorrent -c qbittorrent --tail=200 > ./e2e-logs/qbittorrent.log 2>&1 || true
-
-          echo "Collecting pod descriptions..."
-          kubectl describe pods -n ${{ env.NAMESPACE }} > ./e2e-logs/pod-descriptions.txt 2>&1 || true
-
-          echo "Collecting events..."
-          kubectl get events -n ${{ env.NAMESPACE }} --sort-by='.lastTimestamp' > ./e2e-logs/events.txt 2>&1 || true
-
-          echo "Logs collected"
-
-      - name: Upload logs artifact
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: e2e-logs
-          path: ./e2e-logs/
-          retention-days: 7
-
-      - name: Cleanup Helm release
+      - name: Delete kind cluster
         if: always()
-        run: |
-          helm uninstall ${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --wait --no-hooks || true
+        run: kind delete cluster --name ${{ env.KIND_CLUSTER }} || true
