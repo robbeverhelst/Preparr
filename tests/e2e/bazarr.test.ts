@@ -10,6 +10,7 @@ import {
   HEALTH_PORTS,
   NAMESPACE,
   waitForBazarrApi,
+  waitForCondition,
 } from './utils'
 
 const BAZARR_API_KEY = 'e2e33333333333333333333333333333'
@@ -17,6 +18,28 @@ const BAZARR_API_KEY = 'e2e33333333333333333333333333333'
 describe('Bazarr Integration', () => {
   beforeAll(async () => {
     // Wait for Bazarr API to be ready
+    await waitForBazarrApi('bazarr', { timeoutMs: 120000 })
+
+    // Bazarr settings (integrations, languages, language profiles) are applied by the
+    // sidecar's first reconciliation cycle, not the init container. Wait for that cycle
+    // to finish so assertions don't race it.
+    await waitForCondition(
+      async () => {
+        const response = await fetch(
+          `http://bazarr.${NAMESPACE}.svc.cluster.local:${HEALTH_PORTS.bazarr}/reconciliation/status`,
+        )
+        if (!response.ok) return false
+        const state = (await response.json()) as { reconciliationCount?: number }
+        return (state.reconciliationCount ?? 0) >= 1
+      },
+      {
+        timeoutMs: 240000,
+        intervalMs: 5000,
+        description: 'Bazarr sidecar first reconciliation cycle',
+      },
+    )
+
+    // The sidecar restarts Bazarr after creating language profiles
     await waitForBazarrApi('bazarr', { timeoutMs: 120000 })
   })
 
