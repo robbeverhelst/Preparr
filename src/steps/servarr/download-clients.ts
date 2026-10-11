@@ -15,21 +15,11 @@ export class DownloadClientsStep extends ServarrStep {
   readonly dependencies: string[] = []
   readonly mode: 'init' | 'sidecar' | 'both' = 'sidecar'
 
-  validatePrerequisites(context: StepContext): boolean {
-    // In init mode, Servarr won't be running yet, so we can't validate connectivity
-    if (context.executionMode === 'init') {
-      return true
-    }
-
+  validatePrerequisites(_context: StepContext): boolean {
     return this.client.isReady()
   }
 
-  async readCurrentState(context: StepContext): Promise<DownloadClient[]> {
-    // In init mode, Servarr won't be running yet, so no download clients exist
-    if (context.executionMode === 'init') {
-      logger.info('Init mode: no existing download clients')
-      return []
-    }
+  async readCurrentState(_context: StepContext): Promise<DownloadClient[]> {
     try {
       logger.info('Reading current download clients...')
       const result = await this.client.getDownloadClients()

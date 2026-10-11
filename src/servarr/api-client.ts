@@ -147,14 +147,6 @@ export class ServarrApiClient {
     }
   }
 
-  async detectType(): Promise<string> {
-    if (this.config.type !== 'auto') {
-      return this.config.type
-    }
-
-    return await this.detectServarrType()
-  }
-
   async waitForStartup(apiKey: string, maxRetries = 30, retryDelay = 2000): Promise<void> {
     logger.info('Waiting for Servarr to start...', { type: this.config.type, url: this.config.url })
 
