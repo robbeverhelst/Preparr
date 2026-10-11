@@ -56,7 +56,7 @@ export async function loadConfigFile(filePath: string): Promise<Partial<Config> 
 }
 
 /**
- * Parse JSON configuration with environment variable substitution
+ * Parse JSON configuration
  */
 function parseJSON(content: string): Partial<Config> {
   try {
@@ -67,7 +67,7 @@ function parseJSON(content: string): Partial<Config> {
 }
 
 /**
- * Parse YAML configuration using Bun's native YAML support with environment variable substitution
+ * Parse YAML configuration using Bun's native YAML support
  */
 function parseYAML(content: string): Partial<Config> {
   try {
@@ -78,7 +78,7 @@ function parseYAML(content: string): Partial<Config> {
 }
 
 /**
- * Parse TOML configuration with environment variable substitution
+ * Parse TOML configuration
  */
 function parseTOML(content: string): Partial<Config> {
   try {
