@@ -33,23 +33,25 @@ type Specification = {
 
 ```json
 {
-  "customFormats": [
-    {
-      "name": "x265",
-      "includeCustomFormatWhenRenaming": false,
-      "specifications": [
-        {
-          "name": "x265",
-          "implementation": "ReleaseTitleSpecification",
-          "negate": false,
-          "required": false,
-          "fields": [
-            { "name": "value", "value": "x265|h\\.?265|hevc" }
-          ]
-        }
-      ]
-    }
-  ]
+  "app": {
+    "customFormats": [
+      {
+        "name": "x265",
+        "includeCustomFormatWhenRenaming": false,
+        "specifications": [
+          {
+            "name": "x265",
+            "implementation": "ReleaseTitleSpecification",
+            "negate": false,
+            "required": false,
+            "fields": [
+              { "name": "value", "value": "x265|h\\.?265|hevc" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -57,22 +59,24 @@ type Specification = {
 
 ```json
 {
-  "customFormats": [
-    {
-      "name": "Reject DV",
-      "specifications": [
-        {
-          "name": "Dolby Vision",
-          "implementation": "ReleaseTitleSpecification",
-          "negate": false,
-          "required": true,
-          "fields": [
-            { "name": "value", "value": "\\bDV\\b|\\bDoVi\\b|Dolby\\.?Vision" }
-          ]
-        }
-      ]
-    }
-  ]
+  "app": {
+    "customFormats": [
+      {
+        "name": "Reject DV",
+        "specifications": [
+          {
+            "name": "Dolby Vision",
+            "implementation": "ReleaseTitleSpecification",
+            "negate": false,
+            "required": true,
+            "fields": [
+              { "name": "value", "value": "\\bDV\\b|\\bDoVi\\b|Dolby\\.?Vision" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 

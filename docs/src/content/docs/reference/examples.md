@@ -11,43 +11,45 @@ TV show management with qBittorrent.
 
 ```json
 {
-  "apiKey": "2bac5d00dca43258313c734821a15c4c",
-  "prowlarrSync": true,
-  "rootFolders": [
-    { "path": "/tv" }
-  ],
-  "qualityProfiles": [
-    {
-      "name": "HD - 1080p",
-      "cutoff": 1080,
-      "items": [
-        { "quality": { "id": 9, "name": "HDTV-1080p" }, "allowed": true },
-        { "quality": { "id": 3, "name": "WEBDL-1080p" }, "allowed": true }
-      ]
+  "app": {
+    "apiKey": "2bac5d00dca43258313c734821a15c4c",
+    "prowlarrSync": true,
+    "rootFolders": [
+      { "path": "/tv" }
+    ],
+    "qualityProfiles": [
+      {
+        "name": "HD - 1080p",
+        "cutoff": 1080,
+        "items": [
+          { "quality": { "id": 9, "name": "HDTV-1080p" }, "allowed": true },
+          { "quality": { "id": 3, "name": "WEBDL-1080p" }, "allowed": true }
+        ]
+      }
+    ],
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass" },
+          { "name": "tvCategory", "value": "tv" }
+        ]
+      }
+    ],
+    "qbittorrent": {
+      "webui": { "username": "admin", "password": "adminpass" },
+      "downloads": {
+        "defaultPath": "/downloads",
+        "categories": ["tv", "movies"]
+      },
+      "connection": { "port": 6881 }
     }
-  ],
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 },
-        { "name": "username", "value": "admin" },
-        { "name": "password", "value": "adminpass" },
-        { "name": "tvCategory", "value": "tv" }
-      ]
-    }
-  ],
-  "qbittorrent": {
-    "webui": { "username": "admin", "password": "adminpass" },
-    "downloads": {
-      "defaultPath": "/downloads",
-      "categories": ["tv", "movies"]
-    },
-    "connection": { "port": 6881 }
   }
 }
 ```
@@ -59,42 +61,43 @@ TV show management with qBittorrent.
 
 ## sonarr-config.yaml
 
-Same setup in YAML format with multiple root folders and a manual indexer.
+Same setup in YAML format with multiple root folders and a manual indexer. As in every config file, desired-state settings are nested under `app`.
 
 ```yaml
-rootFolders:
-  - path: /tv
-  - path: /anime
+app:
+  rootFolders:
+    - path: /tv
+    - path: /anime
 
-indexers:
-  - name: NZBgeek
-    implementation: Newznab
-    implementationName: Newznab
-    configContract: NewznabSettings
-    fields:
-      - name: baseUrl
-        value: https://api.nzbgeek.info
-      - name: apiKey
-        value: your-nzbgeek-api-key
-      - name: categories
-        value: [5000, 5040]
+  indexers:
+    - name: NZBgeek
+      implementation: Newznab
+      implementationName: Newznab
+      configContract: NewznabSettings
+      fields:
+        - name: baseUrl
+          value: https://api.nzbgeek.info
+        - name: apiKey
+          value: your-nzbgeek-api-key
+        - name: categories
+          value: [5000, 5040]
 
-downloadClients:
-  - name: qBittorrent
-    implementation: QBittorrent
-    implementationName: qBittorrent
-    configContract: QBittorrentSettings
-    fields:
-      - name: host
-        value: qbittorrent
-      - name: port
-        value: 8080
-      - name: username
-        value: admin
-      - name: password
-        value: adminpass
+  downloadClients:
+    - name: qBittorrent
+      implementation: QBittorrent
+      implementationName: qBittorrent
+      configContract: QBittorrentSettings
+      fields:
+        - name: host
+          value: qbittorrent
+        - name: port
+          value: 8080
+        - name: username
+          value: admin
+        - name: password
+          value: adminpass
 
-qualityProfiles: []
+  qualityProfiles: []
 ```
 
 **Key points:**
@@ -109,47 +112,49 @@ Movie management with qBittorrent and Prowlarr sync.
 
 ```json
 {
-  "apiKey": "3cad6e11eba54369424d835932b16d5d",
-  "prowlarrSync": true,
-  "rootFolders": [
-    { "path": "/movies" }
-  ],
-  "qualityProfiles": [
-    {
-      "name": "1080p",
-      "cutoff": 1080,
-      "items": [
-        { "quality": { "id": 7, "name": "Bluray-1080p" }, "allowed": true },
-        { "quality": { "id": 3, "name": "WEBDL-1080p" }, "allowed": true }
-      ]
-    }
-  ],
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 },
-        { "name": "username", "value": "${QBITTORRENT_USER}" },
-        { "name": "password", "value": "${QBITTORRENT_PASSWORD}" },
-        { "name": "movieCategory", "value": "movies" }
-      ]
-    }
-  ],
-  "qbittorrent": {
-    "webui": {
-      "username": "admin",
-      "password": "adminpass"
+  "app": {
+    "apiKey": "3cad6e11eba54369424d835932b16d5d",
+    "prowlarrSync": true,
+    "rootFolders": [
+      { "path": "/movies" }
+    ],
+    "qualityProfiles": [
+      {
+        "name": "1080p",
+        "cutoff": 1080,
+        "items": [
+          { "quality": { "id": 7, "name": "Bluray-1080p" }, "allowed": true },
+          { "quality": { "id": 3, "name": "WEBDL-1080p" }, "allowed": true }
+        ]
+      }
+    ],
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass" },
+          { "name": "movieCategory", "value": "movies" }
+        ]
+      }
+    ],
+    "qbittorrent": {
+      "webui": {
+        "username": "admin",
+        "password": "adminpass"
+      }
     }
   }
 }
 ```
 
 **Key points:**
-- Environment variable interpolation (`${QBITTORRENT_USER}`) for credentials
+- Credentials are plain values: config files do not support `${VAR}` interpolation. To keep secrets out of the file, supply the relevant settings via environment variables or CLI flags (e.g. `APP_DOWNLOAD_CLIENTS` as JSON), which override the file
 - `movieCategory` field maps downloads to a qBittorrent category
 - Minimal qBittorrent section (just web UI credentials)
 
@@ -159,61 +164,63 @@ Centralized indexer management with application sync to Sonarr and Radarr.
 
 ```json
 {
-  "indexers": [
-    {
-      "name": "The Pirate Bay",
-      "implementation": "Cardigann",
-      "implementationName": "Cardigann",
-      "configContract": "CardigannSettings",
-      "fields": [
-        { "name": "definitionFile", "value": "thepiratebay" }
-      ],
-      "enable": true,
-      "appProfileId": 1
-    }
-  ],
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 },
-        { "name": "username", "value": "admin" },
-        { "name": "password", "value": "adminpass" }
-      ]
-    }
-  ],
-  "applications": [
-    {
-      "name": "Sonarr",
-      "implementation": "Sonarr",
-      "implementationName": "Sonarr",
-      "configContract": "SonarrSettings",
-      "fields": [
-        { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
-        { "name": "baseUrl", "value": "http://sonarr:8989" },
-        { "name": "apiKey", "value": "sonarr-api-key" }
-      ],
-      "syncLevel": "fullSync",
-      "appProfileId": 1
-    },
-    {
-      "name": "Radarr",
-      "implementation": "Radarr",
-      "implementationName": "Radarr",
-      "configContract": "RadarrSettings",
-      "fields": [
-        { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
-        { "name": "baseUrl", "value": "http://radarr:7878" },
-        { "name": "apiKey", "value": "radarr-api-key" }
-      ],
-      "syncLevel": "fullSync",
-      "appProfileId": 1
-    }
-  ]
+  "app": {
+    "indexers": [
+      {
+        "name": "The Pirate Bay",
+        "implementation": "Cardigann",
+        "implementationName": "Cardigann",
+        "configContract": "CardigannSettings",
+        "fields": [
+          { "name": "definitionFile", "value": "thepiratebay" }
+        ],
+        "enable": true,
+        "appProfileId": 1
+      }
+    ],
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass" }
+        ]
+      }
+    ],
+    "applications": [
+      {
+        "name": "Sonarr",
+        "implementation": "Sonarr",
+        "implementationName": "Sonarr",
+        "configContract": "SonarrSettings",
+        "fields": [
+          { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
+          { "name": "baseUrl", "value": "http://sonarr:8989" },
+          { "name": "apiKey", "value": "sonarr-api-key" }
+        ],
+        "syncLevel": "fullSync",
+        "appProfileId": 1
+      },
+      {
+        "name": "Radarr",
+        "implementation": "Radarr",
+        "implementationName": "Radarr",
+        "configContract": "RadarrSettings",
+        "fields": [
+          { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
+          { "name": "baseUrl", "value": "http://radarr:7878" },
+          { "name": "apiKey", "value": "radarr-api-key" }
+        ],
+        "syncLevel": "fullSync",
+        "appProfileId": 1
+      }
+    ]
+  }
 }
 ```
 
@@ -229,17 +236,19 @@ Standalone qBittorrent configuration with download categories and preferences.
 
 ```json
 {
-  "qbittorrent": {
-    "webui": {
-      "username": "admin",
-      "password": "secure-password"
-    },
-    "downloads": {
-      "defaultPath": "/downloads",
-      "categories": ["movies", "tv", "music"]
-    },
-    "connection": {
-      "port": 6881
+  "app": {
+    "qbittorrent": {
+      "webui": {
+        "username": "admin",
+        "password": "secure-password"
+      },
+      "downloads": {
+        "defaultPath": "/downloads",
+        "categories": ["movies", "tv", "music"]
+      },
+      "connection": {
+        "port": 6881
+      }
     }
   }
 }
@@ -256,22 +265,24 @@ Subtitle management with Sonarr and Radarr integration.
 
 ```json
 {
-  "apiKey": "your-bazarr-api-key-here",
-  "bazarr": {
-    "languages": [
-      { "code": "en", "name": "English" },
-      { "code": "nl", "name": "Dutch" }
-    ],
-    "providers": [
-      { "name": "opensubtitlescom", "enabled": true }
-    ],
-    "sonarr": {
-      "url": "http://sonarr:8989",
-      "apiKey": "sonarr-api-key"
-    },
-    "radarr": {
-      "url": "http://radarr:7878",
-      "apiKey": "radarr-api-key"
+  "app": {
+    "apiKey": "your-bazarr-api-key-here",
+    "bazarr": {
+      "languages": [
+        { "code": "en", "name": "English" },
+        { "code": "nl", "name": "Dutch" }
+      ],
+      "providers": [
+        { "name": "opensubtitlescom", "enabled": true }
+      ],
+      "sonarr": {
+        "url": "http://sonarr:8989",
+        "apiKey": "sonarr-api-key"
+      },
+      "radarr": {
+        "url": "http://radarr:7878",
+        "apiKey": "radarr-api-key"
+      }
     }
   }
 }

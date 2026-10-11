@@ -21,36 +21,38 @@ Configure indexers and application sync targets in `prowlarr-config.json`:
 
 ```json
 {
-  "indexers": [
-    {
-      "name": "NZBgeek",
-      "implementation": "Newznab",
-      "implementationName": "Newznab",
-      "configContract": "NewznabSettings",
-      "fields": [
-        { "name": "baseUrl", "value": "https://api.nzbgeek.info" },
-        { "name": "apiKey", "value": "your-nzbgeek-api-key" },
-        { "name": "categories", "value": [5000, 5040] }
-      ],
-      "enable": true,
-      "appProfileId": 1
-    }
-  ],
-  "applications": [
-    {
-      "name": "Sonarr",
-      "implementation": "Sonarr",
-      "implementationName": "Sonarr",
-      "configContract": "SonarrSettings",
-      "fields": [
-        { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
-        { "name": "baseUrl", "value": "http://sonarr:8989" },
-        { "name": "apiKey", "value": "sonarr-api-key" }
-      ],
-      "syncLevel": "fullSync",
-      "appProfileId": 1
-    }
-  ]
+  "app": {
+    "indexers": [
+      {
+        "name": "NZBgeek",
+        "implementation": "Newznab",
+        "implementationName": "Newznab",
+        "configContract": "NewznabSettings",
+        "fields": [
+          { "name": "baseUrl", "value": "https://api.nzbgeek.info" },
+          { "name": "apiKey", "value": "your-nzbgeek-api-key" },
+          { "name": "categories", "value": [5000, 5040] }
+        ],
+        "enable": true,
+        "appProfileId": 1
+      }
+    ],
+    "applications": [
+      {
+        "name": "Sonarr",
+        "implementation": "Sonarr",
+        "implementationName": "Sonarr",
+        "configContract": "SonarrSettings",
+        "fields": [
+          { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
+          { "name": "baseUrl", "value": "http://sonarr:8989" },
+          { "name": "apiKey", "value": "sonarr-api-key" }
+        ],
+        "syncLevel": "fullSync",
+        "appProfileId": 1
+      }
+    ]
+  }
 }
 ```
 
@@ -60,10 +62,12 @@ Set `prowlarrSync: true` and omit the `indexers` array:
 
 ```json
 {
-  "prowlarrSync": true,
-  "rootFolders": [...],
-  "qualityProfiles": [...],
-  "downloadClients": [...]
+  "app": {
+    "prowlarrSync": true,
+    "rootFolders": [...],
+    "qualityProfiles": [...],
+    "downloadClients": [...]
+  }
 }
 ```
 

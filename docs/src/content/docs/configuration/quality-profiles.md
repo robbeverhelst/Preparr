@@ -29,17 +29,19 @@ type QualityItem = {
 
 ```json
 {
-  "qualityProfiles": [
-    {
-      "name": "HD - 1080p",
-      "cutoff": 1080,
-      "items": [
-        { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
-        { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true },
-        { "quality": { "id": 3, "name": "Bluray-1080p" }, "allowed": true }
-      ]
-    }
-  ]
+  "app": {
+    "qualityProfiles": [
+      {
+        "name": "HD - 1080p",
+        "cutoff": 1080,
+        "items": [
+          { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
+          { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true },
+          { "quality": { "id": 3, "name": "Bluray-1080p" }, "allowed": true }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -47,25 +49,27 @@ type QualityItem = {
 
 ```json
 {
-  "qualityProfiles": [
-    {
-      "name": "Any",
-      "cutoff": 1080,
-      "items": [
-        { "quality": { "id": 4, "name": "HDTV-720p" }, "allowed": true },
-        { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
-        { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true }
-      ]
-    },
-    {
-      "name": "4K",
-      "cutoff": 2160,
-      "items": [
-        { "quality": { "id": 18, "name": "WEBDL-2160p" }, "allowed": true },
-        { "quality": { "id": 19, "name": "Bluray-2160p" }, "allowed": true }
-      ]
-    }
-  ]
+  "app": {
+    "qualityProfiles": [
+      {
+        "name": "Any",
+        "cutoff": 1080,
+        "items": [
+          { "quality": { "id": 4, "name": "HDTV-720p" }, "allowed": true },
+          { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
+          { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true }
+        ]
+      },
+      {
+        "name": "4K",
+        "cutoff": 2160,
+        "items": [
+          { "quality": { "id": 18, "name": "WEBDL-2160p" }, "allowed": true },
+          { "quality": { "id": 19, "name": "Bluray-2160p" }, "allowed": true }
+        ]
+      }
+    ]
+  }
 }
 ```
 

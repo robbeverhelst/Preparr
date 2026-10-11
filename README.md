@@ -102,51 +102,53 @@ volumes:
 ```
 
 ### Configuration File (`sonarr-config.json`)
-Define your entire Servarr setup as code:
+Define your entire Servarr setup as code. Desired-state settings go under the `app` key (unknown top-level keys are ignored):
 
 ```json
 {
-  "apiKey": "2bac5d00dca43258313c734821a15c4c",
-  "prowlarrSync": true,
-  "rootFolders": [
-    {
-      "path": "/tv",
-      "accessible": true
-    }
-  ],
-  "qualityProfiles": [
-    {
-      "name": "HD - 1080p",
-      "cutoff": 1080,
-      "items": [
-        {
-          "quality": { "id": 1, "name": "HDTV-1080p" },
-          "allowed": true
-        },
-        {
-          "quality": { "id": 2, "name": "WEBDL-1080p" },
-          "allowed": true
-        }
-      ]
-    }
-  ],
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 },
-        { "name": "username", "value": "admin" },
-        { "name": "password", "value": "adminpass" },
-        { "name": "category", "value": "tv" }
-      ],
-      "enable": true,
-      "priority": 1
-    }
-  ]
+  "app": {
+    "apiKey": "2bac5d00dca43258313c734821a15c4c",
+    "prowlarrSync": true,
+    "rootFolders": [
+      {
+        "path": "/tv",
+        "accessible": true
+      }
+    ],
+    "qualityProfiles": [
+      {
+        "name": "HD - 1080p",
+        "cutoff": 1080,
+        "items": [
+          {
+            "quality": { "id": 1, "name": "HDTV-1080p" },
+            "allowed": true
+          },
+          {
+            "quality": { "id": 2, "name": "WEBDL-1080p" },
+            "allowed": true
+          }
+        ]
+      }
+    ],
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass" },
+          { "name": "category", "value": "tv" }
+        ],
+        "enable": true,
+        "priority": 1
+      }
+    ]
+  }
 }
 ```
 
@@ -183,7 +185,7 @@ Each service gets its own init + sidecar containers managing separate config fil
 1. **Waits**: For Servarr application to be ready
 2. **Monitors**: JSON configuration files for changes
 3. **Reconciles**: Applies configuration via Servarr APIs
-4. **Health**: Exposes /health and /ready endpoints
+4. **Health**: Exposes `/health`, `/health/ready`, and `/health/live` endpoints
 5. **Repeats**: Continuous monitoring and drift correction
 
 ## 🌟 Key Benefits
@@ -219,7 +221,7 @@ Use the Helm chart or manual manifests with init containers + sidecars + ConfigM
 
 ## 🛡️ Production Ready
 
-- **Health Checks** - `/health` and `/ready` endpoints for orchestrators
+- **Health Checks** - `/health`, `/health/ready`, and `/health/live` endpoints for orchestrators
 - **Observability** - Structured JSON logging with correlation IDs  
 - **Configuration Validation** - Zod schema validation prevents bad configs
 - **Error Recovery** - Automatic retry with exponential backoff

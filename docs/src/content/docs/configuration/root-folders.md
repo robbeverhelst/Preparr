@@ -18,9 +18,11 @@ Root folders define where Servarr stores media files. Each Servarr instance need
 
 ```json
 {
-  "rootFolders": [
-    { "path": "/tv", "accessible": true }
-  ]
+  "app": {
+    "rootFolders": [
+      { "path": "/tv", "accessible": true }
+    ]
+  }
 }
 ```
 
@@ -28,10 +30,12 @@ Root folders define where Servarr stores media files. Each Servarr instance need
 
 ```json
 {
-  "rootFolders": [
-    { "path": "/tv/shows", "accessible": true },
-    { "path": "/tv/anime", "accessible": true }
-  ]
+  "app": {
+    "rootFolders": [
+      { "path": "/tv/shows", "accessible": true },
+      { "path": "/tv/anime", "accessible": true }
+    ]
+  }
 }
 ```
 
@@ -39,10 +43,12 @@ Root folders define where Servarr stores media files. Each Servarr instance need
 
 ```json
 {
-  "rootFolders": [
-    { "path": "/movies", "accessible": true },
-    { "path": "/movies/4k", "accessible": true }
-  ]
+  "app": {
+    "rootFolders": [
+      { "path": "/movies", "accessible": true },
+      { "path": "/movies/4k", "accessible": true }
+    ]
+  }
 }
 ```
 

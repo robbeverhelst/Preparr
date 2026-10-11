@@ -50,16 +50,18 @@ Added in PrepArr v0.15.0.
 
 ```json
 {
-  "mediaManagement": {
-    "importExtraFiles": true,
-    "extraFileExtensions": "srt,sub,idx,ass",
-    "copyUsingHardlinks": true,
-    "downloadPropersAndRepacks": "preferAndUpgrade",
-    "deleteEmptyFolders": true,
-    "recycleBin": "/recycle",
-    "recycleBinCleanupDays": 14,
-    "enableMediaInfo": true,
-    "rescanAfterRefresh": "always"
+  "app": {
+    "mediaManagement": {
+      "importExtraFiles": true,
+      "extraFileExtensions": "srt,sub,idx,ass",
+      "copyUsingHardlinks": true,
+      "downloadPropersAndRepacks": "preferAndUpgrade",
+      "deleteEmptyFolders": true,
+      "recycleBin": "/recycle",
+      "recycleBinCleanupDays": 14,
+      "enableMediaInfo": true,
+      "rescanAfterRefresh": "always"
+    }
   }
 }
 ```

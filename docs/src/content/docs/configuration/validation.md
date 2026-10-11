@@ -22,7 +22,7 @@ docker run --rm ghcr.io/robbeverhelst/preparr:latest bun run dist/index.js --gen
 ### Missing Required Fields
 
 ```
-Configuration missing required field: rootFolders.0.path
+Configuration missing required field: app.rootFolders.0.path
 ```
 
 Check that all required fields are present in your configuration file.
@@ -38,43 +38,16 @@ URLs must include the protocol (`http://` or `https://`).
 ### Type Mismatches
 
 ```
-Expected number, received string at qualityProfiles.0.cutoff
+Expected number, received string at app.qualityProfiles.0.cutoff
 ```
 
 Ensure numeric fields contain numbers, not quoted strings.
 
 ## Testing Configuration
 
-Use the validation endpoint to test your configuration before deploying:
+PrepArr has no HTTP validation endpoint. Validation errors are reported in the container logs at startup and when the config file changes, so run the sidecar (or `--init`) against your config and check its logs.
 
-```bash
-curl -X POST http://preparr-sidecar:9001/validate \
-  -H "Content-Type: application/json" \
-  -d @sonarr-config.json
-```
-
-**Valid response:**
-
-```json
-{
-  "valid": true,
-  "message": "Configuration is valid"
-}
-```
-
-**Invalid response:**
-
-```json
-{
-  "valid": false,
-  "errors": [
-    {
-      "path": ["qualityProfiles", 0, "cutoff"],
-      "message": "Expected number, received string"
-    }
-  ]
-}
-```
+Unknown keys are silently dropped rather than reported. Desired-state settings (`rootFolders`, `qualityProfiles`, `downloadClients`, etc.) must be nested under the top-level `app` key; placed at the root of the file they are ignored without an error.
 
 ## Validating JSON Syntax
 

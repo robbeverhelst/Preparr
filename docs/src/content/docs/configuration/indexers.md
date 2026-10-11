@@ -11,7 +11,9 @@ When using Prowlarr to manage indexers centrally, set `prowlarrSync: true` in yo
 
 ```json
 {
-  "prowlarrSync": true
+  "app": {
+    "prowlarrSync": true
+  }
 }
 ```
 
@@ -42,21 +44,23 @@ If you're not using Prowlarr, configure indexers directly:
 
 ```json
 {
-  "indexers": [
-    {
-      "name": "NZBgeek",
-      "implementation": "Newznab",
-      "implementationName": "Newznab",
-      "configContract": "NewznabSettings",
-      "fields": [
-        { "name": "baseUrl", "value": "https://api.nzbgeek.info" },
-        { "name": "apiKey", "value": "your-api-key" },
-        { "name": "categories", "value": [5000, 5040] }
-      ],
-      "enable": true,
-      "priority": 25
-    }
-  ]
+  "app": {
+    "indexers": [
+      {
+        "name": "NZBgeek",
+        "implementation": "Newznab",
+        "implementationName": "Newznab",
+        "configContract": "NewznabSettings",
+        "fields": [
+          { "name": "baseUrl", "value": "https://api.nzbgeek.info" },
+          { "name": "apiKey", "value": "your-api-key" },
+          { "name": "categories", "value": [5000, 5040] }
+        ],
+        "enable": true,
+        "priority": 25
+      }
+    ]
+  }
 }
 ```
 
@@ -64,22 +68,24 @@ If you're not using Prowlarr, configure indexers directly:
 
 ```json
 {
-  "indexers": [
-    {
-      "name": "My Indexer",
-      "implementation": "Cardigann",
-      "implementationName": "Cardigann",
-      "configContract": "CardigannSettings",
-      "definitionName": "myindexer",
-      "fields": [
-        { "name": "definitionFile", "value": "myindexer" },
-        { "name": "baseUrl", "value": "https://myindexer.example.com/" }
-      ],
-      "enable": true,
-      "priority": 25,
-      "appProfileId": 1
-    }
-  ]
+  "app": {
+    "indexers": [
+      {
+        "name": "My Indexer",
+        "implementation": "Cardigann",
+        "implementationName": "Cardigann",
+        "configContract": "CardigannSettings",
+        "definitionName": "myindexer",
+        "fields": [
+          { "name": "definitionFile", "value": "myindexer" },
+          { "name": "baseUrl", "value": "https://myindexer.example.com/" }
+        ],
+        "enable": true,
+        "priority": 25,
+        "appProfileId": 1
+      }
+    ]
+  }
 }
 ```
 

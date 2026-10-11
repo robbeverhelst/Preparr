@@ -61,17 +61,15 @@ resources:
 
 - **`CONFIG_RECONCILE_INTERVAL`** -- Set to 60-300 seconds for production. Lower intervals increase API load.
 - **`CONFIG_WATCH=true`** -- Enable file watching for immediate change detection.
-- **`prowlarrSync=true`** -- Use Prowlarr for centralized indexer management to reduce per-service API calls.
+- **`app.prowlarrSync: true`** (or `APP_PROWLARR_SYNC=true`) -- Use Prowlarr for centralized indexer management to reduce per-service API calls.
 
 ## PostgreSQL Tuning
 
-For multi-service stacks sharing a PostgreSQL instance:
+For multi-service stacks sharing a PostgreSQL instance, tune the PostgreSQL server itself (PrepArr does not manage these settings). With the official `postgres` image, pass them as server flags:
 
 ```yaml
 postgres:
-  environment:
-    POSTGRES_SHARED_BUFFERS: 256MB
-    POSTGRES_MAX_CONNECTIONS: 100
+  command: postgres -c shared_buffers=256MB -c max_connections=100
 ```
 
 ## Backup Strategy

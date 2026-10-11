@@ -24,32 +24,37 @@ The configuration file defines the desired state of your Servarr instance. It ca
 
 ```json
 {
-  "apiKey": "2bac5d00dca43258313c734821a15c4c",
-  "prowlarrSync": true,
-  "rootFolders": [
-    { "path": "/tv", "accessible": true }
-  ],
-  "qualityProfiles": [...],
-  "downloadClients": [...],
-  "customFormats": [...],
-  "mediaManagement": {...},
-  "naming": {...}
+  "app": {
+    "apiKey": "2bac5d00dca43258313c734821a15c4c",
+    "prowlarrSync": true,
+    "rootFolders": [
+      { "path": "/tv", "accessible": true }
+    ],
+    "qualityProfiles": [...],
+    "downloadClients": [...],
+    "customFormats": [...],
+    "mediaManagement": {...},
+    "naming": {...}
+  }
 }
 ```
 
 ### YAML format
 
 ```yaml
-apiKey: 2bac5d00dca43258313c734821a15c4c
-prowlarrSync: true
-rootFolders:
-  - path: /tv
-    accessible: true
-qualityProfiles: [...]
-downloadClients: [...]
+app:
+  apiKey: 2bac5d00dca43258313c734821a15c4c
+  prowlarrSync: true
+  rootFolders:
+    - path: /tv
+      accessible: true
+  qualityProfiles: [...]
+  downloadClients: [...]
 ```
 
-## Root Configuration Properties
+## `app` Properties
+
+All desired-state settings are nested under the top-level `app` key. Other top-level keys are `postgres`, `servarr`, `services`, `health`, `logLevel`, `logFormat`, `configPath`, `configWatch`, and `configReconcileInterval`. Unknown top-level keys are silently ignored, so placing the properties below at the root of the file has no effect.
 
 | Property | Type | Description |
 |----------|------|-------------|

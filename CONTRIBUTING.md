@@ -18,8 +18,8 @@ cd Preparr
 # Install dependencies
 bun install
 
-# Run tests
-bun test
+# Run unit tests (src/)
+bun run test
 
 # Run in development mode with watch
 bun run dev
@@ -32,26 +32,26 @@ bun run build
 
 ### Unit Tests
 ```bash
-# Run all tests
-bun test
+# Run all unit tests (src/)
+bun run test
 
 # Run tests in watch mode
-bun test --watch
+bun run test:watch
 
 # Run specific test file
 bun test src/config/index.test.ts
 ```
 
-### Integration Tests
+### End-to-End Tests
 ```bash
-# Start test environment
-bun run docker:up
+# Deploy the full stack to a Kubernetes cluster (namespace preparr-test)
+bun run k8s:deploy
 
-# Run integration tests
-bun run test:integration
+# Run end-to-end tests against it
+bun run test:e2e
 
 # Clean up
-bun run docker:reset
+bun run k8s:cleanup
 ```
 
 ## 🏗️ Architecture Overview
@@ -67,7 +67,7 @@ PrepArr uses a **three-container pattern** for each Servarr application:
 - **Database Management** (`src/postgres/`) - PostgreSQL initialization and user management  
 - **Servarr Integration** (`src/servarr/`) - API interactions via Tsarr client
 - **Step System** (`src/steps/`) - Modular configuration steps with reconciliation
-- **Health Monitoring** (`src/health/`) - Health check endpoints for orchestrators
+- **Health Monitoring** (`src/core/health.ts`) - Health check endpoints for orchestrators
 
 ## 📝 Code Style
 
@@ -140,10 +140,7 @@ type(scope): description
 
 ### Building Images
 ```bash
-# Build all images
-bun run docker:build
-
-# Build specific service
+# Build the image
 docker build -t preparr:dev .
 
 # Run development stack
@@ -165,10 +162,10 @@ docker ps
 ## 📋 Pull Request Guidelines
 
 ### Before Submitting
-- [ ] All tests pass (`bun test`)
+- [ ] All tests pass (`bun run test`)
 - [ ] Code is properly formatted (`bun run format`)
 - [ ] TypeScript compiles without errors (`bun run typecheck`)
-- [ ] Integration tests pass with Docker stack
+- [ ] E2E tests pass (`bun run test:e2e`, runs in CI)
 - [ ] Documentation updated if needed
 - [ ] Commit messages follow conventional format
 
@@ -185,7 +182,7 @@ Brief description of changes
 
 ## Testing
 - [ ] Unit tests added/updated
-- [ ] Integration tests pass
+- [ ] E2E tests pass
 - [ ] Manual testing completed
 
 ## Checklist
@@ -201,7 +198,6 @@ Brief description of changes
 - **Additional Servarr Support** - Lidarr, Readarr implementation
 - **Enhanced Error Handling** - Better retry logic and error recovery
 - **Kubernetes Examples** - Helm charts and manifest examples
-- **Monitoring Integration** - Prometheus metrics exporter
 
 ### Medium Priority  
 - **Configuration Validation** - More comprehensive Zod schemas

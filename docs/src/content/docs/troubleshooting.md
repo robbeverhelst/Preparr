@@ -14,7 +14,7 @@ Common issues and solutions when deploying and running PrepArr.
 curl http://localhost:9001/health
 
 # Check readiness
-curl http://localhost:9001/ready
+curl http://localhost:9001/health/ready
 
 # Docker Compose
 docker compose logs sonarr-sidecar
@@ -240,7 +240,7 @@ INFO: Indexer removed successfully: "The Pirate Bay (Prowlarr)"
 
 **Fix:**
 
-- Set `"prowlarrSync": true` in the config for apps where Prowlarr manages indexers
+- Set `"prowlarrSync": true` under `app` in the config for apps where Prowlarr manages indexers
 - Remove the `"indexers": []` array from the configuration
 - Restart the sidecar container
 
@@ -375,8 +375,8 @@ ERROR: remaining connection slots are reserved for non-replication superuser con
 # Check current connections
 docker compose exec postgres psql -U postgres -c "SELECT count(*) FROM pg_stat_activity;"
 
-# Increase connection limit in postgres environment:
-# POSTGRES_CONFIG_max_connections: 200
+# Increase the connection limit on the PostgreSQL server itself (not PrepArr),
+# e.g. in the postgres service: command: postgres -c max_connections=200
 ```
 
 ### Database Permission Issues

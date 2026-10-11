@@ -3,7 +3,7 @@ title: Health Endpoints
 description: HTTP endpoint reference for health checks, metrics, and reconciliation control
 ---
 
-PrepArr exposes an HTTP server for health checks, Prometheus metrics, and reconciliation control. The server runs on port `9001` by default (configurable via `HEALTH_PORT` or `--health-port`).
+PrepArr exposes an HTTP server for health checks, Prometheus metrics, and reconciliation control. The server runs on port `8080` by default (configurable via `HEALTH_PORT` or `--health-port`; the Helm chart sets it to `9001`).
 
 ## Endpoints
 

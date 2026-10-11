@@ -33,18 +33,20 @@ Map the exported data to PrepArr's JSON format:
 
 ```json
 {
-  "apiKey": "your-existing-api-key",
-  "rootFolders": [
-    { "path": "/tv", "accessible": true }
-  ],
-  "qualityProfiles": [
-    {
-      "name": "HD - 1080p",
-      "cutoff": 1080,
-      "items": [...]
-    }
-  ],
-  "downloadClients": [...]
+  "app": {
+    "apiKey": "your-existing-api-key",
+    "rootFolders": [
+      { "path": "/tv", "accessible": true }
+    ],
+    "qualityProfiles": [
+      {
+        "name": "HD - 1080p",
+        "cutoff": 1080,
+        "items": [...]
+      }
+    ],
+    "downloadClients": [...]
+  }
 }
 ```
 

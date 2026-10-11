@@ -28,26 +28,28 @@ type ConfigField = {
 
 ```json
 {
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 },
-        { "name": "username", "value": "admin" },
-        { "name": "password", "value": "adminpass" },
-        { "name": "category", "value": "tv" },
-        { "name": "priority", "value": 0 },
-        { "name": "removeCompletedDownloads", "value": false },
-        { "name": "removeFailedDownloads", "value": false }
-      ],
-      "enable": true,
-      "priority": 1
-    }
-  ]
+  "app": {
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass" },
+          { "name": "category", "value": "tv" },
+          { "name": "priority", "value": 0 },
+          { "name": "removeCompletedDownloads", "value": false },
+          { "name": "removeFailedDownloads", "value": false }
+        ],
+        "enable": true,
+        "priority": 1
+      }
+    ]
+  }
 }
 ```
 
@@ -55,23 +57,25 @@ type ConfigField = {
 
 ```json
 {
-  "downloadClients": [
-    {
-      "name": "SABnzbd",
-      "implementation": "Sabnzbd",
-      "implementationName": "SABnzbd",
-      "configContract": "SabnzbdSettings",
-      "fields": [
-        { "name": "host", "value": "sabnzbd" },
-        { "name": "port", "value": 8080 },
-        { "name": "apiKey", "value": "your-api-key" },
-        { "name": "tvCategory", "value": "tv" },
-        { "name": "movieCategory", "value": "movies" }
-      ],
-      "enable": true,
-      "priority": 1
-    }
-  ]
+  "app": {
+    "downloadClients": [
+      {
+        "name": "SABnzbd",
+        "implementation": "Sabnzbd",
+        "implementationName": "SABnzbd",
+        "configContract": "SabnzbdSettings",
+        "fields": [
+          { "name": "host", "value": "sabnzbd" },
+          { "name": "port", "value": 8080 },
+          { "name": "apiKey", "value": "your-api-key" },
+          { "name": "tvCategory", "value": "tv" },
+          { "name": "movieCategory", "value": "movies" }
+        ],
+        "enable": true,
+        "priority": 1
+      }
+    ]
+  }
 }
 ```
 
@@ -81,33 +85,35 @@ Use the `priority` field to define fallback order:
 
 ```json
 {
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 }
-      ],
-      "enable": true,
-      "priority": 1
-    },
-    {
-      "name": "SABnzbd",
-      "implementation": "Sabnzbd",
-      "implementationName": "SABnzbd",
-      "configContract": "SabnzbdSettings",
-      "fields": [
-        { "name": "host", "value": "sabnzbd" },
-        { "name": "port", "value": 8080 },
-        { "name": "apiKey", "value": "your-api-key" }
-      ],
-      "enable": true,
-      "priority": 2
-    }
-  ]
+  "app": {
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 }
+        ],
+        "enable": true,
+        "priority": 1
+      },
+      {
+        "name": "SABnzbd",
+        "implementation": "Sabnzbd",
+        "implementationName": "SABnzbd",
+        "configContract": "SabnzbdSettings",
+        "fields": [
+          { "name": "host", "value": "sabnzbd" },
+          { "name": "port", "value": 8080 },
+          { "name": "apiKey", "value": "your-api-key" }
+        ],
+        "enable": true,
+        "priority": 2
+      }
+    ]
+  }
 }
 ```
 

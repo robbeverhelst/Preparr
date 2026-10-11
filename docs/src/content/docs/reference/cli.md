@@ -42,7 +42,7 @@ docker run --rm ghcr.io/robbeverhelst/preparr:latest --generate-api-key
 
 ## Configuration Flags
 
-All flags support both `--key=value` and `--key value` syntax.
+All flags support both `--key=value` and `--key value` syntax. `POSTGRES_SKIP_PROVISIONING` and `SERVARR_AUTHENTICATION_METHOD` have no CLI flag and can only be set via environment variables (or the config file).
 
 ### PostgreSQL
 
@@ -55,13 +55,14 @@ All flags support both `--key=value` and `--key value` syntax.
 | `--postgres-password` | `POSTGRES_PASSWORD` | — | Database password (required) |
 | `--postgres-db` | `POSTGRES_DB` | `servarr` | Database name |
 | `--postgres-database` | `POSTGRES_DATABASE` | `servarr` | Alias for `--postgres-db` |
+| `--postgres-log-database-enabled` | `POSTGRES_LOG_DATABASE_ENABLED` | `true` | Create a separate `_log` database |
 
 ### Servarr
 
 | Flag | Environment Variable | Default | Description |
 |------|---------------------|---------|-------------|
 | `--servarr-url` | `SERVARR_URL` | — | Instance URL (e.g., `http://sonarr:8989`) |
-| `--servarr-type` | `SERVARR_TYPE` | `auto` | App type: `sonarr`, `radarr`, `lidarr`, `readarr`, `prowlarr`, `qbittorrent`, `auto` |
+| `--servarr-type` | `SERVARR_TYPE` | `auto` | App type: `sonarr`, `radarr`, `lidarr`, `readarr`, `prowlarr`, `qbittorrent`, `bazarr`, `auto` |
 | `--servarr-api-key` | `SERVARR_API_KEY` | — | 32-character hex API key |
 | `--servarr-admin-user` | `SERVARR_ADMIN_USER` | `admin` | Admin username |
 | `--servarr-admin-password` | `SERVARR_ADMIN_PASSWORD` | — | Admin password (required) |
@@ -76,6 +77,8 @@ All flags support both `--key=value` and `--key value` syntax.
 | `--qbittorrent-password` | `QBITTORRENT_PASSWORD` | — | qBittorrent password |
 | `--prowlarr-url` | `PROWLARR_URL` | — | Prowlarr URL |
 | `--prowlarr-api-key` | `PROWLARR_API_KEY` | — | Prowlarr API key |
+| `--bazarr-url` | `BAZARR_URL` | — | Bazarr URL |
+| `--bazarr-api-key` | `BAZARR_API_KEY` | — | Bazarr API key |
 
 ### Application Config
 
@@ -94,16 +97,20 @@ All flags support both `--key=value` and `--key value` syntax.
 
 | Flag | Environment Variable | Default | Description |
 |------|---------------------|---------|-------------|
-| `--health-port` | `HEALTH_PORT` | `9001` | Health endpoint port |
+| `--health-port` | `HEALTH_PORT` | `8080` | Health endpoint port (the Helm chart sets `9001`) |
 | `--log-level` | `LOG_LEVEL` | `info` | Log verbosity: `debug`, `info`, `warn`, `error` |
-| `--log-format` | `LOG_FORMAT` | `pretty` | Log format: `json`, `pretty` |
+| `--log-format` | `LOG_FORMAT` | `json` | Log format: `json`, `pretty` |
+
+:::note
+The logger reads `LOG_LEVEL` and `LOG_FORMAT` from the environment at startup. `--log-level`/`--log-format` (and the config-file `logLevel`/`logFormat` keys) are parsed but do not currently change log output, so set the environment variables instead.
+:::
 
 ### File & Reconciliation
 
 | Flag | Environment Variable | Default | Description |
 |------|---------------------|---------|-------------|
-| `--config-path` | `CONFIG_PATH` | — | Path to configuration file |
-| `--config-watch` | `CONFIG_WATCH` | `false` | Watch config file for changes |
+| `--config-path` | `CONFIG_PATH` | `/config/servarr.yaml` | Path to configuration file |
+| `--config-watch` | `CONFIG_WATCH` | `true` | Watch config file for changes |
 | `--config-reconcile-interval` | `CONFIG_RECONCILE_INTERVAL` | `60` | Reconciliation interval in seconds |
 
 ## Examples
@@ -111,7 +118,7 @@ All flags support both `--key=value` and `--key value` syntax.
 ### Override log level
 
 ```bash
-docker run ghcr.io/robbeverhelst/preparr:latest --log-level=debug
+docker run -e LOG_LEVEL=debug ghcr.io/robbeverhelst/preparr:latest
 ```
 
 ### Pass inline configuration
