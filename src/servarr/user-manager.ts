@@ -1,5 +1,6 @@
 import { SQL } from 'bun'
 import type { PostgresConfig, ServarrConfig } from '@/config/schema'
+import { buildPostgresConnectionString } from '@/postgres/client'
 import { logger } from '@/utils/logger'
 import type { ClientWithHostConfig, DatabaseUser, ServarrClientType } from './types'
 
@@ -17,15 +18,20 @@ export class ServarrUserManager {
     const host = process.env.POSTGRES_HOST || 'postgres'
     const port = process.env.POSTGRES_PORT || '5432'
     const password = process.env.POSTGRES_PASSWORD || ''
-    const connectionString = `postgres://${this.config.type}:${password}@${host}:${port}/${mainDbName}`
+    const connectionOptions = {
+      username: this.config.type,
+      host,
+      port,
+      database: mainDbName,
+    }
 
     logger.debug('Creating database connection', {
       type: this.config.type,
       database: mainDbName,
-      connectionString: connectionString.replace(password, '***'),
+      connectionString: buildPostgresConnectionString({ ...connectionOptions, password: '***' }),
     })
 
-    return new SQL(connectionString)
+    return new SQL(buildPostgresConnectionString({ ...connectionOptions, password }))
   }
 
   private getDatabaseNames(): { main: string; log?: string } {

@@ -29,3 +29,27 @@ test('logger handles metadata correctly', () => {
   console.warn = originalWarn
   console.error = originalError
 })
+
+test('logger serializes Error values in metadata', () => {
+  const originalError = console.error
+  const logs: string[] = []
+  console.error = (msg: string) => logs.push(msg)
+
+  try {
+    logger.error('operation failed', {
+      error: Object.assign(new Error('boom'), { code: 'ECONNREFUSED' }),
+      nested: { cause: new TypeError('bad') },
+    })
+  } finally {
+    console.error = originalError
+  }
+
+  expect(logs).toHaveLength(1)
+  const entry = JSON.parse(logs[0] as string)
+  expect(entry.error.message).toBe('boom')
+  expect(entry.error.name).toBe('Error')
+  expect(entry.error.stack).toContain('boom')
+  expect(entry.error.code).toBe('ECONNREFUSED')
+  expect(entry.nested.cause.message).toBe('bad')
+  expect(entry.nested.cause.name).toBe('TypeError')
+})

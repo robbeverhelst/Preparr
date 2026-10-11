@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
 import type { PostgresConfig } from '@/config/schema'
-import { PostgresClient } from './client'
+import { buildPostgresConnectionString, PostgresClient } from './client'
 
 describe('PostgresClient', () => {
   let client: PostgresClient
@@ -23,47 +23,39 @@ describe('PostgresClient', () => {
     expect(client).toBeInstanceOf(PostgresClient)
   })
 
-  // Skip connection string test since getConnectionString is private
-  test.skip('generates correct connection string', () => {
-    // Would require exposing private method or refactoring for testability
-  })
-
-  // Skip SQL-dependent tests that require actual database connection
-  test.skip('connect creates database connections', () => {
-    // Would require SQL mock
-  })
-
-  test.skip('connect is idempotent', () => {
-    // Would require SQL mock
-  })
-
-  test.skip('close cleans up connections', () => {
-    // Would require SQL mock
-  })
-
   test('close handles null connections gracefully', () => {
     // Should not throw when no connections exist
     expect(() => client.close()).not.toThrow()
   })
 
-  // Skip withRetry test since it's a private method
-  test.skip('withRetry retries on failure', () => {
-    // Would require exposing private method or integration testing
+  test('builds connection strings with URL-encoded credentials', () => {
+    const url = buildPostgresConnectionString({
+      username: 'user@corp',
+      password: 'p@ss:w/rd#1?%',
+      host: 'db.local',
+      port: 5433,
+      database: 'sonarr_main',
+    })
+
+    expect(url).toBe('postgres://user%40corp:p%40ss%3Aw%2Frd%231%3F%25@db.local:5433/sonarr_main')
+    const parsed = new URL(url)
+    expect(decodeURIComponent(parsed.username)).toBe('user@corp')
+    expect(decodeURIComponent(parsed.password)).toBe('p@ss:w/rd#1?%')
+    expect(parsed.hostname).toBe('db.local')
+    expect(parsed.port).toBe('5433')
+    expect(parsed.pathname).toBe('/sonarr_main')
   })
 
-  // Skip withRetry test since it's a private method
-  test.skip('withRetry throws after max retries', () => {
-    // Would require exposing private method or integration testing
-  })
-
-  // Skip withRetry test since it's a private method
-  test.skip('withRetry respects delay parameters', () => {
-    // Would require exposing private method or integration testing
-  })
-
-  // Skip withRetry test since it's a private method
-  test.skip('withRetry respects max delay', () => {
-    // Would require exposing private method or integration testing
+  test('builds connection strings unchanged for plain credentials', () => {
+    expect(
+      buildPostgresConnectionString({
+        username: 'testuser',
+        password: 'testpass',
+        host: 'localhost',
+        port: 5432,
+        database: 'postgres',
+      }),
+    ).toBe('postgres://testuser:testpass@localhost:5432/postgres')
   })
 
   // Note: The actual database operations (testConnection, createDatabase, etc.)

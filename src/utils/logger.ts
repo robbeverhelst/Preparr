@@ -8,14 +8,20 @@ const shouldLog = (level: LogLevel): boolean => {
   return levels[level] >= levels[logLevel as LogLevel]
 }
 
+// Error properties are non-enumerable, so JSON.stringify would otherwise emit `{}`
+const serializeErrors = (_key: string, value: unknown) =>
+  value instanceof Error
+    ? { ...value, name: value.name, message: value.message, stack: value.stack }
+    : value
+
 const formatLog = (level: LogLevel, message: string, meta?: Record<string, unknown>) => {
   const timestamp = new Date().toISOString()
 
   if (logFormat === 'json') {
-    return JSON.stringify({ timestamp, level, message, ...meta })
+    return JSON.stringify({ timestamp, level, message, ...meta }, serializeErrors)
   }
 
-  const metaStr = meta ? ` ${JSON.stringify(meta)}` : ''
+  const metaStr = meta ? ` ${JSON.stringify(meta, serializeErrors)}` : ''
   return `${timestamp} [${level.toUpperCase()}]: ${message}${metaStr}`
 }
 
