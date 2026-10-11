@@ -39,16 +39,18 @@ Naming configuration controls how Servarr renames media files and organizes fold
 
 ```json
 {
-  "naming": {
-    "renameEpisodes": true,
-    "standardEpisodeFormat": "{Series TitleYear} - S{season:00}E{episode:00} - {Episode CleanTitle} [{Quality Full}]{[MediaInfo VideoDynamicRangeType]}{[Preferred Words]}{-Release Group}",
-    "dailyEpisodeFormat": "{Series TitleYear} - {Air-Date} - {Episode CleanTitle} [{Quality Full}]{[Preferred Words]}{-Release Group}",
-    "animeEpisodeFormat": "{Series TitleYear} - S{season:00}E{episode:00} - {absolute:000} - {Episode CleanTitle} [{Quality Full}]{[Preferred Words]}{-Release Group}",
-    "seriesFolderFormat": "{Series TitleYear} [imdbid-{ImdbId}]",
-    "seasonFolderFormat": "Season {season:00}",
-    "specialsFolderFormat": "Specials",
-    "multiEpisodeStyle": 0,
-    "replaceIllegalCharacters": true
+  "app": {
+    "naming": {
+      "renameEpisodes": true,
+      "standardEpisodeFormat": "{Series TitleYear} - S{season:00}E{episode:00} - {Episode CleanTitle} [{Quality Full}]{[MediaInfo VideoDynamicRangeType]}{[Preferred Words]}{-Release Group}",
+      "dailyEpisodeFormat": "{Series TitleYear} - {Air-Date} - {Episode CleanTitle} [{Quality Full}]{[Preferred Words]}{-Release Group}",
+      "animeEpisodeFormat": "{Series TitleYear} - S{season:00}E{episode:00} - {absolute:000} - {Episode CleanTitle} [{Quality Full}]{[Preferred Words]}{-Release Group}",
+      "seriesFolderFormat": "{Series TitleYear} [imdbid-{ImdbId}]",
+      "seasonFolderFormat": "Season {season:00}",
+      "specialsFolderFormat": "Specials",
+      "multiEpisodeStyle": 0,
+      "replaceIllegalCharacters": true
+    }
   }
 }
 ```
@@ -57,11 +59,13 @@ Naming configuration controls how Servarr renames media files and organizes fold
 
 ```json
 {
-  "naming": {
-    "renameMovies": true,
-    "movieFormat": "{Movie CleanTitle} {(Release Year)} [{Quality Full}]{[MediaInfo VideoDynamicRangeType]}{-Release Group}",
-    "movieFolderFormat": "{Movie CleanTitle} ({Release Year}) [imdbid-{ImdbId}]",
-    "replaceIllegalCharacters": true
+  "app": {
+    "naming": {
+      "renameMovies": true,
+      "movieFormat": "{Movie CleanTitle} {(Release Year)} [{Quality Full}]{[MediaInfo VideoDynamicRangeType]}{-Release Group}",
+      "movieFolderFormat": "{Movie CleanTitle} ({Release Year}) [imdbid-{ImdbId}]",
+      "replaceIllegalCharacters": true
+    }
   }
 }
 ```

@@ -49,50 +49,52 @@ Prowlarr manages indexers and syncs them to Sonarr and Radarr:
 
 ```json
 {
-  "indexers": [
-    {
-      "name": "My Indexer",
-      "implementation": "Cardigann",
-      "implementationName": "Cardigann",
-      "configContract": "CardigannSettings",
-      "definitionName": "myindexer",
-      "fields": [
-        { "name": "definitionFile", "value": "myindexer" },
-        { "name": "baseUrl", "value": "https://myindexer.example.com/" }
-      ],
-      "enable": true,
-      "priority": 25,
-      "appProfileId": 1
-    }
-  ],
-  "applications": [
-    {
-      "name": "Sonarr",
-      "implementation": "Sonarr",
-      "implementationName": "Sonarr",
-      "configContract": "SonarrSettings",
-      "fields": [
-        { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
-        { "name": "baseUrl", "value": "http://sonarr:8989" },
-        { "name": "apiKey", "value": "SONARR_API_KEY_HERE" }
-      ],
-      "syncLevel": "fullSync",
-      "appProfileId": 1
-    },
-    {
-      "name": "Radarr",
-      "implementation": "Radarr",
-      "implementationName": "Radarr",
-      "configContract": "RadarrSettings",
-      "fields": [
-        { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
-        { "name": "baseUrl", "value": "http://radarr:7878" },
-        { "name": "apiKey", "value": "RADARR_API_KEY_HERE" }
-      ],
-      "syncLevel": "fullSync",
-      "appProfileId": 1
-    }
-  ]
+  "app": {
+    "indexers": [
+      {
+        "name": "My Indexer",
+        "implementation": "Cardigann",
+        "implementationName": "Cardigann",
+        "configContract": "CardigannSettings",
+        "definitionName": "myindexer",
+        "fields": [
+          { "name": "definitionFile", "value": "myindexer" },
+          { "name": "baseUrl", "value": "https://myindexer.example.com/" }
+        ],
+        "enable": true,
+        "priority": 25,
+        "appProfileId": 1
+      }
+    ],
+    "applications": [
+      {
+        "name": "Sonarr",
+        "implementation": "Sonarr",
+        "implementationName": "Sonarr",
+        "configContract": "SonarrSettings",
+        "fields": [
+          { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
+          { "name": "baseUrl", "value": "http://sonarr:8989" },
+          { "name": "apiKey", "value": "SONARR_API_KEY_HERE" }
+        ],
+        "syncLevel": "fullSync",
+        "appProfileId": 1
+      },
+      {
+        "name": "Radarr",
+        "implementation": "Radarr",
+        "implementationName": "Radarr",
+        "configContract": "RadarrSettings",
+        "fields": [
+          { "name": "prowlarrUrl", "value": "http://prowlarr:9696" },
+          { "name": "baseUrl", "value": "http://radarr:7878" },
+          { "name": "apiKey", "value": "RADARR_API_KEY_HERE" }
+        ],
+        "syncLevel": "fullSync",
+        "appProfileId": 1
+      }
+    ]
+  }
 }
 ```
 
@@ -102,37 +104,39 @@ Sonarr with Prowlarr sync enabled (indexers managed by Prowlarr):
 
 ```json
 {
-  "prowlarrSync": true,
-  "rootFolders": [
-    { "path": "/tv", "accessible": true }
-  ],
-  "qualityProfiles": [
-    {
-      "name": "HD - 1080p",
-      "cutoff": 1080,
-      "items": [
-        { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
-        { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true }
-      ]
-    }
-  ],
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 },
-        { "name": "username", "value": "admin" },
-        { "name": "password", "value": "adminpass" },
-        { "name": "category", "value": "tv" }
-      ],
-      "enable": true,
-      "priority": 1
-    }
-  ]
+  "app": {
+    "prowlarrSync": true,
+    "rootFolders": [
+      { "path": "/tv", "accessible": true }
+    ],
+    "qualityProfiles": [
+      {
+        "name": "HD - 1080p",
+        "cutoff": 1080,
+        "items": [
+          { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
+          { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true }
+        ]
+      }
+    ],
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass" },
+          { "name": "category", "value": "tv" }
+        ],
+        "enable": true,
+        "priority": 1
+      }
+    ]
+  }
 }
 ```
 
@@ -140,37 +144,39 @@ Sonarr with Prowlarr sync enabled (indexers managed by Prowlarr):
 
 ```json
 {
-  "prowlarrSync": true,
-  "rootFolders": [
-    { "path": "/movies", "accessible": true }
-  ],
-  "qualityProfiles": [
-    {
-      "name": "HD - 1080p",
-      "cutoff": 1080,
-      "items": [
-        { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
-        { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true }
-      ]
-    }
-  ],
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 },
-        { "name": "username", "value": "admin" },
-        { "name": "password", "value": "adminpass" },
-        { "name": "category", "value": "movies" }
-      ],
-      "enable": true,
-      "priority": 1
-    }
-  ]
+  "app": {
+    "prowlarrSync": true,
+    "rootFolders": [
+      { "path": "/movies", "accessible": true }
+    ],
+    "qualityProfiles": [
+      {
+        "name": "HD - 1080p",
+        "cutoff": 1080,
+        "items": [
+          { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
+          { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true }
+        ]
+      }
+    ],
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass" },
+          { "name": "category", "value": "movies" }
+        ],
+        "enable": true,
+        "priority": 1
+      }
+    ]
+  }
 }
 ```
 
@@ -182,22 +188,24 @@ Bazarr manages subtitles and integrates with both Sonarr and Radarr:
 
 ```json
 {
-  "apiKey": "your-bazarr-api-key-here",
-  "bazarr": {
-    "languages": [
-      { "code": "en", "name": "English" },
-      { "code": "nl", "name": "Dutch" }
-    ],
-    "providers": [
-      { "name": "opensubtitlescom", "enabled": true }
-    ],
-    "sonarr": {
-      "url": "http://sonarr:8989",
-      "apiKey": "SONARR_API_KEY_HERE"
-    },
-    "radarr": {
-      "url": "http://radarr:7878",
-      "apiKey": "RADARR_API_KEY_HERE"
+  "app": {
+    "apiKey": "your-bazarr-api-key-here",
+    "bazarr": {
+      "languages": [
+        { "code": "en", "name": "English" },
+        { "code": "nl", "name": "Dutch" }
+      ],
+      "providers": [
+        { "name": "opensubtitlescom", "enabled": true }
+      ],
+      "sonarr": {
+        "url": "http://sonarr:8989",
+        "apiKey": "SONARR_API_KEY_HERE"
+      },
+      "radarr": {
+        "url": "http://radarr:7878",
+        "apiKey": "RADARR_API_KEY_HERE"
+      }
     }
   }
 }

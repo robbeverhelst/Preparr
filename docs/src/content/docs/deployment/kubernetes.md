@@ -42,19 +42,21 @@ metadata:
 data:
   sonarr-config.json: |
     {
-      "rootFolders": [
-        { "path": "/tv", "accessible": true }
-      ],
-      "qualityProfiles": [
-        {
-          "name": "HD - 1080p",
-          "cutoff": 1080,
-          "items": [
-            { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
-            { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true }
-          ]
-        }
-      ]
+      "app": {
+        "rootFolders": [
+          { "path": "/tv", "accessible": true }
+        ],
+        "qualityProfiles": [
+          {
+            "name": "HD - 1080p",
+            "cutoff": 1080,
+            "items": [
+              { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
+              { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true }
+            ]
+          }
+        ]
+      }
     }
 ```
 

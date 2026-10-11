@@ -10,7 +10,7 @@
   "servarr": {
     "url": "http://bazarr:6767",
     "type": "bazarr",
-    "apiKey": "your-bazarr-api-key-here",
+    "apiKey": "0123456789abcdef0123456789abcdef",
     "adminUser": "admin",
     "adminPassword": "your-secure-password",
     "authenticationMethod": "forms"
@@ -18,7 +18,7 @@
   "services": {
     "bazarr": {
       "url": "http://bazarr:6767",
-      "apiKey": "your-bazarr-api-key-here"
+      "apiKey": "0123456789abcdef0123456789abcdef"
     }
   },
   "app": {

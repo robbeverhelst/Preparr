@@ -8,7 +8,7 @@ PrepArr is a lightweight Docker sidecar designed to run alongside Servarr applic
 - **Language**: TypeScript
 - **API Client**: Tsarr (https://github.com/robbeverhelst/Tsarr)
 - **Database**: PostgreSQL (via Bun's native SQL API)
-- **File Watching**: Bun.file() + filesystem watching APIs
+- **File Watching**: polling the config file every 5 seconds (`src/core/reconciliation.ts`)
 - **HTTP Client**: Native fetch() API
 - **Validation**: Zod
 - **Logging**: Native console with custom formatting
@@ -18,7 +18,7 @@ PrepArr is a lightweight Docker sidecar designed to run alongside Servarr applic
 
 ## Bun Native Features to Leverage
 - **Bun.file()**: For reading configuration files efficiently
-- **Bun.spawn()**: For running shell commands (psql, etc.)
+- **Bun.spawn()**: For running shell commands
 - **Bun.build()**: For bundling if needed
 - **Built-in test runner**: `bun test` instead of external frameworks
 - **Native fetch()**: For HTTP requests where Axios isn't needed
@@ -50,14 +50,21 @@ bun run semantic-release  # Automated versioning and release
 ```
 preparr/
 ├── src/
-│   ├── index.ts           # Main entry point
-│   └── utils/
-│       └── logger.ts      # Native console logger with formatting
-# Directories will be created as needed during implementation:
-# ├── config/               # Configuration management (Zod schemas, loaders)
-# ├── postgres/             # PostgreSQL initialization
-# ├── servarr/              # Servarr API interactions (Tsarr client)
-# └── health/               # Health check endpoints
+│   ├── index.ts           # Main entry point (init and sidecar modes)
+│   ├── config/            # Zod schema, defaults, file/env/CLI loaders, merger
+│   ├── core/              # Step engine, registry, reconciliation loop, health server (health.ts)
+│   ├── steps/             # Configuration steps: validation, connectivity, infrastructure,
+│   │                      #   servarr, integrations, bazarr
+│   ├── servarr/           # Servarr API interactions (Tsarr client), config.xml writer
+│   ├── bazarr/            # Bazarr API client
+│   ├── qbittorrent/       # qBittorrent client
+│   ├── postgres/          # PostgreSQL provisioning (Bun SQL)
+│   ├── test/integration/  # Config scenario tests
+│   └── utils/             # Logger, retry, errors, API key helpers
+├── tests/e2e/             # Kubernetes end-to-end tests (bun run test:e2e)
+├── examples/              # Example config files (validated by src/config/examples.test.ts)
+├── helm/preparr/          # Helm chart
+└── docs/                  # Documentation site (Astro Starlight)
 ```
 
 ## Architecture Principles
@@ -94,7 +101,7 @@ preparr/
 
 5. **Configuration Watching**
    - Monitor ConfigMaps/Secrets for changes
-   - Detect changes via Bun's native file watching
+   - Detect changes by polling the config file and hashing the `app` section
    - Apply updates via API with conflict resolution
 
 6. **Health Monitoring**
@@ -136,37 +143,25 @@ LOG_FORMAT=json  # json|pretty
 ```
 
 ## Configuration Format (YAML)
+Desired Servarr state lives under `app`; unknown keys are stripped by Zod, so top-level
+`rootFolders` etc. are silently ignored. Secrets usually come from env vars, which override the file.
 ```yaml
-apiVersion: preparr.io/v1
-kind: ServarrConfig
-metadata:
-  name: sonarr-config
-spec:
-  postgres:
-    databases:
-      - name: sonarr_main
-      - name: sonarr_log
-    users:
-      - name: sonarr
-        password: ${SONARR_DB_PASSWORD}
-        databases: [sonarr_main, sonarr_log]
-  
-  servarr:
-    profiles:
-      - name: "1080p"
-        cutoff: 1080p
-        items:
-          - quality: HDTV-1080p
-            allowed: true
-    
-    rootFolders:
-      - path: /tv
-        
-    indexers:
-      - name: "NZBgeek"
-        type: newznab
-        url: https://api.nzbgeek.info
-        apiKey: ${NZBGEEK_API_KEY}
+postgres:
+  host: postgres
+servarr:
+  url: http://sonarr:8989
+  type: sonarr
+app:
+  rootFolders:
+    - path: /tv
+  indexers:
+    - name: NZBgeek
+      implementation: Newznab
+      implementationName: Newznab
+      configContract: NewznabSettings
+      fields:
+        - name: baseUrl
+          value: https://api.nzbgeek.info
 ```
 
 ## Testing Strategy
@@ -259,13 +254,12 @@ Types: feat, fix, docs, style, refactor, test, chore
 - Create directories only when needed during implementation
 
 ## Bun-Specific Implementation Notes
-- Use `Bun.file().watch()` for configuration file monitoring instead of chokidar
-- Use `Bun.spawn()` for running psql commands
+- Configuration file monitoring polls the file every 5 seconds (Bun's file watching is treated as experimental); no chokidar
 - Use `Bun.env` instead of process.env for environment variables
 - Leverage Bun's fast JSON parsing for configuration files
 - Use Bun's built-in HTTP server for health endpoints
 - Use native fetch() for all HTTP requests (Tsarr handles Servarr APIs)
-- Use `import { sql } from "bun"` for PostgreSQL database operations
+- Use `new SQL(url)` from `"bun"` for PostgreSQL database operations
 
 ## Critical Rules
 - NEVER commit changes unless the user explicitly asks you to commit

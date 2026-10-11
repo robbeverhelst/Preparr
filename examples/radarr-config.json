@@ -45,8 +45,8 @@
             "name": "port",
             "value": 8080
           },
-          { "name": "username", "value": "${QBITTORRENT_USER}" },
-          { "name": "password", "value": "${QBITTORRENT_PASSWORD}" },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass" },
           { "name": "category", "value": "movies" }
         ],
         "enable": true,

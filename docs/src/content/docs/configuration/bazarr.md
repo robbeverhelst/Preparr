@@ -28,25 +28,27 @@ When running PrepArr alongside Sonarr or Radarr (`SERVARR_TYPE=sonarr`), you can
 
 ## Configuration
 
-Bazarr settings live under the `bazarr` key in the configuration file:
+Bazarr settings live under the `app.bazarr` key in the configuration file:
 
 ```json
 {
-  "bazarr": {
-    "languages": [
-      { "code": "en", "name": "English" },
-      { "code": "nl", "name": "Dutch" }
-    ],
-    "providers": [
-      { "name": "opensubtitlescom", "enabled": true }
-    ],
-    "sonarr": {
-      "url": "http://sonarr:8989",
-      "apiKey": "your-sonarr-api-key"
-    },
-    "radarr": {
-      "url": "http://radarr:7878",
-      "apiKey": "your-radarr-api-key"
+  "app": {
+    "bazarr": {
+      "languages": [
+        { "code": "en", "name": "English" },
+        { "code": "nl", "name": "Dutch" }
+      ],
+      "providers": [
+        { "name": "opensubtitlescom", "enabled": true }
+      ],
+      "sonarr": {
+        "url": "http://sonarr:8989",
+        "apiKey": "your-sonarr-api-key"
+      },
+      "radarr": {
+        "url": "http://radarr:7878",
+        "apiKey": "your-radarr-api-key"
+      }
     }
   }
 }
@@ -64,12 +66,14 @@ Define which languages Bazarr should search subtitles for:
 
 ```json
 {
-  "bazarr": {
-    "languages": [
-      { "code": "en", "name": "English" },
-      { "code": "nl", "name": "Dutch" },
-      { "code": "fr", "name": "French" }
-    ]
+  "app": {
+    "bazarr": {
+      "languages": [
+        { "code": "en", "name": "English" },
+        { "code": "nl", "name": "Dutch" },
+        { "code": "fr", "name": "French" }
+      ]
+    }
   }
 }
 ```
@@ -86,11 +90,13 @@ Configure where Bazarr downloads subtitles from:
 
 ```json
 {
-  "bazarr": {
-    "providers": [
-      { "name": "opensubtitlescom", "enabled": true },
-      { "name": "addic7ed", "enabled": true }
-    ]
+  "app": {
+    "bazarr": {
+      "providers": [
+        { "name": "opensubtitlescom", "enabled": true },
+        { "name": "addic7ed", "enabled": true }
+      ]
+    }
   }
 }
 ```
@@ -112,14 +118,16 @@ Link Bazarr to your Sonarr and Radarr instances so it knows which media librarie
 
 ```json
 {
-  "bazarr": {
-    "sonarr": {
-      "url": "http://sonarr:8989",
-      "apiKey": "your-sonarr-api-key"
-    },
-    "radarr": {
-      "url": "http://radarr:7878",
-      "apiKey": "your-radarr-api-key"
+  "app": {
+    "bazarr": {
+      "sonarr": {
+        "url": "http://sonarr:8989",
+        "apiKey": "your-sonarr-api-key"
+      },
+      "radarr": {
+        "url": "http://radarr:7878",
+        "apiKey": "your-radarr-api-key"
+      }
     }
   }
 }

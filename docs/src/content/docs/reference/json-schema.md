@@ -7,6 +7,12 @@ This page documents every field available in PrepArr configuration files. The sc
 
 ## Root Properties
 
+The top-level keys of a config file are `postgres`, `servarr`, `services`, `app`, `health`, `logLevel`, `logFormat`, `configPath`, `configWatch`, and `configReconcileInterval`. Unknown top-level keys are silently stripped.
+
+## `app` Properties
+
+All desired-state settings below are properties of the top-level `app` object (e.g. `{ "app": { "rootFolders": [...] } }`). Placed at the root of the file, they are ignored.
+
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
 | `apiKey` | string | No | Auto-generated | 32-character hex API key for the Servarr instance |
@@ -37,10 +43,12 @@ This page documents every field available in PrepArr configuration files. The sc
 
 ```json
 {
-  "rootFolders": [
-    { "path": "/tv", "accessible": true },
-    { "path": "/anime", "accessible": true }
-  ]
+  "app": {
+    "rootFolders": [
+      { "path": "/tv", "accessible": true },
+      { "path": "/anime", "accessible": true }
+    ]
+  }
 }
 ```
 
@@ -74,23 +82,25 @@ This page documents every field available in PrepArr configuration files. The sc
 
 ```json
 {
-  "qualityProfiles": [
-    {
-      "name": "HD - 1080p",
-      "cutoff": 1080,
-      "upgradeAllowed": true,
-      "items": [
-        { "quality": { "id": 7, "name": "Bluray-1080p" }, "allowed": true },
-        { "quality": { "id": 3, "name": "WEBDL-1080p" }, "allowed": true },
-        { "quality": { "id": 9, "name": "HDTV-1080p" }, "allowed": true }
-      ],
-      "formatItems": [
-        { "format": "x265", "score": 100 }
-      ],
-      "minFormatScore": 0,
-      "cutoffFormatScore": 0
-    }
-  ]
+  "app": {
+    "qualityProfiles": [
+      {
+        "name": "HD - 1080p",
+        "cutoff": 1080,
+        "upgradeAllowed": true,
+        "items": [
+          { "quality": { "id": 7, "name": "Bluray-1080p" }, "allowed": true },
+          { "quality": { "id": 3, "name": "WEBDL-1080p" }, "allowed": true },
+          { "quality": { "id": 9, "name": "HDTV-1080p" }, "allowed": true }
+        ],
+        "formatItems": [
+          { "format": "x265", "score": 100 }
+        ],
+        "minFormatScore": 0,
+        "cutoffFormatScore": 0
+      }
+    ]
+  }
 }
 ```
 
@@ -119,20 +129,22 @@ Each field in `fields` is `{ name: string, value: string | number | boolean | nu
 
 ```json
 {
-  "customFormats": [
-    {
-      "name": "x265",
-      "specifications": [
-        {
-          "name": "x265",
-          "implementation": "ReleaseTitleSpecification",
-          "fields": [
-            { "name": "value", "value": "x265|h\\.?265|hevc" }
-          ]
-        }
-      ]
-    }
-  ]
+  "app": {
+    "customFormats": [
+      {
+        "name": "x265",
+        "specifications": [
+          {
+            "name": "x265",
+            "implementation": "ReleaseTitleSpecification",
+            "fields": [
+              { "name": "value", "value": "x265|h\\.?265|hevc" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -152,21 +164,23 @@ Each field in `fields` is `{ name: string, value: string | number | boolean | nu
 
 ```json
 {
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 },
-        { "name": "username", "value": "admin" },
-        { "name": "password", "value": "adminpass" },
-        { "name": "movieCategory", "value": "movies" }
-      ]
-    }
-  ]
+  "app": {
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass" },
+          { "name": "movieCategory", "value": "movies" }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -271,21 +285,23 @@ Bazarr subtitle manager configuration. Used when `SERVARR_TYPE=bazarr` or when c
 
 ```json
 {
-  "bazarr": {
-    "languages": [
-      { "code": "en", "name": "English" },
-      { "code": "nl", "name": "Dutch" }
-    ],
-    "providers": [
-      { "name": "opensubtitlescom", "enabled": true }
-    ],
-    "sonarr": {
-      "url": "http://sonarr:8989",
-      "apiKey": "your-sonarr-api-key"
-    },
-    "radarr": {
-      "url": "http://radarr:7878",
-      "apiKey": "your-radarr-api-key"
+  "app": {
+    "bazarr": {
+      "languages": [
+        { "code": "en", "name": "English" },
+        { "code": "nl", "name": "Dutch" }
+      ],
+      "providers": [
+        { "name": "opensubtitlescom", "enabled": true }
+      ],
+      "sonarr": {
+        "url": "http://sonarr:8989",
+        "apiKey": "your-sonarr-api-key"
+      },
+      "radarr": {
+        "url": "http://radarr:7878",
+        "apiKey": "your-radarr-api-key"
+      }
     }
   }
 }
@@ -407,14 +423,16 @@ Override default quality size limits.
 
 ```json
 {
-  "qualityDefinitions": [
-    {
-      "quality": "Bluray-1080p",
-      "title": "Bluray-1080p",
-      "minSize": 5,
-      "maxSize": 100,
-      "preferredSize": 30
-    }
-  ]
+  "app": {
+    "qualityDefinitions": [
+      {
+        "quality": "Bluray-1080p",
+        "title": "Bluray-1080p",
+        "minSize": 5,
+        "maxSize": 100,
+        "preferredSize": 30
+      }
+    ]
+  }
 }
 ```

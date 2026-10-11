@@ -59,7 +59,7 @@ The sidecar container runs indefinitely:
 3. **Reconcile** -- Compares desired state against current state and applies changes via the Servarr API
 4. **Watch** -- Monitors the config file for changes (if `CONFIG_WATCH=true`)
 5. **Repeat** -- Runs the reconciliation loop on a configurable interval
-6. **Health** -- Exposes `/health`, `/ready`, and `/metrics` endpoints
+6. **Health** -- Exposes `/health`, `/health/ready`, `/health/live`, and `/metrics` endpoints
 
 ## Reconciliation Loop
 

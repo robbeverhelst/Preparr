@@ -16,37 +16,39 @@ Create `sonarr-config.json` with your desired Sonarr configuration:
 
 ```json
 {
-  "rootFolders": [
-    { "path": "/tv", "accessible": true }
-  ],
-  "qualityProfiles": [
-    {
-      "name": "HD - 1080p",
-      "cutoff": 1080,
-      "items": [
-        { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
-        { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true },
-        { "quality": { "id": 3, "name": "Bluray-1080p" }, "allowed": true }
-      ]
-    }
-  ],
-  "downloadClients": [
-    {
-      "name": "qBittorrent",
-      "implementation": "QBittorrent",
-      "implementationName": "qBittorrent",
-      "configContract": "QBittorrentSettings",
-      "fields": [
-        { "name": "host", "value": "qbittorrent" },
-        { "name": "port", "value": 8080 },
-        { "name": "username", "value": "admin" },
-        { "name": "password", "value": "adminpass" },
-        { "name": "category", "value": "tv" }
-      ],
-      "enable": true,
-      "priority": 1
-    }
-  ]
+  "app": {
+    "rootFolders": [
+      { "path": "/tv", "accessible": true }
+    ],
+    "qualityProfiles": [
+      {
+        "name": "HD - 1080p",
+        "cutoff": 1080,
+        "items": [
+          { "quality": { "id": 1, "name": "HDTV-1080p" }, "allowed": true },
+          { "quality": { "id": 2, "name": "WEBDL-1080p" }, "allowed": true },
+          { "quality": { "id": 3, "name": "Bluray-1080p" }, "allowed": true }
+        ]
+      }
+    ],
+    "downloadClients": [
+      {
+        "name": "qBittorrent",
+        "implementation": "QBittorrent",
+        "implementationName": "qBittorrent",
+        "configContract": "QBittorrentSettings",
+        "fields": [
+          { "name": "host", "value": "qbittorrent" },
+          { "name": "port", "value": 8080 },
+          { "name": "username", "value": "admin" },
+          { "name": "password", "value": "adminpass" },
+          { "name": "category", "value": "tv" }
+        ],
+        "enable": true,
+        "priority": 1
+      }
+    ]
+  }
 }
 ```
 
