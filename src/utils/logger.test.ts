@@ -18,7 +18,7 @@ test('logger handles metadata correctly', () => {
   console.warn = (msg: string) => logs.push(msg)
   console.error = (msg: string) => logs.push(msg)
 
-  logger.info('test message', { key: 'value' })
+  logger.error('test message', { key: 'value' })
 
   expect(logs).toHaveLength(1)
   expect(logs[0]).toContain('test message')

@@ -27,14 +27,9 @@
     "noPropertyAccessFromIndexSignature": false,
     "types": ["bun"],
     "paths": {
-      "@/*": ["./src/*"],
-      "@config/*": ["./src/config/*"],
-      "@postgres/*": ["./src/postgres/*"],
-      "@servarr/*": ["./src/servarr/*"],
-      "@watcher/*": ["./src/watcher/*"],
-      "@utils/*": ["./src/utils/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "src/types/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests", "**/*.test.ts", "**/*.spec.ts"]
 }
