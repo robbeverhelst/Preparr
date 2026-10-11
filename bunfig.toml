@@ -1,4 +1,3 @@
 [test]
 # Quiet the JSON logger during tests; set LOG_LEVEL explicitly to see logs
 preload = ["./src/test/setup.ts"]
-coverageSkipTestFiles = true
