@@ -78,7 +78,7 @@ jobs:
           cp package.json "$ctx/"
           cp "$(command -v kubectl)" "$ctx/kubectl"
           cat > "$ctx/Dockerfile" <<'EOF'
-          FROM oven/bun:1-alpine
+          FROM oven/bun:1.4.2-alpine
           WORKDIR /app
           COPY package.json ./
           COPY tests ./tests
