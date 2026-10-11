@@ -1,5 +1,5 @@
 # Build stage
-FROM oven/bun:1-alpine AS builder
+FROM oven/bun:1.4.2-alpine AS builder
 
 WORKDIR /app
 
@@ -16,11 +16,10 @@ COPY . .
 RUN bun run build
 
 # Runtime stage
-FROM oven/bun:1-alpine
+FROM oven/bun:1.4.2-alpine
 
 # Install runtime dependencies
 RUN apk add --no-cache \
-    postgresql-client \
     curl \
     tini
 

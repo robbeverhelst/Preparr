@@ -7,7 +7,7 @@ Thank you for your interest in contributing to PrepArr. This guide covers develo
 
 ## Prerequisites
 
-- [Bun](https://bun.sh/docs/installation) (latest version)
+- [Bun](https://bun.sh/docs/installation) (version pinned in `.bun-version`)
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
 - [PostgreSQL](https://www.postgresql.org/download/) (for local development)
 

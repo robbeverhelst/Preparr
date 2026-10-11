@@ -1,5 +1,5 @@
 {
-  "branches": ["main", "master"],
+  "branches": ["main"],
   "tagFormat": "v${version}",
   "preset": "angular",
   "repositoryUrl": "https://github.com/robbeverhelst/Preparr.git",
