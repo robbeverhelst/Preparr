@@ -9,6 +9,20 @@ interface RetryOptions {
   factor?: number
 }
 
+export interface PostgresConnectionOptions {
+  username: string
+  password: string
+  host: string
+  port: number | string
+  database: string
+}
+
+export function buildPostgresConnectionString(options: PostgresConnectionOptions): string {
+  const username = encodeURIComponent(options.username)
+  const password = encodeURIComponent(options.password)
+  return `postgres://${username}:${password}@${options.host}:${options.port}/${options.database}`
+}
+
 export class PostgresClient {
   private config: PostgresConfig
   private db: SQL | null = null
@@ -25,7 +39,7 @@ export class PostgresClient {
   }
 
   private getConnectionString(database = 'postgres'): string {
-    return `postgres://${this.config.username}:${this.config.password}@${this.config.host}:${this.config.port}/${database}`
+    return buildPostgresConnectionString({ ...this.config, database })
   }
 
   private connect(): void {
