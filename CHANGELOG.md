@@ -1,3 +1,10 @@
+## [0.19.9](https://github.com/robbeverhelst/Preparr/compare/v0.19.8...v0.19.9) (2026-10-11)
+
+
+### Bug Fixes
+
+* repair Docker healthcheck, Error logging, and Postgres URL encoding ([#151](https://github.com/robbeverhelst/Preparr/issues/151)) ([ac865ea](https://github.com/robbeverhelst/Preparr/commit/ac865ea8c50dd5fc3e092053c84ee8881f169911))
+
 ## [0.19.8](https://github.com/robbeverhelst/Preparr/compare/v0.19.7...v0.19.8) (2026-10-07)
 
 
