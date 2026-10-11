@@ -23,6 +23,11 @@ describe('PostgresClient', () => {
     expect(client).toBeInstanceOf(PostgresClient)
   })
 
+  test('close handles null connections gracefully', () => {
+    // Should not throw when no connections exist
+    expect(() => client.close()).not.toThrow()
+  })
+
   test('builds connection strings with URL-encoded credentials', () => {
     const url = buildPostgresConnectionString({
       username: 'user@corp',

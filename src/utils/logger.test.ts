@@ -37,7 +37,7 @@ test('logger serializes Error values in metadata', () => {
 
   try {
     logger.error('operation failed', {
-      error: new Error('boom'),
+      error: Object.assign(new Error('boom'), { code: 'ECONNREFUSED' }),
       nested: { cause: new TypeError('bad') },
     })
   } finally {
@@ -49,6 +49,7 @@ test('logger serializes Error values in metadata', () => {
   expect(entry.error.message).toBe('boom')
   expect(entry.error.name).toBe('Error')
   expect(entry.error.stack).toContain('boom')
+  expect(entry.error.code).toBe('ECONNREFUSED')
   expect(entry.nested.cause.message).toBe('bad')
   expect(entry.nested.cause.name).toBe('TypeError')
 })

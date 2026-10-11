@@ -10,7 +10,9 @@ const shouldLog = (level: LogLevel): boolean => {
 
 // Error properties are non-enumerable, so JSON.stringify would otherwise emit `{}`
 const serializeErrors = (_key: string, value: unknown) =>
-  value instanceof Error ? { name: value.name, message: value.message, stack: value.stack } : value
+  value instanceof Error
+    ? { ...value, name: value.name, message: value.message, stack: value.stack }
+    : value
 
 const formatLog = (level: LogLevel, message: string, meta?: Record<string, unknown>) => {
   const timestamp = new Date().toISOString()
