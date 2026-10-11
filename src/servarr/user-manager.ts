@@ -1,16 +1,14 @@
 import { SQL } from 'bun'
-import type { PostgresConfig, ServarrConfig } from '@/config/schema'
+import type { ServarrConfig } from '@/config/schema'
 import { buildPostgresConnectionString } from '@/postgres/client'
 import { logger } from '@/utils/logger'
-import type { ClientWithHostConfig, DatabaseUser, ServarrClientType } from './types'
+import type { DatabaseUser } from './types'
 
 export class ServarrUserManager {
   private config: ServarrConfig
-  private logDatabaseEnabled: boolean
 
-  constructor(config: ServarrConfig, logDatabaseEnabled: boolean) {
+  constructor(config: ServarrConfig) {
     this.config = config
-    this.logDatabaseEnabled = logDatabaseEnabled
   }
 
   createDatabaseConnection(database?: string): SQL {
@@ -32,31 +30,6 @@ export class ServarrUserManager {
     })
 
     return new SQL(buildPostgresConnectionString({ ...connectionOptions, password }))
-  }
-
-  private getDatabaseNames(): { main: string; log?: string } {
-    return {
-      main: `${this.config.type}_main`,
-      ...(this.logDatabaseEnabled ? { log: `${this.config.type}_log` } : {}),
-    }
-  }
-
-  async verifyPostgreSQLConnection(): Promise<boolean> {
-    logger.info('Verifying PostgreSQL connection...')
-
-    try {
-      const db = this.createDatabaseConnection()
-      await db`SELECT 1 as test`
-      db.close()
-
-      logger.info('PostgreSQL connection successful', { database: `${this.config.type}_main` })
-      return true
-    } catch (error) {
-      logger.warn('PostgreSQL connection not ready yet', {
-        error: error instanceof Error ? error.message : String(error),
-      })
-      return false
-    }
   }
 
   async checkServarrTablesInitialized(): Promise<boolean> {
@@ -244,136 +217,5 @@ export class ServarrUserManager {
       SET "Password" = ${hashedPassword}, "Salt" = ${saltBase64}, "Iterations" = 10000
       WHERE LOWER("Username") = LOWER(${username})
     `
-  }
-
-  async createInitialUserInInitMode(): Promise<void> {
-    logger.info('Creating initial admin user in init mode...', {
-      username: this.config.adminUser,
-    })
-
-    try {
-      const db = this.createDatabaseConnection()
-
-      const existingUsers =
-        await db`SELECT * FROM "Users" WHERE LOWER("Username") = LOWER(${this.config.adminUser})`
-
-      if (existingUsers.length > 0) {
-        logger.info('Admin user already exists', { username: this.config.adminUser })
-        logger.debug('Closing database connection after user check')
-        try {
-          db.close()
-          logger.debug('Database connection closed successfully')
-        } catch (closeError) {
-          logger.warn('Error closing database connection', { closeError })
-        }
-        logger.debug('Returning from createInitialUserInInitMode')
-        return
-      }
-
-      const userId = crypto.randomUUID()
-      const salt = crypto.getRandomValues(new Uint8Array(16))
-      const saltBase64 = Buffer.from(salt).toString('base64')
-
-      const encoder = new TextEncoder()
-      const passwordBytes = encoder.encode(this.config.adminPassword)
-      const key = await crypto.subtle.importKey('raw', passwordBytes, 'PBKDF2', false, [
-        'deriveBits',
-      ])
-      const hashBuffer = await crypto.subtle.deriveBits(
-        {
-          name: 'PBKDF2',
-          salt: salt,
-          iterations: 10000,
-          hash: 'SHA-512',
-        },
-        key,
-        256,
-      )
-
-      const hashedPassword = Buffer.from(hashBuffer).toString('base64')
-
-      await db`
-        INSERT INTO "Users" ("Identifier", "Username", "Password", "Salt", "Iterations")
-        VALUES (${userId}, ${this.config.adminUser.toLowerCase()}, ${hashedPassword}, ${saltBase64}, 10000)
-      `
-
-      db.close()
-
-      logger.info('Initial admin user created successfully in init mode', {
-        username: this.config.adminUser,
-        userId,
-      })
-    } catch (error) {
-      logger.error('Failed to create initial user in init mode', { error })
-      throw error
-    }
-  }
-
-  async configureDatabase(
-    postgresConfig: PostgresConfig,
-    client: ServarrClientType | null,
-    apiKey: string | null,
-  ): Promise<void> {
-    if (!apiKey) {
-      throw new Error('ServarrManager must be initialized before configuring database')
-    }
-
-    logger.info('Configuring Servarr database connection...')
-    const databases = this.getDatabaseNames()
-
-    const dbConfig: Record<string, string | number> = {
-      databaseType: 'postgresql',
-      host: postgresConfig.host,
-      port: postgresConfig.port,
-      database: databases.main,
-      user: this.config.type,
-      password: postgresConfig.password,
-    }
-
-    if (databases.log) {
-      dbConfig.logDatabase = databases.log
-    }
-
-    try {
-      if (!client || !('updateHostConfig' in client)) {
-        logger.debug('updateHostConfig not supported for this Servarr type')
-        throw new Error('Database configuration not supported for this Servarr type')
-      }
-
-      const typedClient = client as ServarrClientType & ClientWithHostConfig
-      const result = await typedClient.updateHostConfig(1, dbConfig)
-
-      if (result.error) {
-        const errorMessage =
-          result.error instanceof Error
-            ? result.error.message
-            : typeof result.error === 'string'
-              ? result.error
-              : JSON.stringify(result.error)
-        throw new Error(`API error: ${errorMessage}`)
-      }
-
-      logger.info('Database configuration updated')
-
-      await this.restartServarr(client)
-    } catch (error) {
-      logger.error('Failed to configure database', { error })
-      throw error
-    }
-  }
-
-  async restartServarr(client: ServarrClientType | null): Promise<void> {
-    logger.info('Restarting Servarr to apply database configuration...')
-
-    try {
-      await client?.restartSystem()
-
-      await new Promise((resolve) => setTimeout(resolve, 5000))
-
-      logger.info('Servarr restart command sent')
-    } catch (error) {
-      logger.error('Failed to restart Servarr', { error })
-      throw error
-    }
   }
 }

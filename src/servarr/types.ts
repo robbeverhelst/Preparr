@@ -49,13 +49,6 @@ export type ClientWithDownloadClients = {
   deleteDownloadClient(id: number): Promise<{ data?: unknown; error?: unknown; response: Response }>
 }
 
-export type ClientWithHostConfig = {
-  updateHostConfig(
-    id: number,
-    config: Record<string, unknown>,
-  ): Promise<{ data?: unknown; error?: unknown; response: Response }>
-}
-
 export type ClientWithApplications = {
   getApplications(): Promise<{ data?: unknown[]; error?: unknown; response: Response }>
   addApplication(

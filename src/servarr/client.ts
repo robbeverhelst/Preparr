@@ -6,7 +6,6 @@ import type {
   Indexer,
   MediaManagementConfig,
   NamingConfig,
-  PostgresConfig,
   QualityDefinition,
   ReleaseProfile,
   RootFolder,
@@ -53,7 +52,7 @@ export class ServarrManager {
 
     this.configWriter = new ConfigXmlWriter(config, this.configPath, this.logDatabaseEnabled)
     this.apiClient = new ServarrApiClient(config)
-    this.userManager = new ServarrUserManager(config, this.logDatabaseEnabled)
+    this.userManager = new ServarrUserManager(config)
   }
 
   private getClientCapabilities(): ClientCapabilities {
@@ -199,18 +198,7 @@ export class ServarrManager {
     return 'getDownloadClients' in client
   }
 
-  // Note: hasHostConfig is used by userManager.configureDatabase internally
-
   // --- Delegated methods ---
-
-  async detectType(): Promise<string> {
-    if (this.config.type !== 'auto') {
-      return this.config.type
-    }
-
-    await this.apiClient.waitForStartup(this.apiKey || '')
-    return await this.apiClient.detectServarrType()
-  }
 
   async writeConfigurationOnly(servarrConfigApiKey?: string): Promise<void> {
     logger.info('Writing Servarr configuration only (init mode)...')
@@ -345,33 +333,11 @@ export class ServarrManager {
 
   // --- Delegated to userManager ---
 
-  verifyPostgreSQLConnection(): Promise<boolean> {
-    return this.userManager.verifyPostgreSQLConnection()
-  }
-
-  checkServarrTablesInitialized(): Promise<boolean> {
-    return this.userManager.checkServarrTablesInitialized()
-  }
-
   createInitialUser(): Promise<void> {
     if (!this.isInitialized) {
       throw new Error('ServarrManager must be initialized before creating user')
     }
     return this.userManager.createInitialUser()
-  }
-
-  createInitialUserInInitMode(): Promise<void> {
-    return this.userManager.createInitialUserInInitMode()
-  }
-
-  async configureDatabase(postgresConfig: PostgresConfig): Promise<void> {
-    if (!this.isInitialized || !this.apiKey) {
-      throw new Error('ServarrManager must be initialized before configuring database')
-    }
-
-    await this.userManager.configureDatabase(postgresConfig, this.client, this.apiKey)
-    // After restart, wait for startup
-    await this.apiClient.waitForStartup(this.apiKey)
   }
 
   // --- Delegated to apiClient ---
@@ -381,20 +347,6 @@ export class ServarrManager {
   }
 
   // --- Public accessors ---
-
-  getClient(): ServarrClientType {
-    if (!this.client) {
-      throw new Error('ServarrManager not initialized. Call initialize() first.')
-    }
-    return this.client
-  }
-
-  getApiKey(): string {
-    if (!this.apiKey) {
-      throw new Error('API key not available. Initialize ServarrManager first.')
-    }
-    return this.apiKey
-  }
 
   getType(): string {
     return this.config.type
@@ -482,37 +434,6 @@ export class ServarrManager {
       logger.info('Root folder added successfully', { path: rootFolder.path })
     } catch (error) {
       logger.error('Failed to add root folder', { path: rootFolder.path, error })
-      throw error
-    }
-  }
-
-  async configureRootFolders(rootFolders: RootFolder[]): Promise<void> {
-    if (!this.isInitialized || !this.apiKey) {
-      throw new Error('ServarrManager not initialized')
-    }
-
-    logger.info('Configuring root folders...', { count: rootFolders.length })
-
-    try {
-      for (const rootFolder of rootFolders) {
-        await this.addRootFolder(rootFolder)
-      }
-
-      const currentFolders = await this.getRootFolders()
-      const configuredPaths = rootFolders.map((f) => f.path)
-      const currentPaths = currentFolders.map((f) => f.path)
-
-      const missing = configuredPaths.filter((path) => !currentPaths.includes(path))
-      if (missing.length > 0) {
-        logger.warn('Some root folders were not added successfully', { missing })
-      }
-
-      logger.info('Root folder configuration completed', {
-        configured: configuredPaths.length,
-        total: currentPaths.length,
-      })
-    } catch (error) {
-      logger.error('Failed to configure root folders', { error })
       throw error
     }
   }
@@ -651,61 +572,6 @@ export class ServarrManager {
     }
   }
 
-  async configureIndexers(indexers: Indexer[]): Promise<void> {
-    if (!this.isInitialized || !this.apiKey) {
-      throw new Error('ServarrManager not initialized')
-    }
-
-    logger.info('Configuring indexers...', { count: indexers.length })
-
-    try {
-      for (const indexer of indexers) {
-        await this.addIndexer(indexer)
-      }
-
-      await this.testIndexers()
-
-      logger.info('Indexer configuration completed', { count: indexers.length })
-    } catch (error) {
-      logger.error('Failed to configure indexers', { error })
-      throw error
-    }
-  }
-
-  async testIndexers(): Promise<void> {
-    if (!this.isInitialized || !this.apiKey) {
-      throw new Error('ServarrManager not initialized')
-    }
-
-    logger.info('Testing all indexers...')
-
-    try {
-      const indexers = await this.getIndexers()
-
-      for (const indexer of indexers) {
-        try {
-          const testResult = await this.client?.testIndexer(this.mapToTsarrIndexer(indexer))
-
-          if (testResult?.data) {
-            logger.info('Indexer test successful', { name: indexer.name })
-          } else {
-            logger.warn('Indexer test failed', {
-              name: indexer.name,
-              error: testResult?.error,
-            })
-          }
-        } catch (error) {
-          logger.warn('Failed to test indexer', { name: indexer.name, error })
-        }
-      }
-
-      logger.info('Indexer testing completed')
-    } catch (error) {
-      logger.error('Failed to test indexers', { error })
-      throw error
-    }
-  }
-
   async removeIndexer(name: string): Promise<void> {
     if (!this.isInitialized || !this.apiKey) {
       throw new Error('ServarrManager not initialized')
@@ -824,66 +690,6 @@ export class ServarrManager {
       logger.info('Download client added successfully', { name: client.name })
     } catch (error) {
       logger.error('Failed to add download client', { name: client.name, error })
-      throw error
-    }
-  }
-
-  async configureDownloadClients(clients: DownloadClient[]): Promise<void> {
-    if (!this.isInitialized || !this.apiKey) {
-      throw new Error('ServarrManager not initialized')
-    }
-
-    logger.info('Configuring download clients...', { count: clients.length })
-
-    try {
-      for (const client of clients) {
-        await this.addDownloadClient(client)
-      }
-
-      await this.testDownloadClients()
-
-      logger.info('Download client configuration completed', { count: clients.length })
-    } catch (error) {
-      logger.error('Failed to configure download clients', { error })
-      throw error
-    }
-  }
-
-  async testDownloadClients(): Promise<void> {
-    if (!this.isInitialized || !this.apiKey) {
-      throw new Error('ServarrManager not initialized')
-    }
-
-    logger.info('Testing all download clients...')
-
-    try {
-      if (!this.client || !('testDownloadClient' in this.client)) {
-        logger.debug('Download client operations not supported for this Servarr type')
-        return
-      }
-
-      const clients = await this.getDownloadClients()
-
-      for (const client of clients) {
-        try {
-          const testResult = await this.client.testDownloadClient(client)
-
-          if (testResult?.data) {
-            logger.info('Download client test successful', { name: client.name })
-          } else {
-            logger.warn('Download client test failed', {
-              name: client.name,
-              error: testResult?.error,
-            })
-          }
-        } catch (error) {
-          logger.warn('Failed to test download client', { name: client.name, error })
-        }
-      }
-
-      logger.info('Download client testing completed')
-    } catch (error) {
-      logger.error('Failed to test download clients', { error })
       throw error
     }
   }
@@ -1113,30 +919,6 @@ export class ServarrManager {
       logger.info('Application deleted successfully', { applicationId })
     } catch (error) {
       logger.error('Failed to delete application', { applicationId, error })
-      throw error
-    }
-  }
-
-  async configureApplications(applications: Application[]): Promise<void> {
-    if (!this.isInitialized || !this.apiKey) {
-      throw new Error('ServarrManager not initialized')
-    }
-
-    if (!applications || applications.length === 0) {
-      logger.debug('No applications to configure')
-      return
-    }
-
-    logger.info('Configuring applications...', { count: applications.length })
-
-    try {
-      for (const application of applications) {
-        await this.addApplication(application)
-      }
-
-      logger.info('Application configuration completed', { count: applications.length })
-    } catch (error) {
-      logger.error('Failed to configure applications', { error })
       throw error
     }
   }
@@ -1558,23 +1340,5 @@ export class ServarrManager {
       logger.error('Failed to update quality definition', { qualityName, error })
       throw error
     }
-  }
-
-  async updateQualityDefinitions(definitions: QualityDefinition[]): Promise<void> {
-    if (!this.isInitialized || !this.apiKey) {
-      throw new Error('ServarrManager not initialized')
-    }
-
-    if (!this.capabilities.hasQualityDefinitions) {
-      throw new Error('Quality definitions not supported for this Servarr type')
-    }
-
-    logger.info('Updating quality definitions...', { count: definitions.length })
-
-    for (const def of definitions) {
-      await this.updateQualityDefinition(def.quality, def)
-    }
-
-    logger.info('Quality definitions updated successfully', { count: definitions.length })
   }
 }

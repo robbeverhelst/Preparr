@@ -67,7 +67,7 @@ PrepArr uses a **three-container pattern** for each Servarr application:
 - **Database Management** (`src/postgres/`) - PostgreSQL initialization and user management  
 - **Servarr Integration** (`src/servarr/`) - API interactions via Tsarr client
 - **Step System** (`src/steps/`) - Modular configuration steps with reconciliation
-- **Health Monitoring** (`src/health/`) - Health check endpoints for orchestrators
+- **Health Monitoring** (`src/core/health.ts`) - Health check endpoints for orchestrators
 
 ## 📝 Code Style
 
