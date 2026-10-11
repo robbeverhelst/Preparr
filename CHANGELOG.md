@@ -1,3 +1,10 @@
+## [0.19.10](https://github.com/robbeverhelst/Preparr/compare/v0.19.9...v0.19.10) (2026-10-11)
+
+
+### Bug Fixes
+
+* **examples:** nest example configs under app and align docs with the schema ([#155](https://github.com/robbeverhelst/Preparr/issues/155)) ([0ffbf3e](https://github.com/robbeverhelst/Preparr/commit/0ffbf3e2c91ecf50572835fd4387b7673ef22fa8))
+
 ## [0.19.9](https://github.com/robbeverhelst/Preparr/compare/v0.19.8...v0.19.9) (2026-10-11)
 
 
