@@ -62,10 +62,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24.21.0
-
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: .bun-version
@@ -76,4 +72,5 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bun run semantic-release
+        # --bun runs semantic-release and the npm CLI it calls (to bump package.json) on Bun, so no Node is needed
+        run: bun --bun run semantic-release
