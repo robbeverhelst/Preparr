@@ -4,6 +4,7 @@
   "description": "A Docker sidecar that fully automates Servarr initialization - from deployment to ready-to-use instances with zero manual setup",
   "main": "dist/index.js",
   "type": "module",
+  "packageManager": "bun@1.4.3",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "build": "bun build src/index.ts --target bun --outdir dist",
