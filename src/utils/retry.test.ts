@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test'
+
 import { withRetry } from './retry'
 
 describe('withRetry', () => {

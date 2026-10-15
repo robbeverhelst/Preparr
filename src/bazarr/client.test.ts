@@ -1,5 +1,6 @@
 import type { Mock } from 'bun:test'
 import { afterEach, describe, expect, mock, test } from 'bun:test'
+
 import { BazarrManager } from './client'
 
 describe('BazarrManager language profile configuration', () => {

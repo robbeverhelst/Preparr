@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test'
+
 import { logger } from './logger'
 
 test('logger exports all methods', () => {

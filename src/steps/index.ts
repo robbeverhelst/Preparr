@@ -1,4 +1,5 @@
 import type { ConfigurationStep } from '@/core/step'
+
 import { BazarrIntegrationStep } from './bazarr/bazarr-integration'
 import { BazarrLanguageProfilesStep } from './bazarr/bazarr-language-profiles'
 import { BazarrLanguagesStep } from './bazarr/bazarr-languages'

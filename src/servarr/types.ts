@@ -8,11 +8,7 @@ import type {
 } from 'tsarr'
 
 export type ServarrClientType =
-  | SonarrClient
-  | RadarrClient
-  | LidarrClient
-  | ReadarrClient
-  | ProwlarrClient
+  SonarrClient | RadarrClient | LidarrClient | ReadarrClient | ProwlarrClient
 
 export type IndexerResource = Sonarr.IndexerResource
 export type DownloadClientResource = Sonarr.DownloadClientResource

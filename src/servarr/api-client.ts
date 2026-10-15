@@ -1,6 +1,8 @@
 import { LidarrClient, ProwlarrClient, RadarrClient, ReadarrClient, SonarrClient } from 'tsarr'
+
 import type { ServarrConfig } from '@/config/schema'
 import { logger } from '@/utils/logger'
+
 import type { ServarrClientType } from './types'
 
 export class ServarrApiClient {

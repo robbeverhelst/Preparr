@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
+
 import type { PostgresConfig } from '@/config/schema'
+
 import { buildPostgresConnectionString, PostgresClient } from './client'
 
 describe('PostgresClient', () => {

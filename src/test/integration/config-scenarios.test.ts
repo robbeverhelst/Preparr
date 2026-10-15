@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+
 import { loadConfiguration } from '../../config'
 
 const testDir = '/tmp/preparr-scenario-test'

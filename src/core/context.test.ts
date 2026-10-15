@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test'
+
 import type { Config } from '@/config/schema'
+
 import { ContextBuilder } from './context'
 
 describe('ContextBuilder', () => {

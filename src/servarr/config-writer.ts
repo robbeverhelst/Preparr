@@ -1,4 +1,5 @@
 import { file, write } from 'bun'
+
 import type { ServarrConfig } from '@/config/schema'
 import { logger } from '@/utils/logger'
 

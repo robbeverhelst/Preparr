@@ -2,9 +2,30 @@
   "name": "preparr",
   "version": "0.19.10",
   "description": "A Docker sidecar that fully automates Servarr initialization - from deployment to ready-to-use instances with zero manual setup",
-  "main": "dist/index.js",
+  "keywords": [
+    "automation",
+    "docker",
+    "docker-compose",
+    "iac",
+    "infrastructure-as-code",
+    "kubernetes",
+    "radarr",
+    "servarr",
+    "sidecar",
+    "sonarr"
+  ],
+  "homepage": "https://github.com/robbeverhelst/Preparr#readme",
+  "bugs": {
+    "url": "https://github.com/robbeverhelst/Preparr/issues"
+  },
+  "license": "MIT",
+  "author": "Robbe Verhelst",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robbeverhelst/Preparr.git"
+  },
   "type": "module",
-  "packageManager": "bun@1.4.3",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "build": "bun build src/index.ts --target bun --outdir dist",
@@ -32,28 +53,6 @@
     "docs:build": "cd docs && bun run build",
     "docs:preview": "cd docs && bun run preview"
   },
-  "keywords": [
-    "servarr",
-    "radarr",
-    "sonarr",
-    "docker",
-    "sidecar",
-    "automation",
-    "kubernetes",
-    "docker-compose",
-    "iac",
-    "infrastructure-as-code"
-  ],
-  "author": "Robbe Verhelst",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/robbeverhelst/Preparr.git"
-  },
-  "bugs": {
-    "url": "https://github.com/robbeverhelst/Preparr/issues"
-  },
-  "homepage": "https://github.com/robbeverhelst/Preparr#readme",
   "dependencies": {
     "tsarr": "^2.16.3",
     "zod": "^4.6.6"
@@ -70,7 +69,8 @@
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=24.21.0",
-    "bun": ">=1.4.3"
-  }
+    "bun": ">=1.4.3",
+    "node": ">=24.21.0"
+  },
+  "packageManager": "bun@1.4.3"
 }
