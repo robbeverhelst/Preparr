@@ -40,7 +40,7 @@ export class Warning {
   ) {}
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: heterogeneous step collections require any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous step collections require any
 export abstract class ConfigurationStep<TState = any> {
   abstract readonly name: string
   abstract readonly description: string
@@ -131,7 +131,7 @@ export abstract class ConfigurationStep<TState = any> {
  * Base class for steps that require a ServarrManager client.
  * Auto-skips when servarrClient is not available (e.g. Bazarr deployments).
  */
-// biome-ignore lint/suspicious/noExplicitAny: heterogeneous step collections require any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous step collections require any
 export abstract class ServarrStep<TState = any> extends ConfigurationStep<TState> {
   protected client!: ServarrManager
 
@@ -154,7 +154,7 @@ export abstract class ServarrStep<TState = any> extends ConfigurationStep<TState
  * Base class for steps that require a BazarrManager client.
  * Auto-skips when bazarrClient is not available.
  */
-// biome-ignore lint/suspicious/noExplicitAny: heterogeneous step collections require any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous step collections require any
 export abstract class BazarrStep<TState = any> extends ConfigurationStep<TState> {
   protected client!: BazarrManager
 

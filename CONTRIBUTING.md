@@ -74,7 +74,7 @@ PrepArr uses a **three-container pattern** for each Servarr application:
 ### Formatting and Linting
 ```bash
 # Check code style
-bun run lint
+bun run lint:check
 
 # Fix auto-fixable issues
 bun run lint:fix
