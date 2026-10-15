@@ -12,7 +12,7 @@ PrepArr is a lightweight Docker sidecar designed to run alongside Servarr applic
 - **HTTP Client**: Native fetch() API
 - **Validation**: Zod
 - **Logging**: Native console with custom formatting
-- **Code Quality**: Biome (linting & formatting)
+- **Code Quality**: bun fmt and bun lint, with Biome for the rules bun lint lacks
 - **Release Management**: Semantic Release
 - **Dependency Updates**: Renovate
 
@@ -37,9 +37,9 @@ bun test            # Run tests
 bun test --watch    # Run tests in watch mode
 
 # Code Quality
-bun run lint        # Check code with Biome
+bun run lint:check  # Check code with bun lint, then Biome
 bun run lint:fix    # Fix linting issues
-bun run format      # Format code with Biome
+bun run format      # Format code with bun fmt
 bun run typecheck   # Type checking with TypeScript
 
 # Release
