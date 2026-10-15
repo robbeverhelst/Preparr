@@ -113,11 +113,11 @@ export class ServarrManager {
 
     // Add properties that may not be part of IndexerResource type
     if (indexer.appProfileId) {
-      // biome-ignore lint/suspicious/noExplicitAny: IndexerResource type may not include appProfileId
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- IndexerResource type may not include appProfileId
       ;(tsarrIndexer as any).appProfileId = indexer.appProfileId
     }
     // Add enable property (may not be part of IndexerResource type)
-    // biome-ignore lint/suspicious/noExplicitAny: IndexerResource type may not include enable
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- IndexerResource type may not include enable
     ;(tsarrIndexer as any).enable = indexer.enable !== false // Enable by default unless explicitly false
 
     return tsarrIndexer
