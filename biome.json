@@ -148,7 +148,13 @@
       }
     },
     {
-      "includes": ["**/src/utils/logger.ts", "**/src/index.ts", "**/generate-*.ts", "**/*.test.ts"],
+      "includes": [
+        "**/src/utils/logger.ts",
+        "**/src/index.ts",
+        "**/generate-*.ts",
+        "**/*.test.ts",
+        "**/scripts/**"
+      ],
       "linter": {
         "rules": {
           "suspicious": {
