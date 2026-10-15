@@ -5,9 +5,9 @@
     "clientKind": "git",
     "useIgnoreFile": true
   },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "assist": { "actions": { "source": { "organizeImports": "off" } } },
   "formatter": {
-    "enabled": true,
+    "enabled": false,
     "formatWithErrors": false,
     "indentStyle": "space",
     "indentWidth": 2,

@@ -1,3 +1,36 @@
 [test]
 # Quiet the JSON logger during tests; set LOG_LEVEL explicitly to see logs
 preload = ["./src/test/setup.ts"]
+
+# bun fmt settings. bun fmt runs through the pinned canary
+# (bun@1.4.3-canary.20261014.1, see package.json); the Bun 1.4.3 runtime and
+# tests ignore this section. Same options biome.json's formatter had.
+[fmt]
+printWidth = 100
+tabWidth = 2
+semi = false
+singleQuote = true
+trailingComma = "all"
+arrowParens = "always"
+endOfLine = "lf"
+# Replaces Biome's organizeImports.
+sortImports = true
+sortPackageJson = true
+# Biome's ignores, plus what Biome never formatted. CHANGELOG.md is written
+# by semantic-release, and Helm templates are Go templates.
+ignorePatterns = [
+  "dist/**",
+  "coverage/**",
+  "docs/**",
+  ".claude/**",
+  "**/*.log",
+  "**/*.lock",
+  "**/*.min.js",
+  "helm/**/templates/**",
+  "**/*.md",
+  "**/*.mdx",
+  "**/*.html",
+  "**/*.yml",
+  "**/*.yaml",
+  "**/*.toml",
+]
