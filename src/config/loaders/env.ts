@@ -1,4 +1,5 @@
 import { env } from 'bun'
+
 import { type EnvKey, envMapping } from '../defaults'
 import type { Config } from '../schema'
 

@@ -5,6 +5,7 @@
  */
 
 import { beforeAll, describe, expect, test } from 'bun:test'
+
 import { callServarrApi, waitForServarrApi } from './utils'
 
 interface CustomFormat {

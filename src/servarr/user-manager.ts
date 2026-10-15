@@ -1,7 +1,9 @@
 import { SQL } from 'bun'
+
 import type { ServarrConfig } from '@/config/schema'
 import { buildPostgresConnectionString } from '@/postgres/client'
 import { logger } from '@/utils/logger'
+
 import type { DatabaseUser } from './types'
 
 export class ServarrUserManager {

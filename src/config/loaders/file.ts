@@ -1,4 +1,5 @@
 import { file, TOML, YAML } from 'bun'
+
 import type { Config } from '../schema'
 
 export type ConfigFileFormat = 'yaml' | 'json' | 'toml'

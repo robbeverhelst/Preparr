@@ -1,4 +1,5 @@
 import type { Sonarr } from 'tsarr'
+
 import type {
   Application,
   CustomFormat,
@@ -13,6 +14,7 @@ import type {
 } from '@/config/schema'
 import { logger } from '@/utils/logger'
 import { withRetry } from '@/utils/retry'
+
 import { ServarrApiClient } from './api-client'
 import { ConfigXmlWriter } from './config-writer'
 import type {

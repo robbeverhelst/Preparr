@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readdirSync } from 'node:fs'
 import { join } from 'node:path'
+
 import { defaultConfig } from './defaults'
 import { loadConfigFile } from './loaders/file'
 import { mergeConfigs } from './merger'

@@ -3,6 +3,7 @@ import type { Config } from '@/config/schema'
 import type { PostgresClient } from '@/postgres/client'
 import type { QBittorrentManager } from '@/qbittorrent/client'
 import type { ServarrManager } from '@/servarr/client'
+
 import type { StepContext } from './step'
 
 export class ContextBuilder {

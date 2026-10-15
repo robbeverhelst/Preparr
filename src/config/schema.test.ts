@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+
 import { AppConfigSchema, ConfigSchema, ServarrConfigSchema } from './schema'
 
 describe('Configuration Schema Validation', () => {

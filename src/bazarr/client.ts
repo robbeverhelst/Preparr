@@ -539,8 +539,7 @@ export class BazarrManager {
       const response = await this.apiGet('/series')
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const body = (await response.json()) as
-        | { data?: Array<Record<string, unknown>> }
-        | Array<Record<string, unknown>>
+        { data?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>
       const data = Array.isArray(body) ? body : (body.data ?? [])
       if (!Array.isArray(data)) return []
       return data.map((s) => ({
@@ -558,8 +557,7 @@ export class BazarrManager {
       const response = await this.apiGet('/movies')
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const body = (await response.json()) as
-        | { data?: Array<Record<string, unknown>> }
-        | Array<Record<string, unknown>>
+        { data?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>
       const data = Array.isArray(body) ? body : (body.data ?? [])
       if (!Array.isArray(data)) return []
       return data.map((m) => ({
