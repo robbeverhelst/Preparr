@@ -1,6 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommitTypeAll(chore)", "helpers:pinGitHubActionDigests"],
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommitTypeAll(chore)",
+    "helpers:pinGitHubActionDigests"
+  ],
   "timezone": "Europe/Brussels",
   "schedule": ["before 3am on Monday"],
   "packageRules": [
