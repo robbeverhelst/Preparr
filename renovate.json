@@ -1,6 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommitTypeAll(chore)"],
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommitTypeAll(chore)",
+    "helpers:pinGitHubActionDigests"
+  ],
   "timezone": "Europe/Brussels",
   "schedule": ["before 3am on Monday"],
   "packageRules": [
@@ -34,6 +39,9 @@
       "matchPackageNames": ["/^@types//", "/^bun-types$/"]
     }
   ],
+  "lockFileMaintenance": {
+    "enabled": true
+  },
   "postUpdateOptions": ["bunInstall"],
   "rangeStrategy": "bump",
   "labels": ["dependencies"],
