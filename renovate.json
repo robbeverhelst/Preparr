@@ -6,6 +6,7 @@
     ":semanticCommitTypeAll(chore)",
     "helpers:pinGitHubActionDigests"
   ],
+  "osvVulnerabilityAlerts": true,
   "timezone": "Europe/Brussels",
   "schedule": ["before 3am on Monday"],
   "packageRules": [
