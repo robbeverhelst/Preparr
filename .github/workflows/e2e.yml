@@ -22,7 +22,7 @@ concurrency:
 jobs:
   e2e:
     if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'renovate/')
-    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || 'arc-preparr' }}
+    runs-on: arc-preparr
     timeout-minutes: 45
     permissions:
       contents: read
