@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || 'arc-preparr' }}
+    runs-on: arc-preparr
     steps:
       - uses: actions/checkout@v6
       
@@ -55,7 +55,7 @@ jobs:
 
   release:
     needs: test
-    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || 'arc-preparr' }}
+    runs-on: arc-preparr
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: write
