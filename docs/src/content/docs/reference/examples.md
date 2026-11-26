@@ -154,7 +154,7 @@ Movie management with qBittorrent and Prowlarr sync.
 ```
 
 **Key points:**
-- Credentials are plain values: config files do not support `${VAR}` interpolation. To keep secrets out of the file, supply the relevant settings via environment variables or CLI flags (e.g. `APP_DOWNLOAD_CLIENTS` as JSON), which override the file
+- Credentials are plain values here. To keep them out of the file, reference an environment variable instead (`"value": "${QBITTORRENT_PASSWORD}"`), see [environment variable interpolation](/configuration/overview/#environment-variable-interpolation)
 - `movieCategory` field maps downloads to a qBittorrent category
 - Minimal qBittorrent section (just web UI credentials)
 

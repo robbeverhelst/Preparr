@@ -145,6 +145,8 @@ LOG_FORMAT=json  # json|pretty
 ## Configuration Format (YAML)
 Desired Servarr state lives under `app`; unknown keys are stripped by Zod, so top-level
 `rootFolders` etc. are silently ignored. Secrets usually come from env vars, which override the file.
+String values in the file may reference env vars as `${VAR}`, `${VAR:-default}` or `${VAR-default}`
+(`$${` escapes); `src/config/interpolate.ts` resolves them after parsing and before validation.
 ```yaml
 postgres:
   host: postgres

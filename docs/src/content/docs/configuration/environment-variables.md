@@ -63,6 +63,7 @@ These override the matching keys under `app` in the configuration file. Array/ob
 
 ## Notes
 
+- Any environment variable of the PrepArr container, not only the ones above, can be referenced from the configuration file as `${VAR}` or `${VAR:-default}`. See [environment variable interpolation](/configuration/overview/#environment-variable-interpolation)
 - Most environment variables can also be set via [CLI flags](/reference/cli/) using kebab-case (e.g., `--postgres-host`). Exceptions with no CLI flag: `POSTGRES_SKIP_PROVISIONING` and `SERVARR_AUTHENTICATION_METHOD`
 - `SERVARR_ADMIN_PASSWORD` is only required for Servarr types (sonarr, radarr, prowlarr, etc.), not for bazarr or qbittorrent
 - `SERVARR_TYPE=auto` attempts to detect the service type from the URL
