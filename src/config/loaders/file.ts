@@ -119,4 +119,4 @@ export async function findConfigFile(customPath?: string): Promise<string | null
   return null
 }
 
-// No file-level environment interpolation; precedence is handled by loader/merger
+// ${VAR} references are resolved after parsing, in loadConfiguration (see ../interpolate.ts)

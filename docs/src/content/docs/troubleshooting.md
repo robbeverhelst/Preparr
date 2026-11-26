@@ -128,6 +128,7 @@ docker compose logs sonarr-init
 ```
 ERROR: Configuration file not found: /config/sonarr-config.json
 ERROR: Configuration validation failed
+ERROR: Environment variable interpolation failed in '/config/sonarr-config.json': app.downloadClients[0].fields[3].value: env var QBITTORRENT_PASSWORD is not set
 ```
 
 **Solutions:**
@@ -145,6 +146,7 @@ docker compose exec sonarr-sidecar ls -la /config/
 - Ensure the JSON file is valid (no trailing commas, proper quotes)
 - Verify the file is mounted as read-only from the host
 - Check volume mount paths match `CONFIG_PATH`
+- For an interpolation error, set each listed variable on the PrepArr init and sidecar containers, give the reference a default (`${VAR:-default}`), or write `$${` if a literal `${` was intended. See [environment variable interpolation](/configuration/overview/#environment-variable-interpolation)
 
 ### Servarr API Connection Issues
 

@@ -353,6 +353,143 @@ type = "sonarr"
     expect(result.metadata.configFileFormat).toBe('toml')
   })
 
+  test('interpolates environment variable references in a config file', async () => {
+    const yamlContent = `
+postgres:
+  host: \${POSTGRES_TEST_HOST:-postgres}
+  port: \${POSTGRES_TEST_PORT}
+  password: \${POSTGRES_TEST_SECRET}
+servarr:
+  url: http://\${SERVARR_TEST_HOST}:\${SERVARR_TEST_PORT:-8989}
+  type: sonarr
+  apiKey: \${SERVARR_TEST_KEY}
+  adminPassword: \${SERVARR_TEST_ADMIN_SECRET}
+services:
+  qbittorrent:
+    url: http://qbittorrent:8080
+    username: admin
+    password: \${QBITTORRENT_TEST_SECRET}
+app:
+  rootFolders:
+    - path: \${CONFIG_TEST_MEDIA_ROOT}/tv
+    - path: \${CONFIG_TEST_MEDIA_ROOT}/anime
+  downloadClients:
+    - name: qBittorrent
+      implementation: QBittorrent
+      implementationName: qBittorrent
+      configContract: QBittorrentSettings
+      fields:
+        - name: host
+          value: qbittorrent
+        - name: port
+          value: 8080
+        - name: password
+          value: \${QBITTORRENT_TEST_SECRET}
+        - name: category
+          value: $\${CATEGORY}
+`
+    await Bun.write('./config.yaml', yamlContent.trim())
+
+    process.env.POSTGRES_TEST_PORT = '5440'
+    process.env.POSTGRES_TEST_SECRET = 'pg-from-env'
+    process.env.SERVARR_TEST_HOST = 'sonarr'
+    process.env.SERVARR_TEST_KEY = '2bac5d00dca43258313c734821a15c4c'
+    process.env.SERVARR_TEST_ADMIN_SECRET = 'admin-from-env'
+    process.env.QBITTORRENT_TEST_SECRET = 'qbit-from-env'
+    process.env.CONFIG_TEST_MEDIA_ROOT = '/data'
+
+    const { config, sources } = await loadConfiguration(['--config-path=./config.yaml'])
+
+    expect(config.postgres.host).toBe('postgres') // default, variable unset
+    expect(config.postgres.port).toBe(5440) // schema runs on the interpolated value
+    expect(config.postgres.password).toBe('pg-from-env')
+    expect(config.servarr.url).toBe('http://sonarr:8989')
+    expect(config.servarr.apiKey).toBe('2bac5d00dca43258313c734821a15c4c')
+    expect(config.servarr.adminPassword).toBe('admin-from-env')
+    expect(config.services?.qbittorrent?.password).toBe('qbit-from-env')
+    expect(config.app.rootFolders.map((folder) => folder.path)).toEqual(['/data/tv', '/data/anime'])
+    expect(config.app.downloadClients[0]?.fields).toEqual([
+      { name: 'host', value: 'qbittorrent' },
+      { name: 'port', value: 8080 }, // non-string values are untouched
+      { name: 'password', value: 'qbit-from-env' },
+      { name: 'category', value: `\${CATEGORY}` }, // escaped
+    ])
+    expect(sources.file?.postgres?.password).toBe('pg-from-env')
+  })
+
+  test('validates interpolated values against the schema', async () => {
+    await Bun.write(
+      './config.json',
+      JSON.stringify({
+        postgres: { password: 'file-secret' },
+        servarr: {
+          url: 'http://sonarr:8989',
+          type: 'sonarr',
+          adminPassword: 'file-admin',
+          apiKey: `\${SERVARR_TEST_KEY}`,
+        },
+      }),
+    )
+    process.env.SERVARR_TEST_KEY = 'not-a-valid-api-key'
+
+    await expect(loadConfiguration(['--config-path=./config.json'])).rejects.toThrow(
+      /Configuration schema validation failed[\s\S]*API key must be/,
+    )
+  })
+
+  test('fails with every unset variable and its config key path, without leaking values', async () => {
+    const yamlContent = `
+postgres:
+  password: prefix-\${POSTGRES_TEST_SECRET}-\${POSTGRES_TEST_SET}
+servarr:
+  url: http://sonarr:8989
+  type: sonarr
+  adminPassword: \${SERVARR_TEST_ADMIN_SECRET}
+app:
+  indexers:
+    - name: NZBgeek
+      implementation: Newznab
+      implementationName: Newznab
+      configContract: NewznabSettings
+      fields:
+        - name: baseUrl
+          value: https://api.nzbgeek.info
+        - name: apiKey
+          value: \${PROWLARR_TEST_INDEXER_KEY}
+`
+    await Bun.write('./config.yaml', yamlContent.trim())
+    process.env.POSTGRES_TEST_SET = 'value-that-must-not-leak'
+
+    const error = await loadConfiguration(['--config-path=./config.yaml']).then(
+      () => null,
+      (reason: Error) => reason,
+    )
+
+    expect(error?.message).toBe(
+      "Environment variable interpolation failed in './config.yaml': " +
+        'postgres.password: env var POSTGRES_TEST_SECRET is not set; ' +
+        'servarr.adminPassword: env var SERVARR_TEST_ADMIN_SECRET is not set; ' +
+        'app.indexers[0].fields[1].value: env var PROWLARR_TEST_INDEXER_KEY is not set',
+    )
+  })
+
+  test('environment variables still override interpolated file values', async () => {
+    await Bun.write(
+      './config.json',
+      JSON.stringify({
+        postgres: { password: `\${POSTGRES_TEST_SECRET}` },
+        servarr: { url: 'http://sonarr:8989', type: 'sonarr', adminPassword: 'file-admin' },
+      }),
+    )
+    process.env.POSTGRES_TEST_SECRET = 'interpolated'
+    process.env.POSTGRES_PASSWORD = 'direct-env'
+
+    const result = await loadConfiguration(['--config-path=./config.json'])
+
+    expect(result.config.postgres.password).toBe('direct-env')
+    expect(result.sources.file?.postgres?.password).toBe('interpolated')
+  })
+
   test('handles complex nested services configuration', async () => {
     process.env.POSTGRES_PASSWORD = 'env-secret'
     process.env.SERVARR_ADMIN_PASSWORD = 'env-admin'

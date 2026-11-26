@@ -159,6 +159,32 @@ Define your entire Servarr setup as code. Desired-state settings go under the `a
 - `true` - Prowlarr manages indexers (recommended for multi-service setups)
 - `false` - Sidecar manages indexers directly via config file (default)
 
+#### Environment Variables in the Config File
+
+String values can reference environment variables of the PrepArr container, so secrets stay out of the file:
+
+```json
+{ "name": "password", "value": "${QBITTORRENT_PASSWORD}" }
+```
+
+```yaml
+# docker-compose.yml: set the variable on the init and sidecar containers
+sonarr-sidecar:
+  image: ghcr.io/robbeverhelst/preparr:latest
+  environment:
+    QBITTORRENT_PASSWORD: ${QBITTORRENT_PASSWORD} # from your shell or .env
+    CONFIG_PATH: /config/sonarr-config.json
+```
+
+| Syntax | Result |
+|--------|--------|
+| `${VAR}` | Value of `VAR`; startup fails if it is not set |
+| `${VAR:-default}` | `default` if `VAR` is not set or empty |
+| `${VAR-default}` | `default` only if `VAR` is not set |
+| `$${VAR}` | Literal `${VAR}` |
+
+A missing variable stops PrepArr at startup with an error that lists every unresolved reference by config key (`app.downloadClients[0].fields[3].value: env var QBITTORRENT_PASSWORD is not set`). Values are never logged. See the [configuration overview](https://preparr.robbeverhelst.com/configuration/overview/#environment-variable-interpolation) for the full rules.
+
 ## 🎯 Multi-Service Setup
 
 For complete Prowlarr + Sonarr + Radarr + Bazarr stack, see our [docker-compose.test.yml](docker-compose.test.yml) which includes:

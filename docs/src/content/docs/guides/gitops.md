@@ -116,7 +116,7 @@ configs/
 - **Kubernetes**: Use Kubernetes Secrets or sealed-secrets
 - **Vault**: Use external secret operators to inject secrets into pods
 
-Never commit passwords, API keys, or other secrets to Git.
+Never commit passwords, API keys, or other secrets to Git. In a committed config file, reference them as `${VAR}` and provide the value through the container environment, see [environment variable interpolation](/configuration/overview/#environment-variable-interpolation).
 
 ## CI/CD Validation
 

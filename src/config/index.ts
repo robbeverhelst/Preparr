@@ -1,5 +1,8 @@
+import { env } from 'bun'
+
 import { logger } from '../utils/logger'
 import { defaultConfig } from './defaults'
+import { interpolateEnv } from './interpolate'
 import { generateHelpText, parseCliArgs } from './loaders/cli'
 import { loadEnvironmentConfig } from './loaders/env'
 import { findConfigFile, loadConfigFile } from './loaders/file'
@@ -59,6 +62,12 @@ export async function loadConfiguration(args?: string[]): Promise<ConfigurationR
       throw new Error(
         `Failed to load config file: ${error instanceof Error ? error.message : String(error)}`,
       )
+    }
+
+    // Resolve ${VAR} references after parsing and before merging/validation, so the
+    // schema validates the final values
+    if (fileConfig) {
+      fileConfig = interpolateEnv(fileConfig, env, configFilePath)
     }
   }
 
