@@ -1,3 +1,10 @@
+# [0.20.0](https://github.com/robbeverhelst/Preparr/compare/v0.19.10...v0.20.0) (2026-11-26)
+
+
+### Features
+
+* **config:** ${VAR} env interpolation ([#177](https://github.com/robbeverhelst/Preparr/issues/177)) ([91ecbae](https://github.com/robbeverhelst/Preparr/commit/91ecbae6f2c35c0c01e44f46e00e9ff7af6ef976)), closes [#167](https://github.com/robbeverhelst/Preparr/issues/167)
+
 ## [0.19.10](https://github.com/robbeverhelst/Preparr/compare/v0.19.9...v0.19.10) (2026-10-11)
 
 
